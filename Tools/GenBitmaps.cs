@@ -1,174 +1,182 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 
 // ============================================================
-//  Starkive installer bitmaps — WiX + InnoSetup
+//  Starkive installer bitmaps + app.ico — WiX + InnoSetup
 // ============================================================
 
 class GenBitmaps
 {
     // ── Palette ──────────────────────────────────────────────
     static readonly Color Blue      = Color.FromArgb(0x1A, 0x56, 0xDB);
-    static readonly Color BlueDark  = Color.FromArgb(0x0D, 0x1A, 0x4A);
     static readonly Color BlueLight = Color.FromArgb(0x93, 0xC5, 0xFD);
     static readonly Color White     = Color.FromArgb(0xFF, 0xFF, 0xFF);
     static readonly Color OffWhite  = Color.FromArgb(0xF9, 0xFA, 0xFB);
     static readonly Color TextDark  = Color.FromArgb(0x1E, 0x29, 0x3B);
+    static readonly Color IconBg    = Color.FromArgb(0xFF, 0x0A, 0x0E, 0x1A);
 
     static void Main()
     {
-        // Resolve Installer/ relative to this source file's location so the
-        // output path is correct regardless of the working directory.
         string thisDir = AppContext.BaseDirectory;
-        // BaseDirectory is  …/Tools/bin/…  — walk up to find Installer/
-        string? root = thisDir;
+        string? root   = thisDir;
         while (root != null && !Directory.Exists(Path.Combine(root, "Installer")))
             root = Directory.GetParent(root)?.FullName;
         string outDir = root != null
             ? Path.Combine(root, "Installer")
             : Path.Combine("..", "Installer");
+
+        // Starkive source folder (for app.ico)
+        string? srcRoot = root;
+        string? appDir  = srcRoot != null && Directory.Exists(Path.Combine(srcRoot, "Starkive"))
+            ? Path.Combine(srcRoot, "Starkive")
+            : null;
+
         Directory.CreateDirectory(outDir);
 
-        // WiX bitmaps (kept for reference / fallback)
+        // WiX bitmaps
         MakeWixDialog(Path.Combine(outDir, "dialog.bmp"));
         MakeWixBanner(Path.Combine(outDir, "banner.bmp"));
 
-        // InnoSetup modern wizard bitmaps
+        // InnoSetup wizard bitmaps
         MakeInnoSide(Path.Combine(outDir, "wizard_side.bmp"));
         MakeInnoBanner(Path.Combine(outDir, "wizard_banner.bmp"));
+
+        // App icon
+        string icoPath = appDir != null
+            ? Path.Combine(appDir, "app.ico")
+            : Path.Combine(outDir, "app.ico");
+        MakeAppIcon(icoPath);
 
         Console.WriteLine("Done.");
     }
 
-    // ── InnoSetup: side panel  164 × 314  (shown on Welcome + Finish pages) ──
-    // Modern style: dark blue gradient left panel, Starkive branding, compass mark
+    // ── InnoSetup: side panel  164 × 314 ─────────────────────────────────────
     static void MakeInnoSide(string path)
     {
         const int W = 164, H = 314;
-
         using var bmp = new Bitmap(W, H, PixelFormat.Format24bppRgb);
         using var g   = Graphics.FromImage(bmp);
         g.SmoothingMode     = SmoothingMode.AntiAlias;
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
-        // Background: vertical gradient dark navy → brand blue
-        using var bgBrush = new LinearGradientBrush(
+        // Dark navy gradient background
+        using var bg = new LinearGradientBrush(
             new Point(0, 0), new Point(0, H),
-            Color.FromArgb(0x0A, 0x10, 0x2A),   // very dark navy at top
-            Color.FromArgb(0x12, 0x3A, 0x8A));   // mid blue at bottom
-        g.FillRectangle(bgBrush, 0, 0, W, H);
+            Color.FromArgb(0x0A, 0x10, 0x2A),
+            Color.FromArgb(0x12, 0x3A, 0x8A));
+        g.FillRectangle(bg, 0, 0, W, H);
 
-        // Subtle diagonal overlay for depth
-        using var overlayBrush = new LinearGradientBrush(
-            new Point(0, 0), new Point(W, H),
-            Color.FromArgb(15, White),
-            Color.FromArgb(0, White));
-        g.FillRectangle(overlayBrush, 0, 0, W, H);
+        // Wheel mark centred in upper half
+        int cx = W / 2, markCY = 95;
+        DrawWheelMark(g, cx, markCY, 36);
 
-        // ── Compass mark (centered, upper third) ─────────────────────────────
-        int cx = W / 2;
-        int markCY = 95;
-        DrawCompassMark(g, cx, markCY, 38);
+        // Thin divider
+        using var div = new Pen(Color.FromArgb(55, White), 1);
+        g.DrawLine(div, 24, markCY + 50, W - 24, markCY + 50);
 
-        // Thin divider below mark
-        using var divPen = new Pen(Color.FromArgb(60, White), 1);
-        g.DrawLine(divPen, 24, markCY + 52, W - 24, markCY + 52);
-
-        // ── Product name ─────────────────────────────────────────────────────
+        // Product name
         using var fName = new Font("Segoe UI", 20, FontStyle.Bold, GraphicsUnit.Pixel);
-        SizeF nameSize = g.MeasureString("Starkive", fName);
+        SizeF ns = g.MeasureString("Starkive", fName);
         g.DrawString("Starkive", fName, new SolidBrush(White),
-            cx - nameSize.Width / 2, markCY + 62);
+            cx - ns.Width / 2, markCY + 60);
 
-        // ── Tagline ───────────────────────────────────────────────────────────
+        // Tagline
         using var fTag = new Font("Segoe UI", 9, FontStyle.Regular, GraphicsUnit.Pixel);
         string tag = "Zip. Encrypt. Stay safe.";
-        SizeF tagSize = g.MeasureString(tag, fTag);
+        SizeF ts = g.MeasureString(tag, fTag);
         g.DrawString(tag, fTag, new SolidBrush(BlueLight),
-            cx - tagSize.Width / 2, markCY + 62 + nameSize.Height + 4);
+            cx - ts.Width / 2, markCY + 60 + ns.Height + 4);
 
-        // ── Version (bottom) ─────────────────────────────────────────────────
+        // Version
         using var fVer = new Font("Segoe UI", 8, FontStyle.Regular, GraphicsUnit.Pixel);
         string ver = "v 1.2.0";
-        SizeF verSize = g.MeasureString(ver, fVer);
-        g.DrawString(ver, fVer,
-            new SolidBrush(Color.FromArgb(110, White)),
-            cx - verSize.Width / 2, H - 22);
+        SizeF vs = g.MeasureString(ver, fVer);
+        g.DrawString(ver, fVer, new SolidBrush(Color.FromArgb(110, White)),
+            cx - vs.Width / 2, H - 22);
 
         bmp.Save(path, ImageFormat.Bmp);
         Console.WriteLine($"Written {path}");
     }
 
-    // ── InnoSetup: top banner  55 × 55  (inner pages, top-right corner) ──────
+    // ── InnoSetup: top-right banner  55 × 55 ─────────────────────────────────
     static void MakeInnoBanner(string path)
     {
         const int W = 55, H = 55;
-
         using var bmp = new Bitmap(W, H, PixelFormat.Format24bppRgb);
         using var g   = Graphics.FromImage(bmp);
         g.SmoothingMode = SmoothingMode.AntiAlias;
-
-        // White background (InnoSetup inner pages are white)
         g.FillRectangle(new SolidBrush(White), 0, 0, W, H);
-
-        // Draw compass mark centred
-        DrawCompassMark(g, W / 2, H / 2, 20);
-
+        DrawWheelMark(g, W / 2, H / 2, 19);
         bmp.Save(path, ImageFormat.Bmp);
         Console.WriteLine($"Written {path}");
     }
 
-    // ── Compass mark helper ───────────────────────────────────────────────────
-    static void DrawCompassMark(Graphics g, int cx, int cy, int r)
+    // ── Wheel / compass mark — new Starkive brand ────────────────────────────
+    // cx, cy = centre pixel; r = outer circle radius
+    static void DrawWheelMark(Graphics g, int cx, int cy, int r)
     {
-        // Outer glow circle
-        using var glowBrush = new SolidBrush(Color.FromArgb(25, Blue));
-        g.FillEllipse(glowBrush, cx - r - 4, cy - r - 4, (r + 4) * 2, (r + 4) * 2);
+        float sw = Math.Max(1.1f, r * 0.05f);
 
-        // Dark circle background
-        using var bgBrush = new SolidBrush(Color.FromArgb(0x08, 0x0E, 0x1C));
-        g.FillEllipse(bgBrush, cx - r, cy - r, r * 2, r * 2);
+        // Outer circle
+        using var cp = new Pen(Blue, sw * 1.3f) { LineJoin = LineJoin.Round };
+        g.DrawEllipse(cp, cx - r, cy - r, r * 2, r * 2);
 
-        // Circle border
-        using var borderPen = new Pen(Color.FromArgb(0x1A, 0x3A, 0x6E), 1f);
-        g.DrawEllipse(borderPen, cx - r, cy - r, r * 2, r * 2);
+        // 4 cardinal spokes
+        using var sp = new Pen(Blue, sw)
+            { StartCap = LineCap.Round, EndCap = LineCap.Round };
+        g.DrawLine(sp, cx,       (float)(cy - r), cx,       (float)(cy + r));
+        g.DrawLine(sp, (float)(cx - r), cy,       (float)(cx + r), cy);
 
-        // Cardinal spikes
-        float spike = r * 0.85f;
-        float body  = r * 0.28f;
-        float wide  = r * 0.14f;
-
-        PointF[] north = { new(cx, cy - spike), new(cx + wide, cy - body), new(cx - wide, cy - body) };
-        PointF[] south = { new(cx, cy + spike), new(cx + wide, cy + body), new(cx - wide, cy + body) };
-        PointF[] west  = { new(cx - spike, cy), new(cx - body, cy - wide), new(cx - body, cy + wide) };
-        PointF[] east  = { new(cx + spike, cy), new(cx + body, cy - wide), new(cx + body, cy + wide) };
-
-        using var blueBrush = new SolidBrush(Blue);
-        g.FillPolygon(blueBrush, north);
-        g.FillPolygon(blueBrush, south);
-        g.FillPolygon(blueBrush, west);
-        g.FillPolygon(blueBrush, east);
-
-        // Diagonal half-spikes (slightly dimmer)
-        float ds = r * 0.55f;
-        float db = r * 0.22f;
-        using var dimBrush = new SolidBrush(Color.FromArgb(0xCC, 0x2D, 0x6F, 0xD4));
-        PointF[] ne = { new(cx + ds * 0.71f, cy - ds * 0.71f), new(cx + db, cy - db * 0.2f), new(cx + db * 0.2f, cy - db) };
-        PointF[] nw = { new(cx - ds * 0.71f, cy - ds * 0.71f), new(cx - db, cy - db * 0.2f), new(cx - db * 0.2f, cy - db) };
-        PointF[] se = { new(cx + ds * 0.71f, cy + ds * 0.71f), new(cx + db, cy + db * 0.2f), new(cx + db * 0.2f, cy + db) };
-        PointF[] sw = { new(cx - ds * 0.71f, cy + ds * 0.71f), new(cx - db, cy + db * 0.2f), new(cx - db * 0.2f, cy + db) };
-        g.FillPolygon(dimBrush, ne);
-        g.FillPolygon(dimBrush, nw);
-        g.FillPolygon(dimBrush, se);
-        g.FillPolygon(dimBrush, sw);
+        // 4 diagonal spokes (slightly dimmer)
+        float d = r * 0.707f;
+        using var dp = new Pen(Color.FromArgb(175, Blue), sw * 0.82f)
+            { StartCap = LineCap.Round, EndCap = LineCap.Round };
+        g.DrawLine(dp, cx - d, cy - d, cx + d, cy + d);
+        g.DrawLine(dp, cx + d, cy - d, cx - d, cy + d);
 
         // Centre dot
-        float dotR = r * 0.12f;
+        float dot  = r * 0.20f;
+        float hiDot = dot * 0.52f;
+        g.FillEllipse(new SolidBrush(Blue),
+            cx - dot, cy - dot, dot * 2, dot * 2);
         g.FillEllipse(new SolidBrush(Color.FromArgb(0x5B, 0xA3, 0xF5)),
-            cx - dotR, cy - dotR, dotR * 2, dotR * 2);
+            cx - hiDot, cy - hiDot, hiDot * 2, hiDot * 2);
+    }
+
+    // ── App icon — 16/32/48/256 px PNG frames ────────────────────────────────
+    static void MakeAppIcon(string path)
+    {
+        int[] sizes = [16, 32, 48, 256];
+        var frames  = new List<(int sz, byte[] png)>();
+
+        foreach (int sz in sizes)
+        {
+            using var bmp = new Bitmap(sz, sz, PixelFormat.Format32bppArgb);
+            using var g   = Graphics.FromImage(bmp);
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
+            g.Clear(Color.Transparent);
+
+            // Rounded-square background
+            float pad    = sz * 0.04f;
+            float corner = sz * 0.22f;
+            using var bgPath = RoundedRect(pad, pad, sz - pad * 2, sz - pad * 2, corner);
+            g.FillPath(new SolidBrush(IconBg), bgPath);
+
+            // Wheel mark, padded ~18% from edge
+            int r = (int)(sz * 0.31f);
+            DrawWheelMark(g, sz / 2, sz / 2, r);
+
+            using var ms = new MemoryStream();
+            bmp.Save(ms, ImageFormat.Png);
+            frames.Add((sz, ms.ToArray()));
+        }
+
+        WriteIco(path, frames);
+        Console.WriteLine($"Written {path}");
     }
 
     // ── WiX dialog  493 × 312 ────────────────────────────────────────────────
@@ -182,21 +190,27 @@ class GenBitmaps
         g.FillRectangle(new SolidBrush(OffWhite), Split, 0, W - Split, H);
         g.FillRectangle(new SolidBrush(Blue), 0, 0, Split, H);
         g.FillRectangle(new SolidBrush(Color.FromArgb(30, TextDark)), Split - 1, 0, 1, H);
+
         int cx = Split / 2;
-        using var fName = new Font("Segoe UI", 22, FontStyle.Bold,    GraphicsUnit.Pixel);
+
+        // Wheel mark on blue sidebar
+        DrawWheelMark(g, cx, H / 2 - 30, 28);
+
+        using var fName = new Font("Segoe UI", 18, FontStyle.Bold,    GraphicsUnit.Pixel);
         using var fSub  = new Font("Segoe UI",  9, FontStyle.Regular, GraphicsUnit.Pixel);
         using var fVer  = new Font("Segoe UI",  8, FontStyle.Regular, GraphicsUnit.Pixel);
-        SizeF nameSize = g.MeasureString("Starkive", fName);
-        float nameX = cx - nameSize.Width / 2;
-        float nameY = H / 2f - nameSize.Height / 2 - 10;
-        g.DrawString("Starkive", fName, new SolidBrush(White), nameX, nameY);
-        float ruleY = nameY + nameSize.Height + 8;
-        using var rulePen = new Pen(Color.FromArgb(100, White), 1);
-        g.DrawLine(rulePen, 20, ruleY, Split - 20, ruleY);
-        SizeF subSize = g.MeasureString("starkive.app", fSub);
-        g.DrawString("starkive.app", fSub, new SolidBrush(BlueLight), cx - subSize.Width / 2, ruleY + 8);
-        SizeF verSize = g.MeasureString("v 1.2.0", fVer);
-        g.DrawString("v 1.2.0", fVer, new SolidBrush(Color.FromArgb(120, White)), cx - verSize.Width / 2, H - 20);
+        SizeF ns = g.MeasureString("Starkive", fName);
+        float ny = H / 2f + 10;
+        g.DrawString("Starkive", fName, new SolidBrush(White), cx - ns.Width / 2, ny);
+        float ry = ny + ns.Height + 6;
+        using var rp = new Pen(Color.FromArgb(90, White), 1);
+        g.DrawLine(rp, 18, ry, Split - 18, ry);
+        SizeF ss = g.MeasureString("starkive.app", fSub);
+        g.DrawString("starkive.app", fSub, new SolidBrush(BlueLight), cx - ss.Width / 2, ry + 7);
+        SizeF vs = g.MeasureString("v 1.2.0", fVer);
+        g.DrawString("v 1.2.0", fVer, new SolidBrush(Color.FromArgb(110, White)),
+            cx - vs.Width / 2, H - 18);
+
         bmp.Save(path, ImageFormat.Bmp);
         Console.WriteLine($"Written {path}");
     }
@@ -211,5 +225,44 @@ class GenBitmaps
         g.FillRectangle(new SolidBrush(Color.FromArgb(40, TextDark)), 0, H - 1, W, 1);
         bmp.Save(path, ImageFormat.Bmp);
         Console.WriteLine($"Written {path}");
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    static GraphicsPath RoundedRect(float x, float y, float w, float h, float r)
+    {
+        var p = new GraphicsPath();
+        p.AddArc(x,             y,             r * 2, r * 2, 180, 90);
+        p.AddArc(x + w - r * 2, y,             r * 2, r * 2, 270, 90);
+        p.AddArc(x + w - r * 2, y + h - r * 2, r * 2, r * 2,   0, 90);
+        p.AddArc(x,             y + h - r * 2, r * 2, r * 2,  90, 90);
+        p.CloseFigure();
+        return p;
+    }
+
+    // Writes a multi-frame ICO using embedded PNG data (Vista+ compatible)
+    static void WriteIco(string path, List<(int sz, byte[] png)> frames)
+    {
+        using var fs = new FileStream(path, FileMode.Create);
+        using var bw = new BinaryWriter(fs);
+
+        bw.Write((short)0);                  // reserved
+        bw.Write((short)1);                  // type: icon
+        bw.Write((short)frames.Count);
+
+        int dataOffset = 6 + 16 * frames.Count;
+        foreach (var (sz, png) in frames)
+        {
+            bw.Write((byte)(sz >= 256 ? 0 : sz));
+            bw.Write((byte)(sz >= 256 ? 0 : sz));
+            bw.Write((byte)0);               // color count
+            bw.Write((byte)0);               // reserved
+            bw.Write((short)1);              // planes
+            bw.Write((short)32);             // bit depth
+            bw.Write((int)png.Length);
+            bw.Write(dataOffset);
+            dataOffset += png.Length;
+        }
+        foreach (var (_, png) in frames)
+            bw.Write(png);
     }
 }

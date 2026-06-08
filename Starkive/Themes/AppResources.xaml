@@ -20,6 +20,7 @@
         <SolidColorBrush x:Key="BgHoverBrush"      Color="#1F2230"/>
         <SolidColorBrush x:Key="BgElevatedBrush"   Color="#222636"/>
         <SolidColorBrush x:Key="BgInputBrush"      Color="#0D111A"/>
+        <SolidColorBrush x:Key="LogoMarkBgBrush"   Color="#0A0E1A"/>
 
         <!-- ── Accent ── -->
         <SolidColorBrush x:Key="AccentBrush"       Color="#1A56DB"/>

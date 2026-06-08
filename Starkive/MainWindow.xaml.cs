@@ -972,6 +972,7 @@ public partial class MainWindow : Window
         SetBrush("BgHoverBrush",          light ? "#E2E8F0" : "#1F2230");
         SetBrush("BgElevatedBrush",       light ? "#EBF0F7" : "#222636");
         SetBrush("BgInputBrush",          light ? "#FFFFFF" : "#0D111A"); // text/password boxes
+        SetBrush("LogoMarkBgBrush",       light ? "#EEF2FF" : "#0A0E1A"); // sidebar logo bg
         // ── Nav active: solid blue pill in dark (GlideX), tinted bg in light ──
         SetBrush("NavActiveBgBrush",      light ? "#EFF6FF" : "#1A56DB");
         SetBrush("NavActiveBorderBrush",  light ? "#BFDBFE" : "Transparent");

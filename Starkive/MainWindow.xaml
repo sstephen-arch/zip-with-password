@@ -48,25 +48,28 @@
                 <StackPanel Grid.Row="1" Orientation="Horizontal"
                             Margin="10,0,10,0" VerticalAlignment="Center">
 
-                    <!-- 20x20 compass star mark -->
+                    <!-- 22x22 wheel/compass mark — bg switches with theme -->
                     <Border x:Name="LogoMark"
-                            Width="20" Height="20" CornerRadius="5"
-                            Background="#080E1C" BorderBrush="#1A3A6E" BorderThickness="0.6">
-                        <Canvas Width="20" Height="20" ClipToBounds="True">
-                            <!-- Cardinal points -->
-                            <Polygon Points="10,2.5 10.8,8.2 10,9.2 9.2,8.2"   Fill="#1A56DB"/>
-                            <Polygon Points="10,17.5 10.8,11.8 10,10.8 9.2,11.8" Fill="#1A56DB"/>
-                            <Polygon Points="2.5,10 8.2,9.2 9.2,10 8.2,10.8"    Fill="#1A56DB"/>
-                            <Polygon Points="17.5,10 11.8,9.2 10.8,10 11.8,10.8" Fill="#1A56DB"/>
-                            <!-- Diagonal points -->
-                            <Polygon Points="4.4,4.4 8.8,8.8 9.5,9.2 8.8,9.5"   Fill="#2D6FD4" Opacity="0.85"/>
-                            <Polygon Points="15.6,4.4 11.2,8.8 10.5,9.2 11.2,9.5" Fill="#2D6FD4" Opacity="0.85"/>
-                            <Polygon Points="4.4,15.6 8.8,11.2 9.5,10.8 8.8,10.5" Fill="#2D6FD4" Opacity="0.85"/>
-                            <Polygon Points="15.6,15.6 11.2,11.2 10.5,10.8 11.2,10.5" Fill="#2D6FD4" Opacity="0.85"/>
-                            <!-- Center -->
-                            <Ellipse Canvas.Left="8.2" Canvas.Top="8.2" Width="3.6" Height="3.6"
-                                     Fill="#080E1C" Stroke="#1A56DB" StrokeThickness="0.5"/>
-                            <Ellipse Canvas.Left="9.2" Canvas.Top="9.2" Width="1.6" Height="1.6"
+                            Width="22" Height="22" CornerRadius="6"
+                            Background="{DynamicResource LogoMarkBgBrush}">
+                        <Canvas Width="22" Height="22" ClipToBounds="True">
+                            <!-- Outer circle -->
+                            <Ellipse Canvas.Left="2.5" Canvas.Top="2.5"
+                                     Width="17" Height="17"
+                                     Stroke="#1A56DB" StrokeThickness="1.4"
+                                     Fill="Transparent"/>
+                            <!-- 4 cardinal spokes -->
+                            <Line X1="11" Y1="2.5"  X2="11" Y2="19.5" Stroke="#1A56DB" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Line X1="2.5" Y1="11"  X2="19.5" Y2="11" Stroke="#1A56DB" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <!-- 4 diagonal spokes -->
+                            <Line X1="4.5" Y1="4.5" X2="17.5" Y2="17.5" Stroke="#1A56DB" StrokeThickness="1.1" Opacity="0.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Line X1="17.5" Y1="4.5" X2="4.5" Y2="17.5" Stroke="#1A56DB" StrokeThickness="1.1" Opacity="0.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <!-- Center dot -->
+                            <Ellipse Canvas.Left="8.8" Canvas.Top="8.8"
+                                     Width="4.4" Height="4.4"
+                                     Fill="#1A56DB"/>
+                            <Ellipse Canvas.Left="9.8" Canvas.Top="9.8"
+                                     Width="2.4" Height="2.4"
                                      Fill="#5BA3F5"/>
                         </Canvas>
                     </Border>
