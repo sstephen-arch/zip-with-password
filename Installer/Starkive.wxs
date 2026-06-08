@@ -3,7 +3,7 @@
 
   <Package Name="Starkive"
            Manufacturer="DePaolo Consulting LLC"
-           Version="1.1.0"
+           Version="1.2.0"
            UpgradeCode="B4E1F2A3-7C8D-4E5F-9A0B-1C2D3E4F5A6B"
            Scope="perMachine"
            InstallerVersion="500"
