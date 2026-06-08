@@ -30,6 +30,9 @@ Installer/dialog_preview.png
 # node_modules
 node_modules/
 
+# Supabase local cache
+supabase/.temp/
+
 # Archives
 *.zip
 Starkive-source.zip
