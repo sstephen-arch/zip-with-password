@@ -274,7 +274,14 @@ public partial class MainWindow : Window
         => OpenAuthDialog();
 
     private void UpgradeToPro_Click(object sender, RoutedEventArgs e)
-        => OpenAuthDialog();
+    {
+        // Always open the auth dialog when the user explicitly clicks
+        // "Upgrade to Pro" — even if they're already signed in — so they can
+        // sign in with a different address or re-verify their Pro account.
+        var dlg = new OtpDialog { Owner = this };
+        dlg.ShowDialog();
+        RefreshProStatus();
+    }
 
     private void OpenAuthDialog()
     {
