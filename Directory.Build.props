@@ -1,0 +1,11 @@
+<Project>
+  <!-- Single source of truth for the app version.
+       Starkive.csproj and installer.wxs both read from here.
+       Bump this before every release — nowhere else. -->
+  <PropertyGroup>
+    <StarkiveVersion>1.1.0</StarkiveVersion>
+    <Version>$(StarkiveVersion)</Version>
+    <AssemblyVersion>$(StarkiveVersion).0</AssemblyVersion>
+    <FileVersion>$(StarkiveVersion).0</FileVersion>
+  </PropertyGroup>
+</Project>

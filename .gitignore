@@ -18,8 +18,17 @@ appsettings.*.json
 # Installer binaries (generated)
 Installer/dialog.bmp
 Installer/banner.bmp
+Installer/.wix/
 *.msi
 *.exe
+
+# Generated bitmap previews
+*.bmp
+Installer/banner_preview.png
+Installer/dialog_preview.png
+
+# node_modules
+node_modules/
 
 # Archives
 *.zip

@@ -1,0 +1,186 @@
+name: Build — MSI + MSIX
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_msix:
+        description: 'Also build MSIX for Windows Store?'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  # ══════════════════════════════════════════════════════════════════════════
+  #  JOB 1 — Build the app + MSI installer
+  # ══════════════════════════════════════════════════════════════════════════
+  build-msi:
+    name: Build MSI
+    runs-on: windows-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. .NET 8 SDK ──────────────────────────────────────────────────────
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # ── 3. Download IBM Plex Sans fonts ────────────────────────────────────
+      - name: Download IBM Plex Sans fonts
+        run: |
+          New-Item -ItemType Directory -Force -Path Starkive\Fonts | Out-Null
+          $base = "https://github.com/IBM/plex/raw/master/packages/plex-sans/fonts/complete/ttf"
+          foreach ($w in @("IBMPlexSans-Regular","IBMPlexSans-Medium","IBMPlexSans-SemiBold")) {
+            Invoke-WebRequest "$base/$w.ttf" -OutFile "Starkive\Fonts\$w.ttf"
+          }
+        shell: pwsh
+
+      # ── 4. Download EFF Large Wordlist ─────────────────────────────────────
+      - name: Download EFF wordlist
+        run: |
+          New-Item -ItemType Directory -Force -Path Starkive\Resources | Out-Null
+          Invoke-WebRequest "https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt" `
+            -OutFile "Starkive\Resources\eff_wordlist.txt"
+        shell: pwsh
+
+      # ── 5. Restore NuGet packages ──────────────────────────────────────────
+      - name: Restore NuGet packages
+        run: dotnet restore Starkive/Starkive.csproj
+
+      # ── 6. Publish self-contained exe ─────────────────────────────────────
+      - name: Publish app (self-contained, single-file)
+        run: |
+          dotnet publish Starkive/Starkive.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:DebugType=none `
+            --output dist
+        shell: pwsh
+
+      # ── 7. Generate installer bitmap assets ────────────────────────────────
+      - name: Generate installer assets
+        run: |
+          pip install Pillow --quiet
+          python gen_installer_assets.py
+        shell: pwsh
+
+      # ── 8. Install WiX v4 + UI extension ──────────────────────────────────
+      - name: Install WiX v4
+        run: dotnet tool install --global wix --version 4.0.5
+        shell: pwsh
+
+      - name: Add WiX UI extension
+        run: wix extension add --global WixToolset.UI.wixext/4.0.5
+        shell: pwsh
+
+      # ── 9. Build MSI ───────────────────────────────────────────────────────
+      - name: Build MSI installer
+        run: |
+          wix build installer.wxs `
+            -ext WixToolset.UI.wixext `
+            -o dist/Starkive.msi
+        shell: pwsh
+
+      # ── 10. Upload MSI artifact ────────────────────────────────────────────
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Starkive-MSI
+          path: dist/Starkive.msi
+          retention-days: 30
+
+      # ── 11. Upload raw exe artifact ────────────────────────────────────────
+      - name: Upload exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Starkive-exe
+          path: dist/Starkive.exe
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════════════════
+  #  JOB 2 — Build MSIX for Windows Store (manual trigger only)
+  # ══════════════════════════════════════════════════════════════════════════
+  build-msix:
+    name: Build MSIX (Windows Store)
+    runs-on: windows-latest
+    needs: build-msi
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_msix == true }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Download exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Starkive-exe
+          path: dist
+
+      - name: Assemble MSIX layout
+        run: |
+          New-Item -ItemType Directory -Force -Path msix-layout\Assets | Out-Null
+          Copy-Item dist\Starkive.exe msix-layout\
+          Copy-Item packaging\AppxManifest.xml msix-layout\
+          Copy-Item packaging\assets\* msix-layout\Assets\
+        shell: pwsh
+
+      - name: Find MakeAppx
+        id: sdk
+        run: |
+          $makeappx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" `
+            -Recurse -Filter makeappx.exe |
+            Where-Object { $_.FullName -match 'x64' } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+          echo "path=$makeappx" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Package MSIX
+        run: |
+          & "${{ steps.sdk.outputs.path }}" pack `
+            /d msix-layout `
+            /p dist\Starkive.msix `
+            /nv
+        shell: pwsh
+
+      - name: Sign MSIX (if cert available)
+        if: ${{ env.CERTIFICATE_PFX != '' }}
+        env:
+          CERTIFICATE_PFX: ${{ secrets.CERTIFICATE_PFX }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: |
+          $pfxBytes = [Convert]::FromBase64String($env:CERTIFICATE_PFX)
+          Set-Content cert.pfx -Value $pfxBytes -AsByteStream
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" `
+            -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match 'x64' } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+          & $signtool sign /fd SHA256 /p $env:CERTIFICATE_PASSWORD `
+            /f cert.pfx dist\Starkive.msix
+          Remove-Item cert.pfx
+        shell: pwsh
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Starkive-MSIX
+          path: dist/Starkive.msix
+          retention-days: 30

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Starkive — WiX v4 MSI Source
+  ================================
+  Build: wix build installer.wxs -ext WixToolset.UI.wixext -o dist\Starkive.msi
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="Starkive"
+           Manufacturer="DePaolo Consulting LLC"
+           Version="1.1.0"
+           UpgradeCode="A3F2C1D4-8B7E-4F5A-9C6D-2E1B0A3D4F5C"
+           Language="1033"
+           InstallerVersion="500"
+           Scope="perMachine">
+
+    <MajorUpgrade
+        Schedule="afterInstallInitialize"
+        DowngradeErrorMessage="A newer version of Starkive is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <ui:WixUI Id="WixUI_InstallDir" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+    <WixVariable Id="WixUIBannerBmp"  Value="installer_banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp"  Value="installer_dialog.bmp" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/sstephen-arch/zip-with-password" />
+    <Property Id="ARPHELPLINK"     Value="https://github.com/sstephen-arch/zip-with-password" />
+    <Property Id="ARPPRODUCTICON"  Value="AppIconIco" />
+
+    <Icon Id="AppIconIco" SourceFile="Starkive\app.ico" />
+
+    <Feature Id="CoreFeature" Title="Starkive" Level="1"
+             Description="Installs Starkive with Explorer right-click integration.">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentGroupRef Id="AppShortcuts" />
+      <ComponentGroupRef Id="ContextMenuAnyFile" />
+      <ComponentGroupRef Id="ContextMenuDirectory" />
+      <ComponentGroupRef Id="ContextMenuDirBackground" />
+    </Feature>
+
+  </Package>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles6432Folder">
+        <Directory Id="INSTALLFOLDER" Name="Starkive" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AppMenuFolder" Name="Starkive" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="MainExe" Guid="B4E3D2C1-9A8F-4E5B-8D7E-3F2A1B0C4D5E">
+        <File Id="StarkiveExe"
+              Source="dist\Starkive.exe"
+              KeyPath="yes"
+              Name="Starkive.exe" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="AppShortcuts" Directory="AppMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="C5D4E3F2-1B2A-4E6C-8D9E-5A4B3C2D1E0F">
+        <Shortcut Id="AppStartMenuShortcut"
+                  Name="Starkive"
+                  Description="Secure file delivery with AES-256 encryption and audit trail"
+                  Target="[INSTALLFOLDER]Starkive.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIconIco" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\DePaoloConsulting\Starkive"
+                       Name="StartMenuInstalled"
+                       Type="integer" Value="1" KeyPath="yes" />
+        <RemoveFolder Id="RemoveAppMenuFolder" Directory="AppMenuFolder" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ContextMenuAnyFile" Directory="INSTALLFOLDER">
+      <Component Id="CtxFile" Guid="D6E5F4A3-2C1B-5F7D-9E0F-6B5C4D3E2F1A">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\*\shell\Starkive"
+                     ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="Starkive — Zip with password..." KeyPath="yes" />
+          <RegistryValue Name="Icon" Type="string"
+                         Value="&quot;[INSTALLFOLDER]Starkive.exe&quot;" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\*\shell\Starkive\command">
+          <RegistryValue Type="string"
+                         Value="&quot;[INSTALLFOLDER]Starkive.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ContextMenuDirectory" Directory="INSTALLFOLDER">
+      <Component Id="CtxDir" Guid="E7F6A5B4-3D2C-6A8E-0F1A-7C6D5E4F3A2B">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\Directory\shell\Starkive"
+                     ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="Starkive — Zip with password..." KeyPath="yes" />
+          <RegistryValue Name="Icon" Type="string"
+                         Value="&quot;[INSTALLFOLDER]Starkive.exe&quot;" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\Directory\shell\Starkive\command">
+          <RegistryValue Type="string"
+                         Value="&quot;[INSTALLFOLDER]Starkive.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ContextMenuDirBackground" Directory="INSTALLFOLDER">
+      <Component Id="CtxDirBg" Guid="F8A7B6C5-4E3D-7B9F-1A2B-8D7E6F5A4B3C">
+        <RegistryKey Root="HKLM"
+                     Key="SOFTWARE\Classes\Directory\Background\shell\Starkive"
+                     ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="Starkive — Zip with password..." KeyPath="yes" />
+          <RegistryValue Name="Icon" Type="string"
+                         Value="&quot;[INSTALLFOLDER]Starkive.exe&quot;" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM"
+                     Key="SOFTWARE\Classes\Directory\Background\shell\Starkive\command">
+          <RegistryValue Type="string"
+                         Value="&quot;[INSTALLFOLDER]Starkive.exe&quot; &quot;%V&quot;" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+</Wix>

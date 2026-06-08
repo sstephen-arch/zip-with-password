@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Starkive</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── Topbar ─────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <span class="app-name">Starkive</span>
+  <div class="right">
+    <span class="badge-std" id="version-badge">AES-256</span>
+    <!-- Shown when logged out -->
+    <span id="sign-in-link" onclick="app.showSignUpModal()">Sign in / Create account</span>
+    <!-- Shown when logged in -->
+    <div id="account-chip" style="display:none" onclick="app.handleAccountChipClick()">
+      <div class="account-avatar" id="account-avatar">S</div>
+      <span class="account-email" id="account-email">user@example.com</span>
+      <span class="badge-pro" id="plan-badge" style="display:none">PRO</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main scroll area ──────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- Source & output panel -->
+  <div class="panel" id="source-panel">
+    <div class="panel-label">Source &amp; Output</div>
+
+    <div class="file-row">
+      <div class="file-input" id="source-display">No file or folder selected</div>
+      <button class="btn-ghost" onclick="app.selectSource()">Browse…</button>
+    </div>
+    <div class="file-row">
+      <div class="file-input" id="output-display">Output path not set</div>
+      <button class="btn-ghost" onclick="app.selectOutput()">Save as…</button>
+    </div>
+  </div>
+
+  <!-- Password mode panel -->
+  <div class="panel" id="mode-panel">
+    <div class="panel-label">Encryption Credential</div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-password" onclick="app.setMode('password')">Password</button>
+      <button class="mode-tab" id="tab-passphrase" onclick="app.setMode('passphrase')">Passphrase</button>
+    </div>
+
+    <!-- ── Password tab ── -->
+    <div id="pane-password">
+      <div class="cred-row">
+        <div class="cred-field" id="password-display">—</div>
+        <button class="btn-copy" id="copy-pw-btn" onclick="app.copyCredential()">Copy</button>
+      </div>
+
+      <!-- Strength bar -->
+      <div class="strength-row">
+        <div class="strength-segments">
+          <div class="seg" id="seg0"></div>
+          <div class="seg" id="seg1"></div>
+          <div class="seg" id="seg2"></div>
+          <div class="seg" id="seg3"></div>
+          <div class="seg" id="seg4"></div>
+        </div>
+        <span class="strength-label" id="strength-label">—</span>
+      </div>
+
+      <!-- Checkboxes -->
+      <div class="options-row">
+        <label class="check-label">
+          <input type="checkbox" id="opt-upper" checked onchange="app.regen()" />
+          Uppercase
+        </label>
+        <label class="check-label">
+          <input type="checkbox" id="opt-lower" checked onchange="app.regen()" />
+          Lowercase
+        </label>
+        <label class="check-label">
+          <input type="checkbox" id="opt-numbers" checked onchange="app.regen()" />
+          Numbers
+        </label>
+        <label class="check-label">
+          <input type="checkbox" id="opt-symbols" onchange="app.regen()" />
+          Symbols
+        </label>
+      </div>
+
+      <!-- Length slider -->
+      <div class="slider-row">
+        <label for="pw-length">Length</label>
+        <input type="range" id="pw-length" min="8" max="64" value="20" oninput="app.onLengthChange()" />
+        <span class="slider-val" id="pw-length-val">20 chars</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions-row">
+        <button class="btn-gen" onclick="app.regen()">↻ Regenerate</button>
+        <div class="save-row">
+          <button class="btn-save-local" onclick="app.saveCredentialLocally()">Save to file</button>
+          <button class="btn-save-drive" title="Connect Google Drive (coming soon)">Save to Drive</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Passphrase tab ── -->
+    <div id="pane-passphrase" style="display:none">
+      <div class="cred-row">
+        <div class="cred-field" id="passphrase-display">—</div>
+        <button class="btn-copy" id="copy-pp-btn" onclick="app.copyCredential()">Copy</button>
+      </div>
+
+      <!-- Word count slider -->
+      <div class="slider-row">
+        <label for="word-count">Words</label>
+        <input type="range" id="word-count" min="3" max="8" value="5" oninput="app.onWordCountChange()" />
+        <span class="slider-val" id="word-count-val">5 words</span>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn-gen" onclick="app.regen()">↻ Regenerate</button>
+        <div class="save-row">
+          <button class="btn-save-local" onclick="app.saveCredentialLocally()">Save to file</button>
+          <button class="btn-save-drive" title="Connect Google Drive (coming soon)">Save to Drive</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit trail panel -->
+  <div class="panel" id="audit-panel">
+    <div class="audit-header">
+      <span class="audit-icon">📋</span>
+      <span class="audit-title">Audit Trail</span>
+      <span class="audit-sublabel" id="audit-sublabel">Sign in to enable</span>
+      <span class="badge-pro-locked" id="audit-pro-badge" style="display:none">PRO</span>
+      <!-- Toggle -->
+      <label class="audit-toggle" id="audit-toggle-wrap">
+        <input type="checkbox" id="audit-toggle" onchange="app.onAuditToggle()" disabled />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Usage bar (free users) -->
+    <div class="usage-bar-wrap" id="usage-wrap" style="display:none">
+      <div class="usage-bar-track">
+        <div class="usage-bar-fill" id="usage-fill" style="width:0%"></div>
+      </div>
+      <div class="usage-text" id="usage-text">0 / 5 events used</div>
+    </div>
+
+    <!-- Fields (when toggle is on and not exhausted) -->
+    <div class="audit-fields" id="audit-fields">
+      <div class="audit-field-row">
+        <div class="field-wrap">
+          <label>Event label *</label>
+          <input class="audit-input" id="f-label" type="text" placeholder="e.g. Q2 2026 HR Archive" maxlength="120" />
+        </div>
+        <div class="field-wrap">
+          <label>Category</label>
+          <select class="audit-select" id="f-category">
+            <option value="">Select…</option>
+            <option value="HR">HR</option>
+            <option value="Legal">Legal</option>
+            <option value="Finance">Finance</option>
+            <option value="IT">IT</option>
+            <option value="Compliance">Compliance</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="audit-field-row">
+        <div class="field-wrap">
+          <label>Created by</label>
+          <input class="audit-input" id="f-created-by" type="text" placeholder="Your name or team" maxlength="100" />
+        </div>
+        <div class="field-wrap">
+          <label>Retention policy</label>
+          <select class="audit-select" id="f-retention">
+            <option value="">None</option>
+            <option value="1y">1 year</option>
+            <option value="3y">3 years</option>
+            <option value="5y">5 years</option>
+            <option value="7y">7 years</option>
+            <option value="Indefinite">Indefinite</option>
+          </select>
+        </div>
+      </div>
+      <div class="audit-field-row single">
+        <div class="field-wrap">
+          <label>Notes</label>
+          <input class="audit-input" id="f-notes" type="text" placeholder="Optional notes" maxlength="500" />
+        </div>
+      </div>
+      <div class="sync-row" id="sync-row">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Will sync after archive creation</span>
+        <a class="sync-link" href="#" onclick="app.goToAuditHistory(); return false;">View history →</a>
+      </div>
+    </div>
+
+    <!-- Exhausted CTA (free limit reached) -->
+    <div class="audit-exhausted" id="audit-exhausted">
+      <div class="exhausted-icon">📦</div>
+      <div class="exhausted-title">Free audit limit reached</div>
+      <div class="exhausted-desc">You've used your 5 free audit events. Upgrade to Pro for unlimited logging.</div>
+      <div class="exhausted-price">$1 / month</div>
+      <div class="feature-pills">
+        <span class="pill">Unlimited events</span>
+        <span class="pill">No file size cap</span>
+        <span class="pill">CSV export</span>
+        <span class="pill">Retention policies</span>
+      </div>
+      <button class="btn-upgrade" onclick="app.openUpgrade()">Upgrade via Microsoft Store</button>
+      <button class="btn-maybe" onclick="app.dismissExhausted()">Maybe later</button>
+    </div>
+  </div>
+
+  <!-- Zip button -->
+  <button id="zip-btn" onclick="app.doZip()">Create Encrypted Archive</button>
+
+</div><!-- /main -->
+
+<!-- ── Sign-up / Sign-in modal ───────────────────────────────────────── -->
+<div id="modal-overlay" onclick="app.closeModalOnOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="app.hideSignUpModal()">✕</button>
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">Starkive Account</div>
+    <div class="modal-sub">Sign in to enable audit trail logging.<br />Free: 5 events · Pro: $1/mo unlimited.</div>
+    <div class="modal-price"></div>
+
+    <!-- Google sign-in -->
+    <button class="btn-google" onclick="app.googleSignIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9L37 10.7C33.5 7.6 29 6 24 6 13 6 4 15 4 26s9 20 20 20c11 0 19.4-7.7 19.4-20 0-1.3-.1-2.7-.4-4H43.6z"/><path fill="#FF3D00" d="M6.3 15.7l6.6 4.8C14.6 17 19 14 24 14c3 0 5.7 1.1 7.8 2.9L37 10.7C33.5 7.6 29 6 24 6c-7.7 0-14.5 4-18.7 9.7z"/><path fill="#4CAF50" d="M24 46c5.1 0 9.8-1.7 13.5-4.7l-6.3-5.1C29.3 37.6 26.8 38 24 38c-5.3 0-9.7-3.4-11.3-8H6.2l-6.4 4.9C4 41.8 13.5 46 24 46z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.7-4.8 6.2l6.3 5.1C40.5 36 44 31.4 44 26c0-1.3-.1-2.7-.4-4z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="modal-divider">or</div>
+
+    <!-- Email sign-in -->
+    <input class="modal-input" id="m-email" type="email" placeholder="Email address" />
+    <input class="modal-input" id="m-password" type="password" placeholder="Password (min 8 chars)"
+           onkeydown="if(event.key==='Enter') app.emailAuth()" />
+    <button class="btn-primary" onclick="app.emailAuth()">Sign in / Create account</button>
+
+    <div class="modal-footer">
+      By signing in you agree to Starkive's terms. Your credential files never leave your device.
+    </div>
+  </div>
+</div>
+
+<!-- ── Success modal ─────────────────────────────────────────────────── -->
+<div id="success-overlay" onclick="app.closeSuccessOnOverlay(event)">
+  <div class="success-modal">
+    <div class="success-icon">✅</div>
+    <div class="success-title" id="success-title">Archive Created</div>
+    <div class="account-details" id="success-details">
+      <div class="detail-row">
+        <span class="detail-key">Output</span>
+        <span class="detail-val" id="success-output">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">Size</span>
+        <span class="detail-val" id="success-size">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-key">Encryption</span>
+        <span class="detail-val">AES-256</span>
+      </div>
+      <div class="detail-row" id="success-audit-row" style="display:none">
+        <span class="detail-key">Audit event</span>
+        <span class="detail-val" id="success-audit-label">Logged ✓</span>
+      </div>
+    </div>
+    <button class="btn-start" onclick="app.hideSuccess()">Done</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

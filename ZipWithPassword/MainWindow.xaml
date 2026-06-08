@@ -1,0 +1,510 @@
+<Window x:Class="ZipWithPassword.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Secure Starzip"
+        Width="860" Height="560"
+        MinWidth="780" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgPrimaryBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        AllowDrop="True">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>   <!-- Sidebar -->
+            <ColumnDefinition Width="*"/>     <!-- Content -->
+        </Grid.ColumnDefinitions>
+
+        <!-- ======================================== SIDEBAR ================ -->
+        <Border Grid.Column="0" Background="{StaticResource BgSurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <!-- Logo -->
+                <StackPanel DockPanel.Dock="Top" Margin="20,24,20,28">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="32" Height="32" Background="{StaticResource AccentBrush}"
+                                CornerRadius="8" Margin="0,0,10,0">
+                            <TextBlock Text="*" FontSize="17" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Secure" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Starzip" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource AccentBrush}" Margin="0,-3,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Text="AES-256 protected archives" FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="42,-2,0,0"/>
+                </StackPanel>
+
+                <!-- Nav items -->
+                <StackPanel DockPanel.Dock="Top" Margin="12,0">
+                    <Button x:Name="NavZip"     Click="Nav_Click" Tag="Zip"
+                            Style="{StaticResource NavButtonStyle}" Margin="0,2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="[ZIP]" FontSize="14" Margin="0,0,10,0"/>
+                            <TextBlock Text="Zip / Encrypt" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavUnzip"   Click="Nav_Click" Tag="Unzip"
+                            Style="{StaticResource NavButtonStyle}" Margin="0,2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="[OPEN]" FontSize="14" Margin="0,0,10,0"/>
+                            <TextBlock Text="Unzip / Decrypt" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavHistory" Click="Nav_Click" Tag="History"
+                            Style="{StaticResource NavButtonStyle}" Margin="0,2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="[H]" FontSize="14" Margin="0,0,10,0"/>
+                            <TextBlock Text="History" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavSettings" Click="Nav_Click" Tag="Settings"
+                            Style="{StaticResource NavButtonStyle}" Margin="0,2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="" FontSize="14" Margin="0,0,10,0"/>
+                            <TextBlock Text="Settings" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Version at bottom -->
+                <TextBlock DockPanel.Dock="Bottom" Text="v1.1.0" FontSize="10"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="20,0,20,16" HorizontalAlignment="Left"/>
+            </DockPanel>
+        </Border>
+
+        <!-- ======================================== CONTENT AREA =========== -->
+        <Grid Grid.Column="1">
+
+            <!-- - ZIP SECTION - -->
+            <ScrollViewer x:Name="ZipSection" VerticalScrollBarVisibility="Auto"
+                          Background="Transparent">
+                <StackPanel Margin="32,28,32,28">
+
+                    <!-- Header -->
+                    <TextBlock Text="Zip &amp; Encrypt" FontSize="20" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Add files or folders, set a password, and create an AES-256 encrypted archive."
+                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,24"
+                               TextWrapping="Wrap"/>
+
+                    <!-- Drop zone -->
+                    <Border x:Name="DropZone" Height="130" CornerRadius="12"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="2"
+                            Background="{StaticResource BgCardBrush}" Margin="0,0,0,20"
+                            AllowDrop="True" Drop="DropZone_Drop" DragOver="DropZone_DragOver"
+                            DragLeave="DropZone_DragLeave" DragEnter="DropZone_DragEnter">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="^" FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Drag &amp; drop files or folders here"
+                                       FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="or" FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4"/>
+                            <Button Content="Browse files..." Style="{StaticResource GhostButtonStyle}"
+                                    Padding="16,7" FontSize="12" HorizontalAlignment="Center"
+                                    Click="ZipBrowseSource_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Source path -->
+                    <TextBlock Text="SOURCE" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <Border Style="{StaticResource InputCardStyle}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ZipSourceBox" Style="{StaticResource DarkTextBoxStyle}"
+                                     IsReadOnly="True" Foreground="{StaticResource TextSecondaryBrush}"
+                                     Text="No file or folder selected"/>
+                            <Button Grid.Column="1" Content="Change" Style="{StaticResource GhostButtonStyle}"
+                                    Padding="12,8" FontSize="11" Margin="0,4,4,4"
+                                    Click="ZipBrowseSource_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Output path -->
+                    <TextBlock Text="SAVE AS" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <Border Style="{StaticResource InputCardStyle}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ZipOutputBox" Style="{StaticResource DarkTextBoxStyle}"/>
+                            <Button Grid.Column="1" Content="Browse" Style="{StaticResource GhostButtonStyle}"
+                                    Padding="12,8" FontSize="11" Margin="0,4,4,4"
+                                    Click="ZipBrowseOutput_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Password row -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Border Style="{StaticResource InputCardStyle}">
+                                <PasswordBox x:Name="ZipPasswordBox" Style="{StaticResource DarkPasswordBoxStyle}"
+                                             PasswordChanged="ZipPassword_Changed"/>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="CONFIRM PASSWORD" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Border Style="{StaticResource InputCardStyle}">
+                                <PasswordBox x:Name="ZipConfirmBox" Style="{StaticResource DarkPasswordBoxStyle}"
+                                             PasswordChanged="ZipPassword_Changed"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Password strength + Generate -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock x:Name="StrengthLabel" Text="Strength: --"
+                                           FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </StackPanel>
+                            <Grid Height="4">
+                                <Border Background="{StaticResource BgCardBrush}" CornerRadius="2"/>
+                                <Border x:Name="StrengthBar" CornerRadius="2"
+                                        HorizontalAlignment="Left" Width="0"
+                                        Background="{StaticResource AccentBrush}"/>
+                            </Grid>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="* Generate password"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="14,8" FontSize="12" Margin="12,0,0,0"
+                                Click="GeneratePassword_Click"/>
+                    </Grid>
+
+                    <!-- Error text -->
+                    <TextBlock x:Name="ZipErrorText" FontSize="12" Margin="0,0,0,12"
+                               Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"
+                               Visibility="Collapsed"/>
+
+                    <!-- Progress -->
+                    <StackPanel x:Name="ZipProgressPanel" Visibility="Collapsed" Margin="0,0,0,16">
+                        <Grid Margin="0,0,0,6">
+                            <TextBlock x:Name="ZipStatusText" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Left" Text="Working..."/>
+                            <TextBlock x:Name="ZipPercentText" FontSize="12"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Border Height="6" CornerRadius="3" Background="{StaticResource BgCardBrush}">
+                            <Border x:Name="ZipProgressBar" CornerRadius="3"
+                                    Background="{StaticResource AccentBrush}"
+                                    HorizontalAlignment="Left" Width="0"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Success banner -->
+                    <Border x:Name="ZipSuccessBanner" CornerRadius="8" Padding="14,10"
+                            Background="#0F2A1A" BorderBrush="{StaticResource SuccessBrush}"
+                            BorderThickness="1" Margin="0,0,0,16" Visibility="Collapsed">
+                        <TextBlock Foreground="{StaticResource SuccessBrush}" FontSize="13" FontWeight="SemiBold"
+                                   Text=" Archive created successfully!"/>
+                    </Border>
+
+                    <!-- Action row -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="ZipCreateButton" Content="[ZIP]  Create ZIP"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="28,12" FontSize="14" Click="ZipCreate_Click"/>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- - UNZIP SECTION - -->
+            <ScrollViewer x:Name="UnzipSection" VerticalScrollBarVisibility="Auto"
+                          Background="Transparent" Visibility="Collapsed">
+                <StackPanel Margin="32,28,32,28">
+
+                    <TextBlock Text="Unzip &amp; Decrypt" FontSize="20" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Select an encrypted ZIP archive and enter its password to extract the contents."
+                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,24"
+                               TextWrapping="Wrap"/>
+
+                    <!-- Drop zone (unzip) -->
+                    <Border x:Name="UnzipDropZone" Height="120" CornerRadius="12"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="2"
+                            Background="{StaticResource BgCardBrush}" Margin="0,0,0,20"
+                            AllowDrop="True" Drop="UnzipDropZone_Drop" DragOver="DropZone_DragOver"
+                            DragLeave="UnzipDropZone_DragLeave" DragEnter="UnzipDropZone_DragEnter">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="[PKG]" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Drop a ZIP file here"
+                                       FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="or" FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4"/>
+                            <Button Content="Browse ZIP..." Style="{StaticResource GhostButtonStyle}"
+                                    Padding="16,7" FontSize="12" HorizontalAlignment="Center"
+                                    Click="UnzipBrowseSource_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ZIP path -->
+                    <TextBlock Text="ZIP FILE" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <Border Style="{StaticResource InputCardStyle}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="UnzipSourceBox" Style="{StaticResource DarkTextBoxStyle}"
+                                     IsReadOnly="True" Foreground="{StaticResource TextSecondaryBrush}"
+                                     Text="No ZIP file selected"/>
+                            <Button Grid.Column="1" Content="Change" Style="{StaticResource GhostButtonStyle}"
+                                    Padding="12,8" FontSize="11" Margin="0,4,4,4"
+                                    Click="UnzipBrowseSource_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Extract to -->
+                    <TextBlock Text="EXTRACT TO" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <Border Style="{StaticResource InputCardStyle}" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="UnzipOutputBox" Style="{StaticResource DarkTextBoxStyle}"/>
+                            <Button Grid.Column="1" Content="Browse" Style="{StaticResource GhostButtonStyle}"
+                                    Padding="12,8" FontSize="11" Margin="0,4,4,4"
+                                    Click="UnzipBrowseOutput_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Password -->
+                    <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <Border Style="{StaticResource InputCardStyle}" Margin="0,0,0,20">
+                        <PasswordBox x:Name="UnzipPasswordBox" Style="{StaticResource DarkPasswordBoxStyle}"/>
+                    </Border>
+
+                    <TextBlock x:Name="UnzipErrorText" FontSize="12" Margin="0,0,0,12"
+                               Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"
+                               Visibility="Collapsed"/>
+
+                    <StackPanel x:Name="UnzipProgressPanel" Visibility="Collapsed" Margin="0,0,0,16">
+                        <Grid Margin="0,0,0,6">
+                            <TextBlock x:Name="UnzipStatusText" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Left" Text="Extracting..."/>
+                            <TextBlock x:Name="UnzipPercentText" FontSize="12"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Border Height="6" CornerRadius="3" Background="{StaticResource BgCardBrush}">
+                            <Border x:Name="UnzipProgressBar" CornerRadius="3"
+                                    Background="{StaticResource AccentBrush}"
+                                    HorizontalAlignment="Left" Width="0"/>
+                        </Border>
+                    </StackPanel>
+
+                    <Border x:Name="UnzipSuccessBanner" CornerRadius="8" Padding="14,10"
+                            Background="#0F2A1A" BorderBrush="{StaticResource SuccessBrush}"
+                            BorderThickness="1" Margin="0,0,0,16" Visibility="Collapsed">
+                        <TextBlock Foreground="{StaticResource SuccessBrush}" FontSize="13" FontWeight="SemiBold"
+                                   Text=" Files extracted successfully!"/>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="UnzipButton" Content="[OPEN]  Extract files"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="28,12" FontSize="14" Click="Unzip_Click"/>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- - HISTORY SECTION - -->
+            <Grid x:Name="HistorySection" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="32,28,32,16">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="History" FontSize="20" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Recent zip and unzip operations."
+                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <Button Content="Clear all" Style="{StaticResource GhostButtonStyle}"
+                                Padding="12,7" FontSize="12" HorizontalAlignment="Right"
+                                VerticalAlignment="Top" Click="HistoryClear_Click"/>
+                    </Grid>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                              Margin="32,0,32,0">
+                    <ItemsControl x:Name="HistoryList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="8" Background="{StaticResource BgCardBrush}"
+                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                        Padding="16,12" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Icon -->
+                                        <Border Grid.Column="0" Width="36" Height="36"
+                                                CornerRadius="8" Margin="0,0,12,0"
+                                                Background="{StaticResource BgSurfaceBrush}">
+                                            <TextBlock Text="{Binding TypeIcon}"
+                                                       FontSize="16" HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <!-- Details -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding OutputPath}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding SourcePath}"
+                                                       FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <!-- Time -->
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding FormattedTime}"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <TextBlock x:Name="HistoryEmpty" Grid.Row="1"
+                           Text="No operations yet. Zip or unzip a file to get started."
+                           FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="Collapsed"/>
+
+                <TextBlock Grid.Row="2" Margin="32,8,32,20"
+                           FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                           x:Name="HistoryCount"/>
+            </Grid>
+
+            <!-- - SETTINGS SECTION - -->
+            <ScrollViewer x:Name="SettingsSection" Visibility="Collapsed"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="32,28,32,28">
+
+                    <TextBlock Text="Settings" FontSize="20" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Configure Secure Starzip to fit your workflow."
+                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,28"
+                               TextWrapping="Wrap"/>
+
+                    <!-- Default output folder -->
+                    <Border CornerRadius="10" Background="{StaticResource BgCardBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            Padding="20" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Default output folder" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Where ZIP files are saved by default when you don't specify a path."
+                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                       Margin="0,0,0,12" TextWrapping="Wrap"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource InputCardStyle}">
+                                    <TextBox x:Name="DefaultFolderBox" Style="{StaticResource DarkTextBoxStyle}"/>
+                                </Border>
+                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource GhostButtonStyle}"
+                                        Padding="14,10" FontSize="12" Margin="8,0,0,0"
+                                        Click="SettingsBrowseFolder_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Context menu -->
+                    <Border CornerRadius="10" Background="{StaticResource BgCardBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            Padding="20" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="Right-click context menu" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                                <TextBlock x:Name="CtxMenuStatusText"
+                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button x:Name="CtxMenuButton" Grid.Column="1"
+                                    Style="{StaticResource GhostButtonStyle}"
+                                    Padding="16,10" FontSize="12" VerticalAlignment="Center"
+                                    Click="CtxMenu_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Save settings button -->
+                    <Button Content="Save settings" Style="{StaticResource PrimaryButtonStyle}"
+                            Padding="24,12" FontSize="13" HorizontalAlignment="Left"
+                            Click="SaveSettings_Click"/>
+
+                    <Border x:Name="SettingsSavedBanner" CornerRadius="8" Padding="14,10"
+                            Background="#0F2A1A" BorderBrush="{StaticResource SuccessBrush}"
+                            BorderThickness="1" Margin="0,12,0,0" Visibility="Collapsed">
+                        <TextBlock Foreground="{StaticResource SuccessBrush}" FontSize="13" FontWeight="SemiBold"
+                                   Text=" Settings saved."/>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+
+        </Grid><!-- end content grid -->
+
+    </Grid>
+</Window>
