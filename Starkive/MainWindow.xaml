@@ -5,8 +5,8 @@
         Width="900" Height="620"
         MinWidth="800" MinHeight="520"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgPrimaryBrush}"
-        Foreground="{StaticResource TextPrimaryBrush}"
+        Background="{DynamicResource BgPrimaryBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
         FontFamily="DM Sans, IBM Plex Sans, Segoe UI, Arial"
         AllowDrop="True">
 
@@ -21,8 +21,8 @@
          -->
         <Border x:Name="SidebarBorder" Grid.Column="0"
                 Width="200"
-                Background="{StaticResource BgSurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
+                Background="{DynamicResource BgSurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,1,0"
                 ClipToBounds="True">
             <Grid>
@@ -40,7 +40,7 @@
                         Style="{StaticResource NavButtonStyle}"
                         Margin="6,10,6,4" Height="32" HorizontalAlignment="Left" Width="38">
                     <TextBlock Text="&#x2630;" FontSize="15" Margin="11,0"
-                               Foreground="{StaticResource TextMutedBrush}"
+                               Foreground="{DynamicResource TextMutedBrush}"
                                VerticalAlignment="Center"/>
                 </Button>
 
@@ -74,7 +74,7 @@
                     <!-- Product name (hidden when collapsed) -->
                     <TextBlock x:Name="LogoTextPanel"
                                Text="Starkive" FontSize="13" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
                                VerticalAlignment="Center" Margin="7,0,0,0"/>
                 </StackPanel>
 
@@ -251,7 +251,7 @@
                                        VerticalAlignment="Center"/>
                             <TextBlock x:Name="GoProPrice" Text="$0.99/mo" Grid.Column="2"
                                        FontSize="10"
-                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Foreground="{DynamicResource TextMutedBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
@@ -261,7 +261,7 @@
                                 Margin="12,0,0,10" VerticalAlignment="Center">
                         <Ellipse Width="5" Height="5" Fill="#16A34A" VerticalAlignment="Center"/>
                         <TextBlock x:Name="VersionText" Text="v1.1.0" FontSize="10"
-                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Foreground="{DynamicResource TextMutedBrush}"
                                    FontFamily="Consolas" Margin="5,0,0,0"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
@@ -273,7 +273,7 @@
         <!-- 
              CONTENT AREA
          -->
-        <Grid Grid.Column="1" Background="{StaticResource BgPrimaryBrush}">
+        <Grid Grid.Column="1" Background="{DynamicResource BgPrimaryBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -318,9 +318,9 @@
                 <!-- Header -->
                 <StackPanel Grid.Row="0" Margin="28,20,28,0">
                     <TextBlock Text="Good morning" FontSize="20" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
                     <TextBlock Text="What would you like to do today?"
-                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                Margin="0,3,0,0"/>
                 </StackPanel>
 
@@ -331,7 +331,7 @@
 
                         <!-- Section: Quick Actions -->
                         <TextBlock Text="QUICK ACTIONS" FontSize="10" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextLabelBrush}"
+                                   Foreground="{DynamicResource TextLabelBrush}"
                                    Margin="0,0,0,8"/>
 
                         <!-- 2x2 action grid -->
@@ -339,15 +339,15 @@
 
                             <!-- Card 1: Zip & Encrypt -->
                             <Border Margin="0,0,6,6" CornerRadius="10"
-                                    Background="{StaticResource BgCardBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" Cursor="Hand"
                                     MouseLeftButtonUp="HomeCardZip_Click">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource BgHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource BgHoverBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -369,28 +369,28 @@
                                                 VerticalAlignment="Center">
                                         <TextBlock Text="Zip &amp; Encrypt" FontSize="13"
                                                    FontWeight="Medium"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text="Password-protect files" FontSize="11"
-                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="2" Text="&#x203A;" FontSize="16"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                VerticalAlignment="Center" Opacity="0.6"/>
                                 </Grid>
                             </Border>
 
                             <!-- Card 2: Unzip & Decrypt -->
                             <Border Margin="6,0,0,6" CornerRadius="10"
-                                    Background="{StaticResource BgCardBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" Cursor="Hand"
                                     MouseLeftButtonUp="HomeCardUnzip_Click">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource BgHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource BgHoverBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -412,28 +412,28 @@
                                                 VerticalAlignment="Center">
                                         <TextBlock Text="Unzip &amp; Decrypt" FontSize="13"
                                                    FontWeight="Medium"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text="Extract protected archives" FontSize="11"
-                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="2" Text="&#x203A;" FontSize="16"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                VerticalAlignment="Center" Opacity="0.6"/>
                                 </Grid>
                             </Border>
 
                             <!-- Card 3: Secure Container (Pro) -->
                             <Border Margin="0,6,6,0" CornerRadius="10"
-                                    Background="{StaticResource BgCardBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" Cursor="Hand"
                                     MouseLeftButtonUp="HomeCardPro_Click">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource BgHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource BgHoverBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -456,7 +456,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="Secure Container" FontSize="13"
                                                        FontWeight="Medium"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
                                             <Border Margin="6,0,0,0" CornerRadius="3"
                                                     Background="#1A0D3A" Padding="4,1">
                                                 <TextBlock Text="PRO" FontSize="9" FontWeight="Bold"
@@ -464,26 +464,26 @@
                                             </Border>
                                         </StackPanel>
                                         <TextBlock Text="Tamper-proof .ssz format" FontSize="11"
-                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="2" Text="&#x203A;" FontSize="16"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                VerticalAlignment="Center" Opacity="0.6"/>
                                 </Grid>
                             </Border>
 
                             <!-- Card 4: History shortcut -->
                             <Border Margin="6,6,0,0" CornerRadius="10"
-                                    Background="{StaticResource BgCardBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" Cursor="Hand"
                                     MouseLeftButtonUp="HomeCardHistory_Click">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource BgHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource BgHoverBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -505,13 +505,13 @@
                                                 VerticalAlignment="Center">
                                         <TextBlock Text="History" FontSize="13"
                                                    FontWeight="Medium"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text="Recent operations" FontSize="11"
-                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="2" Text="&#x203A;" FontSize="16"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                VerticalAlignment="Center" Opacity="0.6"/>
                                 </Grid>
                             </Border>
@@ -519,7 +519,7 @@
 
                         <!-- Drop zone (secondary) -->
                         <Grid Margin="0,0,0,16" MinHeight="56">
-                            <Rectangle Stroke="{StaticResource BorderBrush}"
+                            <Rectangle Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
                                        RadiusX="10" RadiusY="10"
                                        x:Name="HomeDropRect"
@@ -551,7 +551,7 @@
                                     </Canvas>
                                     <TextBlock Text="Drop any file here to compress"
                                                FontSize="12"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                Margin="8,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
@@ -559,14 +559,14 @@
 
                         <!-- Section: Recent -->
                         <TextBlock Text="RECENT" FontSize="10" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextLabelBrush}"
+                                   Foreground="{DynamicResource TextLabelBrush}"
                                    Margin="0,0,0,8"/>
                         <ItemsControl x:Name="HomeRecentList">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="6"
-                                            Background="{StaticResource BgCardBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
+                                            Background="{DynamicResource BgCardBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1"
                                             Padding="14,10" Margin="0,0,0,6">
                                         <Grid>
@@ -577,7 +577,7 @@
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Width="30" Height="30"
                                                     CornerRadius="6" Margin="0,0,10,0"
-                                                    Background="{StaticResource BgPrimaryBrush}">
+                                                    Background="{DynamicResource BgPrimaryBrush}">
                                                 <TextBlock Text="{Binding TypeIcon}"
                                                            FontFamily="Segoe MDL2 Assets"
                                                            FontSize="14"
@@ -587,14 +587,14 @@
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding OutputPath}"
                                                            FontSize="12" FontWeight="Medium"
-                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                            TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Text="{Binding FormattedTime}"
                                                            FontSize="10"
-                                                           Foreground="{StaticResource TextMutedBrush}"/>
+                                                           Foreground="{DynamicResource TextMutedBrush}"/>
                                             </StackPanel>
                                             <TextBlock Grid.Column="2" Text="&#x203A;" FontSize="14"
-                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
                                                        VerticalAlignment="Center" Margin="10,0,0,0"
                                                        Opacity="0.5"/>
                                         </Grid>
@@ -604,7 +604,7 @@
                         </ItemsControl>
                         <TextBlock x:Name="HomeRecentEmpty"
                                    Text="No recent operations yet."
-                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                    Margin="0,4,0,0" Visibility="Collapsed"/>
 
                     </StackPanel>
@@ -619,9 +619,9 @@
                     <!-- Header -->
                     <StackPanel Margin="22,20,22,0">
                         <TextBlock Text="Zip &amp; Encrypt" FontSize="20" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,3"/>
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,3"/>
                         <TextBlock Text="Add files or folders, set a password, create an AES-256 encrypted archive."
-                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
 
@@ -631,7 +631,7 @@
                         <!-- Drop zone -->
                         <Grid Margin="0,0,0,16" Height="120">
                             <Rectangle x:Name="ZipDropRect"
-                                       Stroke="{StaticResource BorderBrush}"
+                                       Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
                                        RadiusX="8" RadiusY="8"
                                        IsHitTestVisible="False"/>
@@ -658,10 +658,10 @@
                                               Opacity="0.4"/>
                                     </Canvas>
                                     <TextBlock Text="Drop files or folders here"
-                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock Text="or" FontSize="11"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                HorizontalAlignment="Center" Margin="0,3"/>
                                     <Button Content="Browse files"
                                             Style="{StaticResource GhostButtonStyle}"
@@ -673,12 +673,12 @@
                         </Grid>
 
                         <!-- SOURCE + SAVE AS shared card (Fix 4c) -->
-                        <Border Background="#161E28" BorderBrush="#1E2D3F"
+                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
                                 Padding="16,14" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="SOURCE" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,5"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -696,7 +696,7 @@
                                 </Grid>
                                 <Rectangle Height="1" Fill="#152030" Margin="0,12"/>
                                 <TextBlock Text="SAVE AS" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,5"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -714,14 +714,14 @@
                         </Border>
 
                         <!-- OUTPUT FORMAT card -->
-                        <Border Background="#161E28" BorderBrush="#1E2D3F"
+                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
                                 Padding="16,14" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="OUTPUT FORMAT" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,8"/>
-                                <Border Background="#0A0E16" BorderBrush="{StaticResource BorderBrush}"
+                                <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -752,30 +752,30 @@
                                 <StackPanel x:Name="RecipientHintPanel" Visibility="Collapsed" Margin="0,12,0,0">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                         <TextBlock Text="RECIPIENT" FontSize="10" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextLabelBrush}"/>
+                                                   Foreground="{DynamicResource TextLabelBrush}"/>
                                         <TextBlock Text=" — optional" FontSize="10"
-                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
                                     </StackPanel>
                                     <TextBox x:Name="RecipientHintBox"
                                              Style="{StaticResource DarkTextBoxStyle}"
                                              Text="" MaxLength="120"
                                              ToolTip="Who is this for? e.g. 'John at Acme' — shown in the open notification email you receive."/>
                                     <TextBlock Text="Shown in your notification email when the file is opened."
-                                               FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
                                                Margin="0,4,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
 
                         <!-- PASSWORD MODE card (Fix 4d) -->
-                        <Border Background="#161E28" BorderBrush="#1E2D3F"
+                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
                                 Padding="16,14" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="PASSWORD MODE" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,8"/>
-                                <Border Background="#0A0E16" BorderBrush="{StaticResource BorderBrush}"
+                                <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -805,10 +805,10 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextLabelBrush}"
+                                               Foreground="{DynamicResource TextLabelBrush}"
                                                Margin="0,0,0,5"/>
-                                    <Border Background="{StaticResource BgCardBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
+                                    <Border Background="{DynamicResource BgCardBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1" CornerRadius="10">
                                         <PasswordBox x:Name="ZipPasswordBox"
                                                      Style="{StaticResource DarkPasswordBoxStyle}"
@@ -818,10 +818,10 @@
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="CONFIRM PASSWORD" FontSize="10"
                                                FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextLabelBrush}"
+                                               Foreground="{DynamicResource TextLabelBrush}"
                                                Margin="0,0,0,5"/>
-                                    <Border Background="{StaticResource BgCardBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
+                                    <Border Background="{DynamicResource BgCardBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1" CornerRadius="10">
                                         <PasswordBox x:Name="ZipConfirmBox"
                                                      Style="{StaticResource DarkPasswordBoxStyle}"
@@ -837,19 +837,19 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Border Grid.Column="0" Height="3" CornerRadius="1.5"
-                                        Background="{StaticResource BorderBrush}"
+                                        Background="{DynamicResource BorderBrush}"
                                         VerticalAlignment="Center">
                                     <Border x:Name="StrengthBar" CornerRadius="1.5"
-                                            Background="{StaticResource AccentBrush}"
+                                            Background="{DynamicResource AccentBrush}"
                                             HorizontalAlignment="Left" Width="0"/>
                                 </Border>
                                 <TextBlock Grid.Column="1" x:Name="StrengthLabel"
                                            Text="--" FontSize="11"
-                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </Grid>
                             <TextBlock x:Name="EntropyLabel" FontSize="10"
-                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Foreground="{DynamicResource TextMutedBrush}"
                                        Margin="0,2,0,0"/>
                             <Border x:Name="WeakPasswordWarning"
                                     Background="#1A0E0A" BorderBrush="#7C2D12"
@@ -864,7 +864,7 @@
                             </Border>
 
                             <!-- Auto-generate section (inline, collapsible) -->
-                            <Border BorderBrush="#1E2D3F" BorderThickness="0,1,0,0"
+                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                                     Margin="0,14,0,0" Padding="0,12,0,0">
                                 <StackPanel>
                                     <Button x:Name="BtnAutoGenToggle"
@@ -875,32 +875,32 @@
                                     <StackPanel x:Name="AutoGenPanel" Visibility="Collapsed" Margin="0,10,0,0">
                                         <TextBlock Text="GENERATED PASSWORD" FontSize="10"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextLabelBrush}"
+                                                   Foreground="{DynamicResource TextLabelBrush}"
                                                    Margin="0,0,0,5"/>
-                                        <Border Background="{StaticResource BgCardBrush}"
-                                                BorderBrush="{StaticResource BorderBrush}"
+                                        <Border Background="{DynamicResource BgCardBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1" CornerRadius="10" Margin="0,0,0,10">
                                             <TextBox x:Name="AutoGenDisplay"
                                                      Style="{StaticResource MonoDisplayStyle}"/>
                                         </Border>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                             <CheckBox x:Name="ChkUpper" Content="Uppercase" IsChecked="True"
-                                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                       FontSize="12" Margin="0,0,14,0"
                                                       Checked="AutoGenOption_Changed"
                                                       Unchecked="AutoGenOption_Changed"/>
                                             <CheckBox x:Name="ChkLower" Content="Lowercase" IsChecked="True"
-                                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                       FontSize="12" Margin="0,0,14,0"
                                                       Checked="AutoGenOption_Changed"
                                                       Unchecked="AutoGenOption_Changed"/>
                                             <CheckBox x:Name="ChkDigits" Content="Digits" IsChecked="True"
-                                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                       FontSize="12" Margin="0,0,14,0"
                                                       Checked="AutoGenOption_Changed"
                                                       Unchecked="AutoGenOption_Changed"/>
                                             <CheckBox x:Name="ChkSpecial" Content="Symbols" IsChecked="True"
-                                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                       FontSize="12"
                                                       Checked="AutoGenOption_Changed"
                                                       Unchecked="AutoGenOption_Changed"/>
@@ -910,7 +910,7 @@
                                                     Width="160" VerticalAlignment="Center"
                                                     ValueChanged="LengthSlider_Changed"/>
                                             <TextBlock x:Name="LengthLabel" Text="16 characters" FontSize="11"
-                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
                                                        Margin="10,0,0,0" VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
@@ -935,7 +935,7 @@
                             <CheckBox x:Name="ChkSavePassword"
                                       Content="Save password to this device"
                                       IsChecked="False"
-                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                       FontSize="12" Margin="0,12,0,0"/>
                         </StackPanel>
 
@@ -943,10 +943,10 @@
                         <StackPanel x:Name="PwdPanelPassphrase" Visibility="Collapsed">
                             <TextBlock Text="GENERATED PASSPHRASE" FontSize="10"
                                        FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextLabelBrush}"
+                                       Foreground="{DynamicResource TextLabelBrush}"
                                        Margin="0,0,0,5"/>
-                            <Border Background="{StaticResource BgCardBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                            <Border Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1" CornerRadius="10" Margin="0,0,0,10">
                                 <TextBox x:Name="PassphraseDisplay"
                                          Style="{StaticResource MonoDisplayStyle}"/>
@@ -961,8 +961,8 @@
                                     <ColumnDefinition Width="8"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Background="#0A0E16"
-                                        BorderBrush="{StaticResource BorderBrush}"
+                                <Border Grid.Column="0" Background="{DynamicResource BgInputBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <StackPanel Orientation="Horizontal">
                                         <Button x:Name="Btn3Words" Content="3 words" Tag="3"
@@ -976,8 +976,8 @@
                                                 Click="WordCount_Click" Padding="8,5"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Grid.Column="2" Background="#0A0E16"
-                                        BorderBrush="{StaticResource BorderBrush}"
+                                <Border Grid.Column="2" Background="{DynamicResource BgInputBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <StackPanel Orientation="Horizontal">
                                         <Button x:Name="BtnSepDot" Content="&#xB7;" Tag="&#xB7;"
@@ -1005,7 +1005,7 @@
                             <CheckBox x:Name="ChkSavePassphrase"
                                       Content="Save passphrase to this device"
                                       IsChecked="False"
-                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                       FontSize="12" Margin="0,8,0,0"/>
                         </StackPanel>
 
@@ -1020,34 +1020,34 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Border Grid.Row="0" Height="4" CornerRadius="2"
-                                    Background="{StaticResource BorderBrush}">
+                                    Background="{DynamicResource BorderBrush}">
                                 <Border x:Name="ZipProgressBar" CornerRadius="2"
-                                        Background="{StaticResource AccentBrush}"
+                                        Background="{DynamicResource AccentBrush}"
                                         HorizontalAlignment="Left" Width="0"/>
                             </Border>
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
                                 <TextBlock x:Name="ZipPercentText" Text="0%" FontSize="11"
-                                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 <TextBlock x:Name="ZipStatusText" Text="" FontSize="11"
-                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="10,0,0,0"/>
                             </StackPanel>
                         </Grid>
                         <TextBlock x:Name="ZipErrorText" FontSize="12"
-                                   Foreground="{StaticResource DangerBrush}"
+                                   Foreground="{DynamicResource DangerBrush}"
                                    TextWrapping="Wrap" Margin="0,10,0,0"
                                    Visibility="Collapsed"/>
                         <Border x:Name="ZipSuccessBanner"
-                                Background="#0A2018" BorderBrush="{StaticResource SuccessBrush}"
+                                Background="#0A2018" BorderBrush="{DynamicResource SuccessBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="14,10"
                                 Margin="0,10,0,0" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="OK" FontSize="13"
-                                           Foreground="{StaticResource SuccessBrush}"
+                                           Foreground="{DynamicResource SuccessBrush}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="ZIP created successfully."
                                            FontSize="12"
-                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
                                            Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
@@ -1061,14 +1061,14 @@
                 <StackPanel>
                     <StackPanel Margin="22,20,22,0">
                         <TextBlock Text="Unzip &amp; Decrypt" FontSize="20" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,3"/>
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,3"/>
                         <TextBlock Text="Select an AES-256 encrypted ZIP, enter the password, and extract."
-                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
                     <StackPanel Margin="28,16,28,24">
                         <Grid Margin="0,0,0,16" Height="100">
-                            <Rectangle Stroke="{StaticResource BorderBrush}"
+                            <Rectangle Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
                                        RadiusX="8" RadiusY="8" IsHitTestVisible="False"/>
                             <Border x:Name="UnzipDropZone" CornerRadius="8"
@@ -1079,10 +1079,10 @@
                                     DragEnter="UnzipDropZone_DragEnter">
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <TextBlock Text="Drop a .zip file here" FontSize="12"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock Text="or" FontSize="11"
-                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Foreground="{DynamicResource TextMutedBrush}"
                                                HorizontalAlignment="Center" Margin="0,3"/>
                                     <Button Content="Browse files"
                                             Style="{StaticResource GhostButtonStyle}"
@@ -1092,12 +1092,12 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
-                        <Border Background="#161E28" BorderBrush="#1E2D3F"
+                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
                                 Padding="16,14" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="ZIP FILE" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,5"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -1114,7 +1114,7 @@
                                 </Grid>
                                 <Rectangle Height="1" Fill="#152030" Margin="0,12"/>
                                 <TextBlock Text="EXTRACT TO" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,5"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -1130,15 +1130,15 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
-                        <Border Background="#161E28" BorderBrush="#1E2D3F"
+                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
                                 Padding="16,14" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextLabelBrush}"
+                                           Foreground="{DynamicResource TextLabelBrush}"
                                            Margin="0,0,0,5"/>
-                                <Border Background="{StaticResource BgCardBrush}"
-                                        BorderBrush="{StaticResource BorderBrush}"
+                                <Border Background="{DynamicResource BgCardBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="10">
                                     <PasswordBox x:Name="UnzipPasswordBox"
                                                  Style="{StaticResource DarkPasswordBoxStyle}"/>
@@ -1154,33 +1154,33 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Border Grid.Row="0" Height="4" CornerRadius="2"
-                                    Background="{StaticResource BorderBrush}">
+                                    Background="{DynamicResource BorderBrush}">
                                 <Border x:Name="UnzipProgressBar" CornerRadius="2"
-                                        Background="{StaticResource AccentBrush}"
+                                        Background="{DynamicResource AccentBrush}"
                                         HorizontalAlignment="Left" Width="0"/>
                             </Border>
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
                                 <TextBlock x:Name="UnzipPercentText" Text="0%" FontSize="11"
-                                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 <TextBlock x:Name="UnzipStatusText" Text="" FontSize="11"
-                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="10,0,0,0"/>
                             </StackPanel>
                         </Grid>
                         <TextBlock x:Name="UnzipErrorText" FontSize="12"
-                                   Foreground="{StaticResource DangerBrush}"
+                                   Foreground="{DynamicResource DangerBrush}"
                                    TextWrapping="Wrap" Margin="0,10,0,0"
                                    Visibility="Collapsed"/>
                         <Border x:Name="UnzipSuccessBanner"
-                                Background="#0A2018" BorderBrush="{StaticResource SuccessBrush}"
+                                Background="#0A2018" BorderBrush="{DynamicResource SuccessBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="14,10"
                                 Margin="0,10,0,0" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="OK" FontSize="13"
-                                           Foreground="{StaticResource SuccessBrush}"
+                                           Foreground="{DynamicResource SuccessBrush}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="Extraction complete." FontSize="12"
-                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
                                            Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
@@ -1201,9 +1201,9 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="History" FontSize="20" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <TextBlock x:Name="HistoryCount" Text="" FontSize="12"
-                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0"/>
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0"/>
                     </StackPanel>
                     <Button Grid.Column="1" Content="Clear all"
                             Style="{StaticResource GhostButtonStyle}"
@@ -1217,8 +1217,8 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="8"
-                                            Background="{StaticResource BgCardBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
+                                            Background="{DynamicResource BgCardBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1"
                                             Padding="14,10" Margin="0,0,0,6">
                                         <Grid>
@@ -1229,7 +1229,7 @@
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Width="32" Height="32"
                                                     CornerRadius="6" Margin="0,0,12,0"
-                                                    Background="{StaticResource BgPrimaryBrush}">
+                                                    Background="{DynamicResource BgPrimaryBrush}">
                                                 <TextBlock Text="{Binding TypeIcon}"
                                                            FontFamily="Segoe MDL2 Assets"
                                                            FontSize="15"
@@ -1239,16 +1239,16 @@
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding OutputPath}"
                                                            FontSize="12" FontWeight="Medium"
-                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                            TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Text="{Binding FormattedTime}"
                                                            FontSize="10"
-                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           Foreground="{DynamicResource TextMutedBrush}"
                                                            Margin="0,2,0,0"/>
                                             </StackPanel>
                                             <TextBlock Grid.Column="2" Text="&#x203A;"
                                                        FontSize="14"
-                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
                                                        VerticalAlignment="Center" Margin="12,0,0,0"
                                                        Opacity="0.5"/>
                                         </Grid>
@@ -1258,7 +1258,7 @@
                         </ItemsControl>
                         <TextBlock x:Name="HistoryEmpty"
                                    Text="No operations yet."
-                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                    Margin="0,8,0,0" Visibility="Collapsed"/>
                     </StackPanel>
                 </ScrollViewer>
@@ -1269,7 +1269,7 @@
                           Background="Transparent" Visibility="Collapsed">
                 <StackPanel Margin="28,20,28,24">
                     <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,20"/>
+                               Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
 
                     <!-- Pro Active badge — shown only when user is Pro -->
                     <Border x:Name="ProActiveCard" CornerRadius="10" Margin="0,0,0,14" Padding="18"
@@ -1379,8 +1379,8 @@
 
                     <!-- Appearance -->
                     <TextBlock Text="APPEARANCE" FontSize="10" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextLabelBrush}" Margin="0,0,0,8"/>
-                    <Border Background="#161E28" BorderBrush="#1E2D3F"
+                               Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,0,0,18">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -1389,9 +1389,9 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="Theme" FontSize="13" FontWeight="Medium"
-                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 <TextBlock Text="Dark theme is active" FontSize="11"
-                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="0,2,0,0"/>
                             </StackPanel>
                             <ComboBox x:Name="ThemeComboBox" Grid.Column="1"
@@ -1406,12 +1406,12 @@
 
                     <!-- Output folder -->
                     <TextBlock Text="OUTPUT FOLDER" FontSize="10" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextLabelBrush}" Margin="0,0,0,8"/>
-                    <Border Background="#161E28" BorderBrush="#1E2D3F"
+                               Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,0,0,18">
                         <StackPanel>
                             <TextBlock Text="Default save location" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -1430,12 +1430,12 @@
 
                     <!-- Context menu -->
                     <TextBlock Text="CONTEXT MENU" FontSize="10" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextLabelBrush}" Margin="0,0,0,8"/>
-                    <Border Background="#161E28" BorderBrush="#1E2D3F"
+                               Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,0,0,18">
                         <StackPanel>
                             <TextBlock x:Name="CtxMenuStatusText" FontSize="12"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextWrapping="Wrap" Margin="0,0,0,12" LineHeight="18"/>
                             <Button x:Name="CtxMenuButton" Content="Install"
                                     Style="{StaticResource GhostButtonStyle}"
@@ -1446,8 +1446,8 @@
 
                     <!-- App data -->
                     <TextBlock Text="APP DATA" FontSize="10" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextLabelBrush}" Margin="0,0,0,8"/>
-                    <Border Background="#161E28" BorderBrush="#1E2D3F"
+                               Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,0,0,18">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -1456,9 +1456,9 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="Data folder" FontSize="12" FontWeight="Medium"
-                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 <TextBlock x:Name="AppDataPathText" FontSize="11"
-                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
                             <Button Grid.Column="1" Content="Open"
@@ -1472,12 +1472,12 @@
                             Style="{StaticResource PrimaryButtonStyle}"
                             HorizontalAlignment="Right" Click="SaveSettings_Click"/>
                     <Border x:Name="SettingsSavedBanner"
-                            Background="#0A2018" BorderBrush="{StaticResource SuccessBrush}"
+                            Background="#0A2018" BorderBrush="{DynamicResource SuccessBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="14,10"
                             Margin="0,10,0,0" HorizontalAlignment="Right"
                             Visibility="Collapsed">
                         <TextBlock Text="Settings saved." FontSize="12"
-                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
@@ -1491,14 +1491,14 @@
                 Grid.Column="0" Grid.ColumnSpan="2"
                 HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 Margin="0,0,0,24"
-                Background="#1C2635" BorderBrush="#1E2D3F" BorderThickness="1"
+                Background="#1C2635" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                 CornerRadius="8" Padding="14,10"
                 Visibility="Collapsed" IsHitTestVisible="False">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="ToastTranslate" Y="0"/>
             </Border.RenderTransform>
             <TextBlock x:Name="ToastText"
-                       Foreground="{StaticResource TextPrimaryBrush}"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
                        FontSize="12" FontFamily="IBM Plex Sans, Segoe UI"/>
         </Border>
 
