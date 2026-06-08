@@ -1,0 +1,125 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="Starkive"
+           Manufacturer="DePaolo Consulting LLC"
+           Version="1.1.0"
+           UpgradeCode="B4E1F2A3-7C8D-4E5F-9A0B-1C2D3E4F5A6B"
+           Scope="perMachine"
+           InstallerVersion="500"
+           Compressed="yes">
+
+    <!-- Allow upgrades, remove older versions automatically -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Starkive is already installed."/>
+
+    <MediaTemplate EmbedCab="yes"/>
+
+    <!-- ── Install directory ─────────────────────────────────────────────── -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Starkive"/>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppStartMenuFolder" Name="Starkive"/>
+    </StandardDirectory>
+
+    <!-- ── Main component: the exe ──────────────────────────────────────── -->
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+
+      <Component Id="MainExe" Guid="A1B2C3D4-E5F6-7890-ABCD-EF1234567890">
+        <File Id="StarkiveExe"
+              Source="..\publish\Starkive-v1.1.0\Starkive.exe"
+              KeyPath="yes"/>
+
+        <!-- ── .ssz file association ──────────────────────────────────── -->
+        <ProgId Id="Starkive.SSZ" Description="Starkive Secure Container"
+                Advertise="no">
+          <Extension Id="ssz" ContentType="application/x-starkive-ssz">
+            <Verb Id="open" Command="Open" TargetFile="StarkiveExe"
+                  Argument="&quot;%1&quot;"/>
+          </Extension>
+        </ProgId>
+
+        <!-- ── Right-click: "Create Secure Container" on any file ─────── -->
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\*\shell\CreateSecureContainer" Value="Create Secure Container with Starkive"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\*\shell\CreateSecureContainer"
+                       Name="Icon"
+                       Value="[INSTALLFOLDER]Starkive.exe,0"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\*\shell\CreateSecureContainer\command" Value="&quot;[INSTALLFOLDER]Starkive.exe&quot; &quot;%1&quot;"
+                       Type="string" Action="write"/>
+
+        <!-- ── Right-click: "Zip &amp; Encrypt" on any file ───────────── -->
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\*\shell\ZipEncryptStarkive" Value="Zip &amp; Encrypt with Starkive"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\*\shell\ZipEncryptStarkive"
+                       Name="Icon"
+                       Value="[INSTALLFOLDER]Starkive.exe,0"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\*\shell\ZipEncryptStarkive\command" Value="&quot;[INSTALLFOLDER]Starkive.exe&quot; &quot;%1&quot;"
+                       Type="string" Action="write"/>
+
+        <!-- ── Right-click: "Zip &amp; Encrypt" on folders too ──────────── -->
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\Directory\shell\ZipEncryptStarkive" Value="Zip &amp; Encrypt with Starkive"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\Directory\shell\ZipEncryptStarkive"
+                       Name="Icon"
+                       Value="[INSTALLFOLDER]Starkive.exe,0"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\Directory\shell\ZipEncryptStarkive\command" Value="&quot;[INSTALLFOLDER]Starkive.exe&quot; &quot;%1&quot;"
+                       Type="string" Action="write"/>
+
+        <!-- ── Right-click: "Zip &amp; Encrypt" on folder background ───── -->
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\Directory\Background\shell\ZipEncryptStarkive" Value="Zip &amp; Encrypt with Starkive"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\Directory\Background\shell\ZipEncryptStarkive"
+                       Name="Icon"
+                       Value="[INSTALLFOLDER]Starkive.exe,0"
+                       Type="string" Action="write"/>
+        <RegistryValue Root="HKLM"
+                       Key="SOFTWARE\Classes\Directory\Background\shell\ZipEncryptStarkive\command" Value="&quot;[INSTALLFOLDER]Starkive.exe&quot;"
+                       Type="string" Action="write"/>
+      </Component>
+
+      <!-- ── Start Menu shortcut ──────────────────────────────────────── -->
+      <Component Id="StartMenuShortcut" Guid="B2C3D4E5-F6A7-8901-BCDE-F12345678901"
+                 Directory="AppStartMenuFolder">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="Starkive"
+                  Description="Secure file delivery with AES-256 encryption"
+                  Target="[INSTALLFOLDER]Starkive.exe"
+                  WorkingDirectory="INSTALLFOLDER"/>
+        <RemoveFolder Id="CleanupStartMenu" Directory="AppStartMenuFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU"
+                       Key="Software\DePaolo Consulting LLC\Starkive"
+                       Name="StartMenuInstalled" Value="1"
+                       Type="integer" KeyPath="yes"/>
+      </Component>
+
+    </ComponentGroup>
+
+    <!-- ── Feature ──────────────────────────────────────────────────────── -->
+    <Feature Id="ProductFeature" Title="Starkive" Level="1">
+      <ComponentGroupRef Id="ProductComponents"/>
+    </Feature>
+
+    <!-- ── UI ────────────────────────────────────────────────────────────── -->
+    <ui:WixUI Id="WixUI_Minimal"/>
+    <WixVariable Id="WixUILicenseRtf"    Value="License.rtf"/>
+    <WixVariable Id="WixUIDialogBmp"     Value="dialog.bmp"/>
+    <WixVariable Id="WixUIBannerBmp"     Value="banner.bmp"/>
+
+  </Package>
+</Wix>

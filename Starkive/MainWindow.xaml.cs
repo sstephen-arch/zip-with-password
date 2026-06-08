@@ -1,0 +1,1074 @@
+﻿using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Threading;
+using Microsoft.Win32;
+
+namespace Starkive;
+
+public partial class MainWindow : Window
+{
+    // ─── State ───────────────────────────────────────────────────────────────
+    private string      _activeSection   = "Home";
+    private AppSettings _settings;
+    private bool        _sidebarExpanded = true;
+    private string      _pwdMode         = "Password";   // Password | Passphrase
+    private bool        _autoGenVisible  = false;
+    private string      _activePassword  = string.Empty;
+    private int         _wordCount       = 4;
+    private string      _separator       = "·";
+    private bool        _isSszMode            = false;
+    private bool        _suppressThemeChange  = false;
+    private DispatcherTimer? _toastTimer;
+
+    // ─── Wordlist ─────────────────────────────────────────────────────────────
+    private static string[]? _wordlist;
+
+    private static string[] GetWordlist()
+    {
+        if (_wordlist != null) return _wordlist;
+        try
+        {
+            var asm    = Assembly.GetExecutingAssembly();
+            var name   = asm.GetManifestResourceNames()
+                            .FirstOrDefault(n => n.EndsWith("eff_wordlist.txt"));
+            if (name != null)
+            {
+                using var stream = asm.GetManifestResourceStream(name)!;
+                using var reader = new StreamReader(stream);
+                _wordlist = reader.ReadToEnd()
+                    .Split('\n')
+                    .Where(l => l.Contains('\t'))
+                    .Select(l => l.Split('\t').LastOrDefault()?.Trim())
+                    .Where(w => !string.IsNullOrEmpty(w))
+                    .Select(w => w!)
+                    .ToArray();
+            }
+        }
+        catch { }
+        _wordlist ??= ["maple","stone","river","cloud","north","frost","ember","grove"];
+        return _wordlist;
+    }
+
+    // ─── Constructor ─────────────────────────────────────────────────────────
+    public MainWindow(string? sourcePath)
+    {
+        InitializeComponent();
+        _settings = SettingsManager.Load();
+
+        // Restore sidebar state
+        _sidebarExpanded = !_settings.SidebarCollapsed;
+        if (!_sidebarExpanded) ApplySidebarState(animate: false);
+
+        // Pre-load wordlist off startup thread
+        Task.Run(() => GetWordlist());
+
+        if (!string.IsNullOrWhiteSpace(sourcePath)
+            && sourcePath != "--install"
+            && sourcePath != "--uninstall")
+        {
+            if (sourcePath.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase))
+                OpenSszFile(sourcePath);
+            else
+                SetZipSource(sourcePath);
+        }
+
+        ShowSection("Home");
+        SetPasswordMode("Password");
+        SelectSegment(BtnModePassword, new[] { BtnModePassword, BtnModePassphrase });
+        SelectSegment(BtnFmtZip,      new[] { BtnFmtZip, BtnFmtSsz });
+        SelectSegment(Btn4Words,      new[] { Btn3Words, Btn4Words, Btn5Words });
+        SelectSegment(BtnSepDot,      new[] { BtnSepDot, BtnSepDash, BtnSepSpace });
+        RegeneratePassphrase();
+        RegenerateAutoPassword();
+        RefreshHistorySection();
+        RefreshHomeSection();
+        RefreshSettingsSection();
+
+        // Restore saved theme (suppress SelectionChanged during init)
+        _suppressThemeChange = true;
+        ThemeComboBox.SelectedIndex = _settings.Theme switch
+        {
+            "Light"  => 1,
+            "System" => 2,
+            _        => 0,   // Dark
+        };
+        _suppressThemeChange = false;
+        ApplyTheme(_settings.Theme);
+
+        RefreshProStatus();
+
+        // Non-blocking startup version check.
+        _ = CheckForUpdateAsync();
+    }
+
+    private string? _updateUrl;
+
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            string? latest = await ApiService.GetLatestVersionAsync();
+            if (string.IsNullOrEmpty(latest)) return;
+
+            if (Version.TryParse(latest, out var latestVer) &&
+                Version.TryParse(AppConstants.AppVersion, out var currentVer) &&
+                latestVer > currentVer)
+            {
+                _updateUrl = $"https://github.com/sstephen-arch/zip-with-password/releases/latest";
+                UpdateBannerText.Text = $"Starkive {latest} is available — you're on {AppConstants.AppVersion}.";
+                UpdateBanner.Visibility = Visibility.Visible;
+            }
+        }
+        catch { /* version check is optional — never surface errors */ }
+    }
+
+    private void UpdateDownload_Click(object sender, RoutedEventArgs e)
+    {
+        if (_updateUrl != null)
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_updateUrl)
+                { UseShellExecute = true });
+    }
+
+    private void UpdateDismiss_Click(object sender, RoutedEventArgs e)
+        => UpdateBanner.Visibility = Visibility.Collapsed;
+
+    // ─── Navigation ──────────────────────────────────────────────────────────
+    private void Nav_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string tag)
+            ShowSection(tag);
+    }
+
+    private void ShowSection(string section)
+    {
+        _activeSection = section;
+
+        HomeSection.Visibility     = section == "Home"     ? Visibility.Visible : Visibility.Collapsed;
+        ZipSection.Visibility      = section == "Zip"      ? Visibility.Visible : Visibility.Collapsed;
+        UnzipSection.Visibility    = section == "Unzip"    ? Visibility.Visible : Visibility.Collapsed;
+        HistorySection.Visibility  = section == "History"  ? Visibility.Visible : Visibility.Collapsed;
+        SettingsSection.Visibility = section == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+
+        // Nav items + accent bars
+        var navItems = new[]
+        {
+            (btn: NavHome,     accent: NavHomeAccent,     tag: "Home"),
+            (btn: NavZip,      accent: NavZipAccent,      tag: "Zip"),
+            (btn: NavUnzip,    accent: NavUnzipAccent,    tag: "Unzip"),
+            (btn: NavHistory,  accent: NavHistoryAccent,  tag: "History"),
+            (btn: NavSettings, accent: NavSettingsAccent, tag: "Settings"),
+        };
+
+        var accentColor = (SolidColorBrush)FindResource("AccentBrush");
+        var navActiveBg = (SolidColorBrush)FindResource("NavActiveBgBrush");
+
+        foreach (var (btn, accent, tag) in navItems)
+        {
+            bool active = tag == section;
+            btn.Background = active ? navActiveBg : Brushes.Transparent;
+            btn.Foreground = active
+                ? (SolidColorBrush)FindResource("TextPrimaryBrush")
+                : (SolidColorBrush)FindResource("TextSecondaryBrush");
+            accent.Fill = active ? accentColor : Brushes.Transparent;
+        }
+
+        if (section == "History")  RefreshHistorySection();
+        if (section == "Settings") RefreshSettingsSection();
+        if (section == "Home")     RefreshHomeSection();
+    }
+
+    // ─── Sidebar collapse/expand ─────────────────────────────────────────────
+    private void Hamburger_Click(object sender, RoutedEventArgs e)
+    {
+        _sidebarExpanded = !_sidebarExpanded;
+        ApplySidebarState(animate: true);
+        _settings.SidebarCollapsed = !_sidebarExpanded;
+        SettingsManager.Save(_settings);
+    }
+
+    private void ApplySidebarState(bool animate)
+    {
+        double target = _sidebarExpanded ? 200 : 52;
+
+        if (animate)
+        {
+            var anim = new DoubleAnimation(target, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+            };
+            SidebarBorder.BeginAnimation(WidthProperty, anim);
+        }
+        else
+        {
+            SidebarBorder.Width = target;
+        }
+
+        var textVis = _sidebarExpanded ? Visibility.Visible : Visibility.Collapsed;
+        LogoTextPanel.Visibility     = textVis;
+        NavHomeText.Visibility       = textVis;
+        NavZipText.Visibility        = textVis;
+        NavUnzipText.Visibility      = textVis;
+        NavHistoryText.Visibility    = textVis;
+        NavSettingsText.Visibility   = textVis;
+        VersionText.Visibility       = textVis;
+        GoProLabel.Visibility        = textVis;
+        GoProPrice.Visibility        = textVis;
+
+        LogoMark.HorizontalAlignment = _sidebarExpanded
+            ? HorizontalAlignment.Left
+            : HorizontalAlignment.Center;
+    }
+
+    // ─── Home section ─────────────────────────────────────────────────────────
+    private void RefreshHomeSection()
+    {
+        var entries = HistoryManager.Load();
+        var recent  = entries.Take(5).Select(h => new HistoryViewModel(h)).ToList();
+        HomeRecentList.ItemsSource = recent;
+        HomeRecentEmpty.Visibility = recent.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void HomeCardZip_Click(object sender, MouseButtonEventArgs e)
+        => ShowSection("Zip");
+
+    private void HomeCardUnzip_Click(object sender, MouseButtonEventArgs e)
+        => ShowSection("Unzip");
+
+    private void HomeCardPro_Click(object sender, MouseButtonEventArgs e)
+        => OpenAuthDialog();
+
+    private void HomeCardHistory_Click(object sender, MouseButtonEventArgs e)
+        => ShowSection("History");
+
+    private void HomeDropZone_DragEnter(object sender, DragEventArgs e)
+    {
+        HomeDropRect.Stroke = new SolidColorBrush(Color.FromRgb(0x1A, 0x56, 0xDB));
+        ((Border)sender).Background = new SolidColorBrush(Color.FromArgb(0x18, 0x1A, 0x56, 0xDB));
+    }
+
+    private void HomeDropZone_DragLeave(object sender, DragEventArgs e)
+    {
+        HomeDropRect.Stroke = (Brush)FindResource("BorderBrush");
+        ((Border)sender).Background = Brushes.Transparent;
+    }
+
+    private void HomeDropZone_Drop(object sender, DragEventArgs e)
+    {
+        HomeDropRect.Stroke = (Brush)FindResource("BorderBrush");
+        ((Border)sender).Background = Brushes.Transparent;
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
+        {
+            SetZipSource(files[0]);
+            ShowSection("Zip");
+        }
+    }
+
+    private void GoProBtn_Click(object sender, MouseButtonEventArgs e)
+        => OpenAuthDialog();
+
+    private void UpgradeToPro_Click(object sender, RoutedEventArgs e)
+        => OpenAuthDialog();
+
+    private void OpenAuthDialog()
+    {
+        if (AuthManager.IsLoggedIn)
+        {
+            // Already signed in — take them to Settings where the Pro card lives
+            // and show a hint if they're not yet Pro.
+            ShowSection("Settings");
+            if (!AuthManager.IsProUser)
+                ShowToast("Signed in. Visit starkive.app to activate Pro.");
+            return;
+        }
+        var dlg = new OtpDialog { Owner = this };
+        dlg.ShowDialog();
+        RefreshProStatus();
+    }
+
+    // ─── ZIP source helpers ───────────────────────────────────────────────────
+    private void SetZipSource(string path)
+    {
+        ZipSourceBox.Text = path;
+        ZipOutputBox.Text = BuildDefaultZipOutput(path);
+    }
+
+    private string BuildDefaultZipOutput(string source)
+    {
+        source = source.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        string dir = Path.GetDirectoryName(source)
+                  ?? _settings.DefaultOutputFolder
+                  ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string name = Path.GetFileNameWithoutExtension(source);
+        if (string.IsNullOrWhiteSpace(name))
+            name = new DirectoryInfo(source).Name;
+        string candidate = Path.Combine(dir, name + ".zip");
+        int i = 1;
+        while (File.Exists(candidate))
+            candidate = Path.Combine(dir, $"{name} ({i++}).zip");
+        return candidate;
+    }
+
+    internal void OpenSszFile(string sszPath)
+    {
+        if (RequirePro("Opening Starkive Secure Containers (.ssz)")) return;
+
+        // Navigate to Unzip panel and pre-fill the source path.
+        ShowSection("Unzip");
+        SetUnzipSource(sszPath);
+    }
+
+    // ─── Drop zone (Zip panel) ────────────────────────────────────────────────
+    private void DropZone_DragEnter(object sender, DragEventArgs e)
+    {
+        ZipDropRect.Stroke = new SolidColorBrush(Color.FromRgb(0x1A, 0x56, 0xDB));
+        DropZone.Background = new SolidColorBrush(Color.FromArgb(0x18, 0x1A, 0x56, 0xDB));
+    }
+
+    private void DropZone_DragLeave(object sender, DragEventArgs e)
+    {
+        ZipDropRect.Stroke = (Brush)FindResource("BorderBrush");
+        DropZone.Background = Brushes.Transparent;
+    }
+
+    private void DropZone_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+            ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void DropZone_Drop(object sender, DragEventArgs e)
+    {
+        ZipDropRect.Stroke = (Brush)FindResource("BorderBrush");
+        DropZone.Background = Brushes.Transparent;
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
+            SetZipSource(files[0]);
+    }
+
+    private void UnzipDropZone_DragEnter(object sender, DragEventArgs e)
+        => HighlightDropZone(UnzipDropZone, true);
+
+    private void UnzipDropZone_DragLeave(object sender, DragEventArgs e)
+        => HighlightDropZone(UnzipDropZone, false);
+
+    private void UnzipDropZone_Drop(object sender, DragEventArgs e)
+    {
+        HighlightDropZone(UnzipDropZone, false);
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
+            SetUnzipSource(files[0]);
+    }
+
+    private static void HighlightDropZone(Border zone, bool on)
+    {
+        zone.BorderBrush = on
+            ? new SolidColorBrush(Color.FromRgb(0x1A, 0x56, 0xDB))
+            : new SolidColorBrush(Color.FromRgb(0x21, 0x26, 0x2D));
+        zone.Background = on
+            ? new SolidColorBrush(Color.FromArgb(0x18, 0x1A, 0x56, 0xDB))
+            : Brushes.Transparent;
+    }
+
+    // ─── Browse dialogs ───────────────────────────────────────────────────────
+    private void ZipBrowseSource_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "Select a file to zip",
+            Filter = "All Files (*.*)|*.*",
+            CheckFileExists = false, CheckPathExists = true,
+            FileName = "Select Folder or File"
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            string selected = dlg.FileName;
+            if      (Directory.Exists(selected)) SetZipSource(selected);
+            else if (File.Exists(selected))      SetZipSource(selected);
+            else
+            {
+                string folder = BrowseForFolder("Select folder to zip");
+                if (!string.IsNullOrEmpty(folder)) SetZipSource(folder);
+            }
+        }
+    }
+
+    private void ZipBrowseOutput_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title = "Save ZIP as...",
+            Filter = "ZIP Archive (*.zip)|*.zip",
+            DefaultExt = ".zip",
+            FileName = Path.GetFileName(ZipOutputBox.Text),
+            InitialDirectory = Path.GetDirectoryName(ZipOutputBox.Text)
+                            ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+        };
+        if (dlg.ShowDialog() == true) ZipOutputBox.Text = dlg.FileName;
+    }
+
+    // ─── Password mode selector ───────────────────────────────────────────────
+    private void PwdMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string mode)
+        {
+            SetPasswordMode(mode);
+            SelectSegment(btn, new[] { BtnModePassword, BtnModePassphrase });
+        }
+    }
+
+    private void SetPasswordMode(string mode)
+    {
+        _pwdMode = mode;
+        PwdPanelPassword.Visibility   = mode == "Password"   ? Visibility.Visible : Visibility.Collapsed;
+        PwdPanelPassphrase.Visibility = mode == "Passphrase" ? Visibility.Visible : Visibility.Collapsed;
+        WeakPasswordWarning.Visibility = Visibility.Collapsed;
+        // Collapse auto-gen panel when switching away from Password mode
+        if (mode != "Password") { _autoGenVisible = false; AutoGenPanel.Visibility = Visibility.Collapsed; }
+    }
+
+    // ─── Inline auto-generate (Password panel) ────────────────────────────────
+    private void AutoGenToggle_Click(object sender, RoutedEventArgs e)
+    {
+        _autoGenVisible = !_autoGenVisible;
+        AutoGenPanel.Visibility = _autoGenVisible ? Visibility.Visible : Visibility.Collapsed;
+        if (_autoGenVisible && string.IsNullOrEmpty(AutoGenDisplay.Text))
+            RegenerateAutoPassword();
+    }
+
+    private void UseAutoPassword_Click(object sender, RoutedEventArgs e)
+    {
+        string pwd = AutoGenDisplay.Text;
+        if (string.IsNullOrEmpty(pwd)) return;
+        // Copy generated password into the manual fields so validation passes normally
+        ZipPasswordBox.Password  = pwd;
+        ZipConfirmBox.Password   = pwd;
+        AutoGenPanel.Visibility  = Visibility.Collapsed;
+        _autoGenVisible          = false;
+        UpdateStrengthBar();
+        ShowToast("Password applied");
+    }
+
+    // ─── Segmented control helper ─────────────────────────────────────────────
+    private void SelectSegment(Button selected, Button[] all)
+    {
+        foreach (var btn in all)
+        {
+            bool active = btn == selected;
+            btn.Background = active
+                ? (SolidColorBrush)FindResource("AccentBrush")
+                : Brushes.Transparent;
+            btn.Foreground = active
+                ? Brushes.White
+                : (SolidColorBrush)FindResource("TextSecondaryBrush");
+        }
+    }
+
+    // ─── Passphrase mode ─────────────────────────────────────────────────────
+    private void WordCount_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && int.TryParse(btn.Tag?.ToString(), out int wc))
+        {
+            _wordCount = wc;
+            SelectSegment(btn, new[] { Btn3Words, Btn4Words, Btn5Words });
+            RegeneratePassphrase();
+        }
+    }
+
+    private void Separator_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string sep)
+        {
+            _separator = sep;
+            SelectSegment(btn, new[] { BtnSepDot, BtnSepDash, BtnSepSpace });
+            RegeneratePassphrase();
+        }
+    }
+
+    private void RegeneratePassphrase_Click(object sender, RoutedEventArgs e)
+        => RegeneratePassphrase();
+
+    private void RegeneratePassphrase()
+    {
+        var words = GetWordlist();
+        if (words.Length == 0) return;
+
+        var selected = new string[_wordCount];
+        var buf      = new byte[4];
+        for (int i = 0; i < _wordCount; i++)
+        {
+            RandomNumberGenerator.Fill(buf);
+            uint idx = BitConverter.ToUInt32(buf, 0) % (uint)words.Length;
+            selected[i] = words[idx];
+        }
+        string phrase           = string.Join(_separator, selected);
+        PassphraseDisplay.Text  = phrase;
+        _activePassword         = phrase;
+    }
+
+    private void CopyPassphrase_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(PassphraseDisplay.Text))
+        {
+            Clipboard.SetText(PassphraseDisplay.Text);
+            ShowToast("Copied to clipboard");
+        }
+    }
+
+    // ─── Auto-generate mode ───────────────────────────────────────────────────
+    private void AutoGenOption_Changed(object sender, RoutedEventArgs e)
+    {
+        bool anyChecked = (ChkUpper.IsChecked == true)
+                       || (ChkLower.IsChecked == true)
+                       || (ChkDigits.IsChecked == true)
+                       || (ChkSpecial.IsChecked == true);
+        if (!anyChecked && sender is CheckBox cb)
+            cb.IsChecked = true;
+        RegenerateAutoPassword();
+    }
+
+    private void LengthSlider_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (LengthLabel == null) return;
+        int len            = (int)LengthSlider.Value;
+        LengthLabel.Text   = $"{len} characters";
+        RegenerateAutoPassword();
+    }
+
+    private void RegenerateAutoPassword_Click(object sender, RoutedEventArgs e)
+        => RegenerateAutoPassword();
+
+    private void RegenerateAutoPassword()
+    {
+        if (AutoGenDisplay == null || LengthSlider == null) return;
+
+        int    len  = (int)LengthSlider.Value;
+        string pwd  = PasswordGenerator.Generate(len,
+            useUpper:   ChkUpper.IsChecked == true,
+            useLower:   ChkLower.IsChecked == true,
+            useDigits:  ChkDigits.IsChecked == true,
+            useSpecial: ChkSpecial.IsChecked == true);
+        AutoGenDisplay.Text = pwd;
+        _activePassword = pwd;
+    }
+
+    private void CopyAutoPassword_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(AutoGenDisplay.Text))
+        {
+            Clipboard.SetText(AutoGenDisplay.Text);
+            ShowToast("Copied to clipboard");
+        }
+    }
+
+
+    // ─── Password strength ────────────────────────────────────────────────────
+    private void ZipPassword_Changed(object sender, RoutedEventArgs e)
+    {
+        ZipErrorText.Visibility = Visibility.Collapsed;
+        UpdateStrengthBar();
+    }
+
+    private void UpdateStrengthBar()
+    {
+        string pwd  = ZipPasswordBox.Password;
+        int    score = ScorePassword(pwd);
+        double maxW  = ((Border)StrengthBar.Parent).ActualWidth;
+        if (maxW <= 0) maxW = 300;
+
+        StrengthBar.Width = maxW * score / 4.0;
+        StrengthBar.Background = score switch
+        {
+            0 => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            1 => (SolidColorBrush)FindResource("DangerBrush"),
+            2 => (SolidColorBrush)FindResource("WarningBrush"),
+            3 => new SolidColorBrush(Color.FromRgb(0x1A, 0x56, 0xDB)),
+            _ => (SolidColorBrush)FindResource("SuccessBrush"),
+        };
+
+        string label = score switch { 0 => "--", 1 => "Weak", 2 => "Fair", 3 => "Good", _ => "Strong" };
+        StrengthLabel.Text       = label;
+        StrengthLabel.Foreground = StrengthBar.Background;
+
+        int charsetSize = 0;
+        if (pwd.Any(char.IsLower))                  charsetSize += 26;
+        if (pwd.Any(char.IsUpper))                  charsetSize += 26;
+        if (pwd.Any(char.IsDigit))                  charsetSize += 10;
+        if (pwd.Any(c => !char.IsLetterOrDigit(c))) charsetSize += 32;
+        if (charsetSize > 0 && pwd.Length > 0)
+        {
+            double bits = pwd.Length * Math.Log2(charsetSize);
+            EntropyLabel.Text = $"~{bits:F0} bits of entropy · {pwd.Length} characters";
+        }
+        else
+        {
+            EntropyLabel.Text = string.Empty;
+        }
+
+        // Show brute-force risk warning when the user has typed a weak manual password.
+        WeakPasswordWarning.Visibility =
+            (_pwdMode == "Password" && score <= 1 && pwd.Length > 0)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+    }
+
+    // Returns true and shows the auth dialog if the user is not Pro.
+    // Call at the entry point of any Pro-only feature before doing work.
+    private bool RequirePro(string featureName)
+    {
+        if (AuthManager.IsProUser) return false;
+
+        var dlg = new OtpDialog { Owner = this };
+        bool? result = dlg.ShowDialog();
+        RefreshProStatus();
+
+        // After successful login, re-check Pro status.
+        if (result == true && AuthManager.IsProUser) return false;
+
+        // Not Pro — navigate to Settings so they can see the upgrade card.
+        ShowSection("Settings");
+        ShowToast($"{featureName} requires Starkive Pro.");
+        return true; // blocked
+    }
+
+    private static int ScorePassword(string pwd)
+    {
+        if (string.IsNullOrEmpty(pwd)) return 0;
+        int score = 0;
+        if (pwd.Length >= 8)  score++;
+        if (pwd.Length >= 12 && (pwd.Any(char.IsUpper) || pwd.Any(char.IsLower))) score++;
+        if (pwd.Length >= 12 && pwd.Any(char.IsUpper) && pwd.Any(char.IsLower) && pwd.Any(char.IsDigit)) score++;
+        if (pwd.Length >= 14 && pwd.Any(char.IsUpper) && pwd.Any(char.IsLower)
+            && pwd.Any(char.IsDigit) && pwd.Any(c => !char.IsLetterOrDigit(c))) score++;
+        return score;
+    }
+
+    // ─── Zip create ───────────────────────────────────────────────────────────
+    private bool ValidateZip(out string error)
+    {
+        if (string.IsNullOrWhiteSpace(ZipSourceBox.Text) || ZipSourceBox.Text == "No file or folder selected")
+        { error = "Please select a file or folder to zip."; return false; }
+        if (string.IsNullOrWhiteSpace(ZipOutputBox.Text))
+        { error = "Please specify a destination path."; return false; }
+        if (!ZipOutputBox.Text.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        { error = "Destination must end with .zip"; return false; }
+
+        string pwd = ResolveActivePassword();
+        if (string.IsNullOrEmpty(pwd))
+        { error = "Please enter or generate a password."; return false; }
+        if (_pwdMode == "Password" && pwd.Length < 6)
+        { error = "Password must be at least 6 characters."; return false; }
+        if (_pwdMode == "Password" && pwd != ZipConfirmBox.Password)
+        { error = "Passwords do not match."; return false; }
+
+        error = string.Empty;
+        return true;
+    }
+
+    private string ResolveActivePassword()
+    {
+        return _pwdMode switch
+        {
+            "Passphrase" => PassphraseDisplay.Text,
+            _            => ZipPasswordBox.Password,
+        };
+    }
+
+    private void OutputFmt_Click(object sender, RoutedEventArgs e)
+    {
+        string tag = (string)((Button)sender).Tag;
+        bool ssz = tag == "SSZ";
+
+        if (ssz && RequirePro("Secure Container (.ssz)")) return;
+
+        _isSszMode = ssz;
+
+        // Segment button highlight
+        SelectSegment(ssz ? BtnFmtSsz : BtnFmtZip, new[] { BtnFmtZip, BtnFmtSsz });
+
+        // Show/hide recipient hint
+        RecipientHintPanel.Visibility = ssz ? Visibility.Visible : Visibility.Collapsed;
+
+        // Update create button label and output extension
+        ZipCreateButton.Content = ssz ? "Create Secure Container" : "Create Encrypted ZIP";
+
+        // Switch output extension
+        string current = ZipOutputBox.Text;
+        if (ssz && current.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            ZipOutputBox.Text = Path.ChangeExtension(current, ".ssz");
+        else if (!ssz && current.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase))
+            ZipOutputBox.Text = Path.ChangeExtension(current, ".zip");
+    }
+
+    private async void ZipCreate_Click(object sender, RoutedEventArgs e)
+    {
+        if (!ValidateZip(out string error)) { ShowZipError(error); return; }
+
+        ZipErrorText.Visibility     = Visibility.Collapsed;
+        ZipSuccessBanner.Visibility = Visibility.Collapsed;
+        ZipProgressPanel.Visibility = Visibility.Visible;
+        ZipCreateButton.IsEnabled   = false;
+
+        string source   = ZipSourceBox.Text.TrimEnd('\\', '/');
+        string output   = ZipOutputBox.Text;
+        string password = ResolveActivePassword();
+        double progWidth = ((Border)ZipProgressBar.Parent).ActualWidth;
+
+        var prog = new Progress<(int pct, string status)>(p =>
+        {
+            ZipProgressBar.Width = progWidth * p.pct / 100.0;
+            ZipPercentText.Text  = $"{p.pct}%";
+            ZipStatusText.Text   = p.status;
+        });
+
+        bool success = false; string? errMsg = null;
+
+        if (_isSszMode)
+        {
+            string recipientHint = RecipientHintBox.Text.Trim();
+            try
+            {
+                var result = await Task.Run(() => SszHelper.Create(source, output, password, prog));
+                success = true;
+                if (AuthManager.IsLoggedIn)
+                {
+                    _ = ApiService.RegisterSszFileAsync(new SszFileRecord
+                    {
+                        OwnerId          = AuthManager.UserId ?? "",
+                        FileToken        = result.FileToken,
+                        OriginalFilename = Path.GetFileName(output),
+                        FileSizeBytes    = new FileInfo(output).Length,
+                        Sha256Hash       = Convert.ToHexString(result.PayloadHash).ToLowerInvariant(),
+                        RecipientHint    = string.IsNullOrEmpty(recipientHint) ? null : recipientHint,
+                    });
+                }
+            }
+            catch (Exception ex) { errMsg = ex.Message; }
+        }
+        else
+        {
+            try { await Task.Run(() => ZipHelper.CreateEncryptedZip(source, output, password, prog)); success = true; }
+            catch (Exception ex) { errMsg = ex.Message; }
+        }
+
+        ZipProgressPanel.Visibility = Visibility.Collapsed;
+        ZipCreateButton.IsEnabled   = true;
+        HistoryManager.Add(new HistoryEntry
+        {
+            Type = OperationType.Zip, SourcePath = source, OutputPath = output,
+            Success = success, ErrorMessage = errMsg ?? string.Empty
+        });
+
+        if (success)
+        {
+            ZipSuccessBanner.Visibility = Visibility.Visible;
+            bool saveChecked = (_pwdMode == "Passphrase")
+                ? ChkSavePassphrase.IsChecked == true
+                : ChkSavePassword.IsChecked == true;
+            if (saveChecked)
+                SavedPasswordStore.Save(output, password);
+        }
+        else ShowZipError($"Error: {errMsg}");
+    }
+
+    private void ShowZipError(string msg)
+    {
+        ZipErrorText.Text = msg;
+        ZipErrorText.Visibility = Visibility.Visible;
+    }
+
+    // ─── Unzip ────────────────────────────────────────────────────────────────
+    private void SetUnzipSource(string path)
+    {
+        if (!path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        { ShowUnzipError("Please select a .zip file."); return; }
+        UnzipSourceBox.Text = path;
+        UnzipOutputBox.Text = Path.Combine(
+            Path.GetDirectoryName(path) ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            Path.GetFileNameWithoutExtension(path));
+
+        // Auto-fill saved password if found
+        var saved = SavedPasswordStore.Find(path);
+        if (saved != null)
+        {
+            UnzipPasswordBox.Password = saved.Password;
+            ShowToast($"Password filled from saved entry \"{saved.Hint}\".");
+        }
+    }
+
+    private void UnzipBrowseSource_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "Select ZIP file to extract",
+            Filter = "ZIP Archives (*.zip)|*.zip|All Files (*.*)|*.*"
+        };
+        if (dlg.ShowDialog() == true) SetUnzipSource(dlg.FileName);
+    }
+
+    private void UnzipBrowseOutput_Click(object sender, RoutedEventArgs e)
+    {
+        string folder = BrowseForFolder("Select folder to extract into");
+        if (!string.IsNullOrEmpty(folder)) UnzipOutputBox.Text = folder;
+    }
+
+    private async void Unzip_Click(object sender, RoutedEventArgs e)
+    {
+        UnzipErrorText.Visibility     = Visibility.Collapsed;
+        UnzipSuccessBanner.Visibility = Visibility.Collapsed;
+
+        if (string.IsNullOrWhiteSpace(UnzipSourceBox.Text) || UnzipSourceBox.Text == "No ZIP file selected")
+        { ShowUnzipError("Please select a ZIP file."); return; }
+        if (string.IsNullOrWhiteSpace(UnzipOutputBox.Text))
+        { ShowUnzipError("Please specify an output folder."); return; }
+        if (UnzipPasswordBox.Password.Length == 0)
+        { ShowUnzipError("Please enter the ZIP password."); return; }
+
+        UnzipProgressPanel.Visibility = Visibility.Visible;
+        UnzipButton.IsEnabled          = false;
+
+        string zipPath   = UnzipSourceBox.Text;
+        string outFolder = UnzipOutputBox.Text;
+        string password  = UnzipPasswordBox.Password;
+        double progWidth = ((Border)UnzipProgressBar.Parent).ActualWidth;
+
+        var prog = new Progress<(int pct, string status)>(p =>
+        {
+            UnzipProgressBar.Width = progWidth * p.pct / 100.0;
+            UnzipPercentText.Text  = $"{p.pct}%";
+            UnzipStatusText.Text   = p.status;
+        });
+
+        bool success = false; string? errMsg = null;
+        try { await Task.Run(() => ZipHelper.ExtractEncryptedZip(zipPath, outFolder, password, prog)); success = true; }
+        catch (Exception ex) { errMsg = ex.Message; }
+
+        UnzipProgressPanel.Visibility = Visibility.Collapsed;
+        UnzipButton.IsEnabled          = true;
+        HistoryManager.Add(new HistoryEntry
+        {
+            Type = OperationType.Unzip, SourcePath = zipPath, OutputPath = outFolder,
+            Success = success, ErrorMessage = errMsg ?? string.Empty
+        });
+
+        if (success) UnzipSuccessBanner.Visibility = Visibility.Visible;
+        else ShowUnzipError(errMsg?.Contains("password", StringComparison.OrdinalIgnoreCase) == true
+            ? "Wrong password or the file is not encrypted."
+            : $"Error: {errMsg}");
+    }
+
+    private void ShowUnzipError(string msg)
+    {
+        UnzipErrorText.Text = msg;
+        UnzipErrorText.Visibility = Visibility.Visible;
+    }
+
+    // ─── History ──────────────────────────────────────────────────────────────
+    private void RefreshHistorySection()
+    {
+        var entries = HistoryManager.Load();
+        var vms     = entries.Select(h => new HistoryViewModel(h)).ToList();
+        HistoryList.ItemsSource  = vms;
+        HistoryEmpty.Visibility  = vms.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        HistoryCount.Text        = vms.Count == 0 ? string.Empty : $"{vms.Count} operation(s)";
+    }
+
+    private void HistoryClear_Click(object sender, RoutedEventArgs e)
+    {
+        if (MessageBox.Show("Clear all history?", "Starkive",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+        {
+            HistoryManager.Clear();
+            RefreshHistorySection();
+        }
+    }
+
+    // ─── Settings ─────────────────────────────────────────────────────────────
+    private void RefreshSettingsSection()
+    {
+        DefaultFolderBox.Text = _settings.DefaultOutputFolder;
+
+        string appDataPath    = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Starkive");
+        AppDataPathText.Text  = appDataPath;
+
+        bool installed         = ContextMenuInstaller.IsInstalled();
+        CtxMenuStatusText.Text = installed
+            ? "Installed. \"Starkive — Zip with password...\" appears when you right-click files and folders."
+            : "Not installed. Click Install to add Starkive to your right-click context menu.";
+        CtxMenuButton.Content  = installed ? "Uninstall" : "Install";
+    }
+
+    private void SettingsBrowseFolder_Click(object sender, RoutedEventArgs e)
+    {
+        string folder = BrowseForFolder("Select default output folder");
+        if (!string.IsNullOrEmpty(folder)) DefaultFolderBox.Text = folder;
+    }
+
+    private void OpenDataFolder_Click(object sender, RoutedEventArgs e)
+    {
+        string path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Starkive");
+        Directory.CreateDirectory(path);
+        System.Diagnostics.Process.Start("explorer.exe", path);
+    }
+
+    private void CtxMenu_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (ContextMenuInstaller.IsInstalled()) ContextMenuInstaller.Uninstall();
+            else ContextMenuInstaller.Install();
+            RefreshSettingsSection();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Could not update context menu:\n{ex.Message}\n\nTry running Starkive as Administrator.",
+                "Starkive", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressThemeChange) return;
+        if (ThemeComboBox.SelectedItem is ComboBoxItem item)
+        {
+            string theme = item.Tag?.ToString() ?? "Dark";
+            ApplyTheme(theme);
+            _settings.Theme = theme;
+            SettingsManager.Save(_settings);
+        }
+    }
+
+    // ── Theme engine ──────────────────────────────────────────────────────────
+    private void ApplyTheme(string theme)
+    {
+        // Resolve "System" to the OS preference
+        if (theme == "System")
+        {
+            bool osDark = IsOsDarkMode();
+            theme = osDark ? "Dark" : "Light";
+        }
+
+        bool light = theme == "Light";
+
+        SetBrush("BgPrimaryBrush",       light ? "#F1F5F9" : "#0A0E16");
+        SetBrush("BgSurfaceBrush",        light ? "#FFFFFF" : "#0D1219");
+        SetBrush("BgCardBrush",           light ? "#F8FAFC" : "#161E28");
+        SetBrush("BgHoverBrush",          light ? "#E2E8F0" : "#1A2230");
+        SetBrush("BgElevatedBrush",       light ? "#EBF0F7" : "#1C2635");
+        SetBrush("NavActiveBgBrush",      light ? "#EFF6FF" : "#0C1F50");
+        SetBrush("NavActiveBorderBrush",  light ? "#BFDBFE" : "#331A56DB");
+        SetBrush("BorderBrush",           light ? "#CBD5E1" : "#1E2D3F");
+        SetBrush("BorderSubtleBrush",     light ? "#E2E8F0" : "#152030");
+        SetBrush("TextPrimaryBrush",      light ? "#0F172A" : "#E8F0FB");
+        SetBrush("TextSecondaryBrush",    light ? "#475569" : "#7A9AB8");
+        SetBrush("TextMutedBrush",        light ? "#94A3B8" : "#3A5470");
+        SetBrush("TextLabelBrush",        light ? "#64748B" : "#405A72");
+        SetBrush("AccentDimBrush",        light ? "#DBEAFE" : "#0C1F50");
+        SetBrush("AccentGlowBrush",       light ? "#401A56DB" : "#1F1A56DB");
+    }
+
+    private void SetBrush(string key, string hex)
+    {
+        var color = (Color)ColorConverter.ConvertFromString(hex);
+        if (Application.Current.Resources[key] is SolidColorBrush brush && !brush.IsFrozen)
+            brush.Color = color;
+        else
+            Application.Current.Resources[key] = new SolidColorBrush(color);
+    }
+
+    private static bool IsOsDarkMode()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser
+                .OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return (key?.GetValue("AppsUseLightTheme") is int v && v == 0);
+        }
+        catch { return true; }
+    }
+
+    // ── Pro status UI ─────────────────────────────────────────────────────────
+    private void RefreshProStatus()
+    {
+        bool isPro = AuthManager.IsProUser;
+
+        // Sidebar button
+        if (isPro)
+        {
+            GoProBtn.Background     = new SolidColorBrush(Color.FromArgb(0x22, 0x16, 0xA3, 0x4A));
+            GoProLabel.Text         = "Starkive Pro";
+            GoProLabel.Foreground   = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
+            GoProPrice.Text         = "Active ✓";
+            GoProPrice.Foreground   = new SolidColorBrush(Color.FromArgb(0xCC, 0x16, 0xA3, 0x4A));
+        }
+        else
+        {
+            GoProBtn.Background     = new SolidColorBrush(Color.FromArgb(0x14, 0xC0, 0x84, 0xFC));
+            GoProLabel.Text         = "Go Pro";
+            GoProLabel.Foreground   = new SolidColorBrush(Color.FromRgb(0xC0, 0x84, 0xFC));
+            GoProPrice.Text         = "$0.99/mo";
+            GoProPrice.Foreground   = new SolidColorBrush(Color.FromArgb(0x99, 0xC0, 0x84, 0xFC));
+        }
+
+        // Settings page — swap upgrade card ↔ active badge
+        ProUpgradeCard.Visibility = isPro ? Visibility.Collapsed : Visibility.Visible;
+        ProActiveCard.Visibility  = isPro ? Visibility.Visible   : Visibility.Collapsed;
+    }
+
+    private void SaveSettings_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.DefaultOutputFolder = DefaultFolderBox.Text;
+        SettingsManager.Save(_settings);
+        SettingsSavedBanner.Visibility = Visibility.Visible;
+    }
+
+    // ─── Toast ────────────────────────────────────────────────────────────────
+    private void ShowToast(string message)
+    {
+        ToastText.Text          = message;
+        ToastBorder.Visibility  = Visibility.Visible;
+        ToastBorder.Opacity     = 1;
+        ToastTranslate.Y        = 20;
+
+        var slideIn = new DoubleAnimation(20, 0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        ToastTranslate.BeginAnimation(TranslateTransform.YProperty, slideIn);
+        ToastBorder.BeginAnimation(OpacityProperty, fadeIn);
+
+        _toastTimer?.Stop();
+        _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(2000) };
+        _toastTimer.Tick += (s, _) =>
+        {
+            _toastTimer?.Stop();
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+            fadeOut.Completed += (_, _) => ToastBorder.Visibility = Visibility.Collapsed;
+            ToastBorder.BeginAnimation(OpacityProperty, fadeOut);
+        };
+        _toastTimer.Start();
+    }
+
+    // ─── Folder picker helper ─────────────────────────────────────────────────
+    private static string BrowseForFolder(string description)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = description, CheckFileExists = false, CheckPathExists = true,
+            FileName = "Select Folder", Filter = "Folders|*.none",
+            ValidateNames = false
+        };
+        if (dlg.ShowDialog() == true)
+            return Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
+        return string.Empty;
+    }
+}

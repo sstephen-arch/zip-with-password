@@ -1,0 +1,35 @@
+# Build outputs
+bin/
+obj/
+publish/
+packaging/
+
+# User/IDE files
+.vs/
+*.user
+*.suo
+.vscode/
+
+# Secrets / local config
+*.env
+.env.*
+appsettings.*.json
+
+# Installer binaries (generated)
+Installer/dialog.bmp
+Installer/banner.bmp
+*.msi
+*.exe
+
+# Archives
+*.zip
+Starkive-source.zip
+Starkive_Export.zip
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS
+Thumbs.db
+.DS_Store

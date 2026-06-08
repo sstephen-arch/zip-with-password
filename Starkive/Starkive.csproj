@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Starkive</AssemblyName>
+    <RootNamespace>Starkive</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <Platforms>x64</Platforms>
+    <Product>Starkive</Product>
+    <Company>DePaolo Consulting LLC</Company>
+    <Copyright>Copyright © 2026 DePaolo Consulting LLC</Copyright>
+    <!-- Version is set in /Directory.Build.props — do not edit here -->
+    <Description>Secure file delivery with AES-256 encryption and audit trail</Description>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\IBMPlexSans-Regular.ttf" />
+    <Resource Include="Fonts\IBMPlexSans-Medium.ttf" />
+    <Resource Include="Fonts\IBMPlexSans-SemiBold.ttf" />
+    <EmbeddedResource Include="Resources\eff_wordlist.txt" />
+  </ItemGroup>
+
+</Project>
