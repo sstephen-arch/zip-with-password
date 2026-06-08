@@ -70,33 +70,50 @@ class GenBitmaps
             Color.FromArgb(0x12, 0x3A, 0x8A));
         g.FillRectangle(bg, 0, 0, W, H);
 
-        // Wheel mark centred in upper half
-        int cx = W / 2, markCY = 95;
-        DrawWheelMark(g, cx, markCY, 36);
+        int cx = W / 2;
 
-        // Thin divider
-        using var div = new Pen(Color.FromArgb(55, White), 1);
-        g.DrawLine(div, 24, markCY + 50, W - 24, markCY + 50);
+        // ── Measure the full content block so we can centre it vertically ──
+        using var fName = new Font("Segoe UI", 19, FontStyle.Bold,    GraphicsUnit.Pixel);
+        using var fTag  = new Font("Segoe UI",  9, FontStyle.Regular, GraphicsUnit.Pixel);
+        using var fVer  = new Font("Segoe UI",  8, FontStyle.Regular, GraphicsUnit.Pixel);
+
+        int    markR    = 28;           // wheel radius
+        int    markDiam = markR * 2;
+        float  gap1     = 14;           // mark → divider gap
+        float  divH     = 1;
+        float  gap2     = 12;           // divider → name gap
+        SizeF  ns       = g.MeasureString("Starkive", fName);
+        float  gap3     = 5;
+        string tag      = "Zip. Encrypt. Stay safe.";
+        SizeF  ts       = g.MeasureString(tag, fTag);
+
+        float totalH = markDiam + gap1 + divH + gap2 + ns.Height + gap3 + ts.Height;
+        float blockTop = (H - totalH) / 2f;   // vertically centred
+
+        // Wheel mark
+        int markCY = (int)(blockTop + markR);
+        DrawWheelMark(g, cx, markCY, markR);
+
+        // Divider
+        float divY = blockTop + markDiam + gap1;
+        using var div = new Pen(Color.FromArgb(55, White), divH);
+        g.DrawLine(div, 22, divY, W - 22, divY);
 
         // Product name
-        using var fName = new Font("Segoe UI", 20, FontStyle.Bold, GraphicsUnit.Pixel);
-        SizeF ns = g.MeasureString("Starkive", fName);
+        float nameY = divY + gap2;
         g.DrawString("Starkive", fName, new SolidBrush(White),
-            cx - ns.Width / 2, markCY + 60);
+            cx - ns.Width / 2, nameY);
 
         // Tagline
-        using var fTag = new Font("Segoe UI", 9, FontStyle.Regular, GraphicsUnit.Pixel);
-        string tag = "Zip. Encrypt. Stay safe.";
-        SizeF ts = g.MeasureString(tag, fTag);
+        float tagY = nameY + ns.Height + gap3;
         g.DrawString(tag, fTag, new SolidBrush(BlueLight),
-            cx - ts.Width / 2, markCY + 60 + ns.Height + 4);
+            cx - ts.Width / 2, tagY);
 
-        // Version
-        using var fVer = new Font("Segoe UI", 8, FontStyle.Regular, GraphicsUnit.Pixel);
+        // Version — pinned to bottom
         string ver = "v 1.2.0";
         SizeF vs = g.MeasureString(ver, fVer);
-        g.DrawString(ver, fVer, new SolidBrush(Color.FromArgb(110, White)),
-            cx - vs.Width / 2, H - 22);
+        g.DrawString(ver, fVer, new SolidBrush(Color.FromArgb(100, White)),
+            cx - vs.Width / 2, H - 18);
 
         bmp.Save(path, ImageFormat.Bmp);
         Console.WriteLine($"Written {path}");

@@ -24,7 +24,7 @@ public partial class MainWindow : Window
     private int         _wordCount       = 4;
     private string      _separator       = "·";
     private bool        _isSszMode            = false;
-    private bool        _suppressThemeChange  = false;
+    private bool        _suppressThemeChange  = true;   // true until constructor finishes init
     private DispatcherTimer? _toastTimer;
 
     // ─── Wordlist ─────────────────────────────────────────────────────────────
