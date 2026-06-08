@@ -27,10 +27,12 @@ public static class ContextMenuInstaller
             if (shellKey is null) continue;
 
             using var menuKey = shellKey.CreateSubKey(SubKeyName);
+            if (menuKey is null) continue;
             menuKey.SetValue("", MenuLabel);
             menuKey.SetValue("Icon", $"\"{exePath}\"");
 
             using var cmdKey = menuKey.CreateSubKey("command");
+            if (cmdKey is null) continue;
             bool isBackground = basePath.Contains("Background");
             cmdKey.SetValue("", isBackground
                 ? $"\"{exePath}\" \"%V\""
@@ -103,18 +105,19 @@ public static class ContextMenuInstaller
         using (root)
         {
             // .ssz extension → ProgID
-            using (var extKey = root.CreateSubKey(@".ssz"))
-                extKey.SetValue("", "StarkiveSecureContainer");
+            using var extKey = root.CreateSubKey(@".ssz");
+            extKey?.SetValue("", "StarkiveSecureContainer");
 
             // ProgID definition
             using var progKey = root.CreateSubKey("StarkiveSecureContainer");
+            if (progKey is null) return;
             progKey.SetValue("", "Starkive Secure Container");
 
-            using (var iconKey = progKey.CreateSubKey("DefaultIcon"))
-                iconKey.SetValue("", $"\"{exePath}\",0");
+            using var iconKey = progKey.CreateSubKey("DefaultIcon");
+            iconKey?.SetValue("", $"\"{exePath}\",0");
 
             using var openKey = progKey.CreateSubKey(@"shell\open\command");
-            openKey.SetValue("", $"\"{exePath}\" \"%1\"");
+            openKey?.SetValue("", $"\"{exePath}\" \"%1\"");
         }
     }
 

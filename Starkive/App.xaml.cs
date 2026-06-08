@@ -19,22 +19,18 @@ public partial class App : Application
 
             if (arg.Equals("--install", StringComparison.OrdinalIgnoreCase))
             {
-                ContextMenuInstaller.Install();
-                MessageBox.Show(
-                    "\"Starkive\" has been added to your right-click context menu.",
-                    "Starkive — Installed",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                // Runs hidden from the installer — never show dialogs, just log errors
+                try { ContextMenuInstaller.Install(); }
+                catch (Exception ex) { LogStartupError("--install", ex); }
                 Shutdown(0);
                 return;
             }
 
             if (arg.Equals("--uninstall", StringComparison.OrdinalIgnoreCase))
             {
-                ContextMenuInstaller.Uninstall();
-                MessageBox.Show(
-                    "\"Starkive\" has been removed from your right-click context menu.",
-                    "Starkive — Uninstalled",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                // Runs hidden from the installer — never show dialogs, just log errors
+                try { ContextMenuInstaller.Uninstall(); }
+                catch (Exception ex) { LogStartupError("--uninstall", ex); }
                 Shutdown(0);
                 return;
             }
@@ -64,11 +60,38 @@ public partial class App : Application
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        // Write full details to crash log so we can diagnose without stack trace
+        try
+        {
+            var log = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Starkive", "crash.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(log)!);
+            File.AppendAllText(log,
+                $"[{DateTime.UtcNow:O}] DISPATCHER: {e.Exception}\n\n");
+        }
+        catch { }
+
         MessageBox.Show(
-            $"An unexpected error occurred:\n\n{e.Exception.Message}",
+            $"An unexpected error occurred:\n\n{e.Exception.Message}\n\n" +
+            $"Details written to:\n%APPDATA%\\Starkive\\crash.log\n\n" +
+            $"Stack trace:\n{e.Exception.StackTrace}",
             "Starkive — Error",
             MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
+    }
+
+    private static void LogStartupError(string context, Exception ex)
+    {
+        try
+        {
+            var log = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Starkive", "crash.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(log)!);
+            File.AppendAllText(log, $"[{DateTime.UtcNow:O}] {context}: {ex}\n\n");
+        }
+        catch { }
     }
 
     private static void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
