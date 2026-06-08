@@ -958,20 +958,26 @@ public partial class MainWindow : Window
 
         bool light = theme == "Light";
 
-        SetBrush("BgPrimaryBrush",       light ? "#F1F5F9" : "#0A0E16");
-        SetBrush("BgSurfaceBrush",        light ? "#FFFFFF" : "#0D1219");
-        SetBrush("BgCardBrush",           light ? "#F8FAFC" : "#161E28");
-        SetBrush("BgHoverBrush",          light ? "#E2E8F0" : "#1A2230");
-        SetBrush("BgElevatedBrush",       light ? "#EBF0F7" : "#1C2635");
-        SetBrush("NavActiveBgBrush",      light ? "#EFF6FF" : "#0C1F50");
-        SetBrush("NavActiveBorderBrush",  light ? "#BFDBFE" : "#331A56DB");
-        SetBrush("BorderBrush",           light ? "#CBD5E1" : "#1E2D3F");
-        SetBrush("BorderSubtleBrush",     light ? "#E2E8F0" : "#152030");
-        SetBrush("TextPrimaryBrush",      light ? "#0F172A" : "#E8F0FB");
-        SetBrush("TextSecondaryBrush",    light ? "#475569" : "#7A9AB8");
-        SetBrush("TextMutedBrush",        light ? "#94A3B8" : "#3A5470");
-        SetBrush("TextLabelBrush",        light ? "#64748B" : "#405A72");
-        SetBrush("AccentDimBrush",        light ? "#DBEAFE" : "#0C1F50");
+        // ── Background layers (GlideX-inspired neutral dark palette) ──
+        SetBrush("BgSurfaceBrush",        light ? "#FFFFFF" : "#0D111A"); // sidebar
+        SetBrush("BgPrimaryBrush",        light ? "#F1F5F9" : "#14171E"); // content
+        SetBrush("BgCardBrush",           light ? "#F8FAFC" : "#1A1D26");
+        SetBrush("BgHoverBrush",          light ? "#E2E8F0" : "#1F2230");
+        SetBrush("BgElevatedBrush",       light ? "#EBF0F7" : "#222636");
+        SetBrush("BgInputBrush",          light ? "#FFFFFF" : "#0D111A"); // text/password boxes
+        // ── Nav active: solid blue pill in dark (GlideX), tinted bg in light ──
+        SetBrush("NavActiveBgBrush",      light ? "#EFF6FF" : "#1A56DB");
+        SetBrush("NavActiveBorderBrush",  light ? "#BFDBFE" : "Transparent");
+        // ── Borders ──
+        SetBrush("BorderBrush",           light ? "#CBD5E1" : "#252A38");
+        SetBrush("BorderSubtleBrush",     light ? "#E2E8F0" : "#1A1F2C");
+        // ── Text ──
+        SetBrush("TextPrimaryBrush",      light ? "#0F172A" : "#E8EAED");
+        SetBrush("TextSecondaryBrush",    light ? "#475569" : "#8892A4");
+        SetBrush("TextMutedBrush",        light ? "#94A3B8" : "#4A5568");
+        SetBrush("TextLabelBrush",        light ? "#64748B" : "#3D4A5C");
+        // ── Accent dims ──
+        SetBrush("AccentDimBrush",        light ? "#DBEAFE" : "#162044");
         SetBrush("AccentGlowBrush",       light ? "#401A56DB" : "#1F1A56DB");
     }
 
