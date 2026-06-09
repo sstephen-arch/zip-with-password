@@ -11,7 +11,7 @@
 #define AppId        "{{B4E1F2A3-7C8D-4E5F-9A0B-1C2D3E4F5A6B}"
 
 ; ── Source paths (relative to this .iss file) ────────────────────────────────
-#define PublishDir   "..\publish"
+#define PublishDir   "..\Starkive\bin\Release\net8.0-windows\win-x64\publish"
 #define LicenseFile  "License.rtf"
 
 [Setup]
