@@ -1615,9 +1615,10 @@
                             <ComboBox x:Name="ThemeComboBox" Grid.Column="1"
                                       Width="120" VerticalAlignment="Center"
                                       SelectionChanged="ThemeComboBox_SelectionChanged">
-                                <ComboBoxItem Content="Dark" Tag="Dark" IsSelected="True"/>
-                                <ComboBoxItem Content="Light" Tag="Light"/>
-                                <ComboBoxItem Content="System" Tag="System"/>
+                                <ComboBoxItem Content="Dark"     Tag="Dark"     IsSelected="True"/>
+                                <ComboBoxItem Content="Light"    Tag="Light"/>
+                                <ComboBoxItem Content="Titanium" Tag="Titanium"/>
+                                <ComboBoxItem Content="System"   Tag="System"/>
                             </ComboBox>
                         </Grid>
                     </Border>

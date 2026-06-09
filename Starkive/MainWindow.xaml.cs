@@ -103,9 +103,10 @@ public partial class MainWindow : Window
         _suppressThemeChange = true;
         ThemeComboBox.SelectedIndex = _settings.Theme switch
         {
-            "Light"  => 1,
-            "System" => 2,
-            _        => 0,   // Dark
+            "Light"    => 1,
+            "Titanium" => 2,
+            "System"   => 3,
+            _          => 0,   // Dark (default)
         };
         _suppressThemeChange = false;
         ApplyTheme(_settings.Theme);
@@ -1340,50 +1341,124 @@ public partial class MainWindow : Window
     {
         // Resolve "System" to the OS preference
         if (theme == "System")
+            theme = IsOsDarkMode() ? "Dark" : "Light";
+
+        switch (theme)
         {
-            bool osDark = IsOsDarkMode();
-            theme = osDark ? "Dark" : "Light";
+            case "Light":    ApplyLightTheme();    break;
+            case "Titanium": ApplyTitaniumTheme(); break;
+            default:         ApplyDarkTheme();     break;  // "Dark" + fallback
         }
+    }
 
-        bool light = theme == "Light";
+    // ── Dark  ─────────────────────────────────────────────────────────────────
+    // Deep blue-black palette. The app's signature look.
+    private void ApplyDarkTheme()
+    {
+        SetBrush("BgSurfaceBrush",       "#0D111A");
+        SetBrush("BgPrimaryBrush",       "#14171E");
+        SetBrush("BgCardBrush",          "#1A1D26");
+        SetBrush("BgHoverBrush",         "#1F2230");
+        SetBrush("BgElevatedBrush",      "#222636");
+        SetBrush("BgInputBrush",         "#0D111A");
+        SetBrush("LogoMarkBgBrush",      "#0A0E1A");
+        SetBrush("NavActiveBgBrush",     "#1A4ED8");
+        SetBrush("NavActiveBorderBrush", "Transparent");
+        SetBrush("BorderBrush",          "#252A38");
+        SetBrush("BorderSubtleBrush",    "#1A1F2C");
+        SetBrush("TextPrimaryBrush",     "#E8EAED");
+        SetBrush("TextSecondaryBrush",   "#8892A4");
+        SetBrush("TextMutedBrush",       "#4A5568");
+        SetBrush("TextLabelBrush",       "#3D4A5C");
+        SetBrush("AccentDimBrush",       "#162044");
+        SetBrush("AccentGlowBrush",      "#1F2563EB");
+        SetBrush("IconBgBlueBrush",      "#0C1F50");
+        SetBrush("IconBgGreenBrush",     "#0A2018");
+        SetBrush("IconBgPurpleBrush",    "#1A0D3A");
+        SetBrush("IconBgAmberBrush",     "#1A1408");
+        SetBrush("BannerSuccessBgBrush", "#0A2018");
+        SetBrush("BannerWarnBgBrush",    "#1A0E0A");
+        SetBrush("BannerInfoBgBrush",    "#0A1E42");
+        SetBrush("GoProBgBrush",         "#1A0D3A");
+        SetBrush("GoProBorderBrush",     "#40C084FC");
+        SetGradient("HeroGradientBrush", "#0F1729", "#14171E");
+        SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
+        SetGradient("AccentGradientBrush","#3B82F6","#2563EB");
+    }
 
-        // ── Background layers (GlideX-inspired neutral dark palette) ──
-        SetBrush("BgSurfaceBrush",        light ? "#FFFFFF" : "#0D111A"); // sidebar
-        SetBrush("BgPrimaryBrush",        light ? "#F1F5F9" : "#14171E"); // content
-        SetBrush("BgCardBrush",           light ? "#F8FAFC" : "#1A1D26");
-        SetBrush("BgHoverBrush",          light ? "#E2E8F0" : "#1F2230");
-        SetBrush("BgElevatedBrush",       light ? "#EBF0F7" : "#222636");
-        SetBrush("BgInputBrush",          light ? "#FFFFFF" : "#0D111A"); // text/password boxes
-        SetBrush("LogoMarkBgBrush",       light ? "#EEF2FF" : "#0A0E1A"); // sidebar logo bg
-        // ── Nav active: solid blue pill in dark (GlideX), tinted bg in light ──
-        SetBrush("NavActiveBgBrush",      light ? "#EFF6FF" : "#1A56DB");
-        SetBrush("NavActiveBorderBrush",  light ? "#BFDBFE" : "Transparent");
-        // ── Borders ──
-        SetBrush("BorderBrush",           light ? "#CBD5E1" : "#252A38");
-        SetBrush("BorderSubtleBrush",     light ? "#E2E8F0" : "#1A1F2C");
-        // ── Text ──
-        SetBrush("TextPrimaryBrush",      light ? "#0F172A" : "#E8EAED");
-        SetBrush("TextSecondaryBrush",    light ? "#475569" : "#8892A4");
-        SetBrush("TextMutedBrush",        light ? "#94A3B8" : "#4A5568");
-        SetBrush("TextLabelBrush",        light ? "#64748B" : "#3D4A5C");
-        // ── Accent dims ──
-        SetBrush("AccentDimBrush",        light ? "#DBEAFE" : "#162044");
-        SetBrush("AccentGlowBrush",       light ? "#401A56DB" : "#1F1A56DB");
+    // ── Light  ────────────────────────────────────────────────────────────────
+    // Clean neutral whites with crisp blue accents. Legible, minimal.
+    private void ApplyLightTheme()
+    {
+        SetBrush("BgSurfaceBrush",       "#F8F9FB");  // sidebar: soft cool white
+        SetBrush("BgPrimaryBrush",       "#ECEEF2");  // content: slightly darker for depth
+        SetBrush("BgCardBrush",          "#FFFFFF");  // cards pop white
+        SetBrush("BgHoverBrush",         "#E4E7ED");
+        SetBrush("BgElevatedBrush",      "#F0F2F6");
+        SetBrush("BgInputBrush",         "#FFFFFF");
+        SetBrush("LogoMarkBgBrush",      "#EEF2FF");
+        SetBrush("NavActiveBgBrush",     "#2563EB");  // solid blue pill — same as dark
+        SetBrush("NavActiveBorderBrush", "Transparent");
+        SetBrush("BorderBrush",          "#D0D5DF");
+        SetBrush("BorderSubtleBrush",    "#E4E7ED");
+        SetBrush("TextPrimaryBrush",     "#0F172A");
+        SetBrush("TextSecondaryBrush",   "#4B5675");
+        SetBrush("TextMutedBrush",       "#8A93A8");
+        SetBrush("TextLabelBrush",       "#64748B");
+        SetBrush("AccentDimBrush",       "#DBEAFE");
+        SetBrush("AccentGlowBrush",      "#302563EB");
+        SetBrush("IconBgBlueBrush",      "#DBEAFE");
+        SetBrush("IconBgGreenBrush",     "#DCFCE7");
+        SetBrush("IconBgPurpleBrush",    "#F3E8FF");
+        SetBrush("IconBgAmberBrush",     "#FEF3C7");
+        SetBrush("BannerSuccessBgBrush", "#F0FDF4");
+        SetBrush("BannerWarnBgBrush",    "#FFF7ED");
+        SetBrush("BannerInfoBgBrush",    "#EFF6FF");
+        SetBrush("GoProBgBrush",         "#FAF5FF");
+        SetBrush("GoProBorderBrush",     "#C084FC");
+        // Hero gradient: soft indigo wash (readable over white content)
+        SetGradient("HeroGradientBrush", "#EEF2FF", "#ECEEF2");
+        // Pro gradient: vivid purple — stays strong on light bg
+        SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
+        SetGradient("AccentGradientBrush","#3B82F6","#2563EB");
+    }
 
-        // ── Quick-action card icon tile backgrounds ──
-        SetBrush("IconBgBlueBrush",       light ? "#DBEAFE" : "#0C1F50");
-        SetBrush("IconBgGreenBrush",      light ? "#DCFCE7" : "#0A2018");
-        SetBrush("IconBgPurpleBrush",     light ? "#F3E8FF" : "#1A0D3A");
-        SetBrush("IconBgAmberBrush",      light ? "#FEF3C7" : "#1A1408");
-
-        // ── Tinted banner / callout backgrounds ──
-        SetBrush("BannerSuccessBgBrush",  light ? "#F0FDF4" : "#0A2018");
-        SetBrush("BannerWarnBgBrush",     light ? "#FFF7ED" : "#1A0E0A");
-        SetBrush("BannerInfoBgBrush",     light ? "#EFF6FF" : "#0A1E42");
-
-        // ── Go Pro sidebar button ──
-        SetBrush("GoProBgBrush",          light ? "#FAF5FF" : "#1A0D3A");
-        SetBrush("GoProBorderBrush",      light ? "#D8B4FE" : "#40C084FC");
+    // ── Titanium (Antares) ────────────────────────────────────────────────────
+    // Antares is an M-supergiant blazing with titanium-oxide bands in its spectrum.
+    // Palette: warm charcoal — the colour of brushed titanium in shadow.
+    // Not dark, not light — a third temperature, like the star itself.
+    private void ApplyTitaniumTheme()
+    {
+        SetBrush("BgSurfaceBrush",       "#26231F");  // sidebar: deep warm charcoal
+        SetBrush("BgPrimaryBrush",       "#302D29");  // content: lifted warm dark
+        SetBrush("BgCardBrush",          "#3C3935");  // cards: warm mid-tone
+        SetBrush("BgHoverBrush",         "#47443F");
+        SetBrush("BgElevatedBrush",      "#4E4B46");
+        SetBrush("BgInputBrush",         "#26231F");
+        SetBrush("LogoMarkBgBrush",      "#1E1B18");
+        SetBrush("NavActiveBgBrush",     "#1A4ED8");  // blue pill — pops on warm bg
+        SetBrush("NavActiveBorderBrush", "Transparent");
+        SetBrush("BorderBrush",          "#5A5752");  // warm medium border
+        SetBrush("BorderSubtleBrush",    "#4A4744");
+        SetBrush("TextPrimaryBrush",     "#F2EFE8");  // warm off-white
+        SetBrush("TextSecondaryBrush",   "#A89F96");  // warm medium tan
+        SetBrush("TextMutedBrush",       "#706A64");  // warm muted
+        SetBrush("TextLabelBrush",       "#605A55");
+        SetBrush("AccentDimBrush",       "#1A2E50");
+        SetBrush("AccentGlowBrush",      "#282563EB");
+        SetBrush("IconBgBlueBrush",      "#1A2840");
+        SetBrush("IconBgGreenBrush",     "#0E2218");
+        SetBrush("IconBgPurpleBrush",    "#201030");
+        SetBrush("IconBgAmberBrush",     "#2A1E0A");  // warm amber tile
+        SetBrush("BannerSuccessBgBrush", "#0E1E14");
+        SetBrush("BannerWarnBgBrush",    "#201608");
+        SetBrush("BannerInfoBgBrush",    "#0E1E38");
+        SetBrush("GoProBgBrush",         "#2A1E38");
+        SetBrush("GoProBorderBrush",     "#7040B0");
+        // Hero gradient: warm ember glow — like Antares itself
+        SetGradient("HeroGradientBrush", "#2C2018", "#302D29");
+        SetGradient("ProGradientBrush",  "#C2773A", "#A0521C");  // amber-bronze Pro
+        SetGradient("AccentGradientBrush","#3B82F6","#2563EB");
     }
 
     private void SetBrush(string key, string hex)
@@ -1393,6 +1468,25 @@ public partial class MainWindow : Window
             brush.Color = color;
         else
             Application.Current.Resources[key] = new SolidColorBrush(color);
+    }
+
+    /// <summary>Replaces a LinearGradientBrush resource. Hero = top→bottom (0,0→0,1); others = diagonal (0,0→1,1).</summary>
+    private void SetGradient(string key, string hexStart, string hexEnd)
+    {
+        var c0 = (Color)ColorConverter.ConvertFromString(hexStart);
+        var c1 = (Color)ColorConverter.ConvertFromString(hexEnd);
+        bool vertical = key == "HeroGradientBrush";
+        var grad = new LinearGradientBrush
+        {
+            StartPoint = new System.Windows.Point(0, 0),
+            EndPoint   = vertical ? new System.Windows.Point(0, 1) : new System.Windows.Point(1, 1),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(c0, 0.0),
+                new GradientStop(c1, 1.0),
+            }
+        };
+        Application.Current.Resources[key] = grad;
     }
 
     private static bool IsOsDarkMode()
