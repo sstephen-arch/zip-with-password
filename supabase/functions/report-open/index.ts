@@ -193,7 +193,7 @@ Deno.serve(async (req: Request) => {
     // Queue for async retry: write a pending_notifications record
     console.error(`[report-open] All email attempts failed for audit_id=${auditId ?? "null"}, queuing for retry`);
     try {
-      await supabase.from("pending_notifications").insert({
+      const { error: qInsErr } = await supabase.from("pending_notifications").insert({
         audit_event_id: auditId,
         owner_email:    ownerEmail,
         subject:        emailSubject,
@@ -203,6 +203,7 @@ Deno.serve(async (req: Request) => {
         created_at:     now,
         attempts:       delays.length,
       });
+      if (qInsErr) console.error("[report-open] pending_notifications insert error:", JSON.stringify(qInsErr));
     } catch (qErr) {
       console.error("[report-open] Failed to queue pending notification:", qErr);
     }
