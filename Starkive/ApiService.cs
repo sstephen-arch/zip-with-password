@@ -181,22 +181,20 @@ internal static class ApiService
 
     // ── Version check ─────────────────────────────────────────────────────────
 
-    // ── GitHub release check ──────────────────────────────────────────────────
-    // Hits the GitHub Releases API — no edge function required.
-    // Returns the latest semver string (e.g. "1.4.0"), or null on any failure.
+    // ── Version check (Supabase edge function) ───────────────────────────────
+    // Uses our own /functions/v1/version endpoint so the check works regardless
+    // of whether the GitHub repo is public or private.
+    // To ship an update: bump CURRENT_VERSION in supabase/functions/version/index.ts
+    // and redeploy — the app will show the banner on next launch.
 
     internal static async Task<(string? Version, string? HtmlUrl)> GetLatestReleaseAsync()
     {
-        const string url = "https://api.github.com/repos/sstephen-arch/zip-with-password/releases/latest";
+        const string url = AppConstants.SupabaseUrl + "/functions/v1/version";
         try
         {
-            // GitHub API requires a User-Agent header (already set on _http via BuildClient)
-            var resp = await _http.GetFromJsonAsync<GitHubReleaseResponse>(url);
+            var resp = await _http.GetFromJsonAsync<VersionEndpointResponse>(url);
             if (resp is null) return (null, null);
-
-            // tag_name is "v1.3.0" — strip the leading 'v' for version comparison
-            string version = resp.TagName?.TrimStart('v') ?? "";
-            return (version, resp.HtmlUrl);
+            return (resp.Version?.TrimStart('v'), resp.Url);
         }
         catch { return (null, null); }
     }
@@ -229,10 +227,9 @@ internal sealed class SszFileRecord
     [JsonPropertyName("star_name")]         public string? StarName       { get; init; }
 }
 
-// GitHub Releases API minimal shape
-internal sealed class GitHubReleaseResponse
+// Supabase /functions/v1/version response shape
+internal sealed class VersionEndpointResponse
 {
-    [JsonPropertyName("tag_name")] public string? TagName  { get; init; }
-    [JsonPropertyName("html_url")] public string? HtmlUrl  { get; init; }
-    [JsonPropertyName("name")]     public string? Name     { get; init; }
+    [JsonPropertyName("version")] public string? Version { get; init; }
+    [JsonPropertyName("url")]     public string? Url     { get; init; }
 }
