@@ -79,6 +79,7 @@ public partial class MainWindow : Window
                 SetZipSource(sourcePath);
         }
 
+        VersionText.Text = $"v{AppConstants.AppVersion}";
         ShowSection("Home");
         SetPasswordMode("Password");
         SelectSegment(BtnModePassword, new[] { BtnModePassword, BtnModePassphrase });
