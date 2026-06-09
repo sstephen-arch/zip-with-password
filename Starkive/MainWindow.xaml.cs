@@ -1567,6 +1567,11 @@ public partial class MainWindow : Window
         // Settings page — swap upgrade card ↔ active badge
         ProUpgradeCard.Visibility = isPro ? Visibility.Collapsed : Visibility.Visible;
         ProActiveCard.Visibility  = isPro ? Visibility.Visible   : Visibility.Collapsed;
+
+        // Home page — hide upsell strip, show Pro-active ribbon; hide PRO badge on card
+        HomeProUpsellStrip.Visibility  = isPro ? Visibility.Collapsed : Visibility.Visible;
+        HomeProActiveStrip.Visibility  = isPro ? Visibility.Visible   : Visibility.Collapsed;
+        HomeCardProBadge.Visibility    = isPro ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)

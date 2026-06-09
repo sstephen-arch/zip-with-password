@@ -427,51 +427,53 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Card 3: Secure Container (Pro) — gradient border -->
-                            <Border Margin="0,6,6,0" CornerRadius="12"
-                                    Background="#120D2A" Padding="1"
+                            <!-- Card 3: Secure Container (Pro) -->
+                            <Border x:Name="HomeCardSecureContainer"
+                                    Margin="0,6,6,0" CornerRadius="12"
+                                    Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="#5B21B6" BorderThickness="1"
                                     Cursor="Hand" MouseLeftButtonUp="HomeCardPro_Click">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#7C3AED" BlurRadius="16" Opacity="0.25" ShadowDepth="0"/>
+                                    <DropShadowEffect Color="#7C3AED" BlurRadius="14" Opacity="0.2" ShadowDepth="0"/>
                                 </Border.Effect>
-                                <Border CornerRadius="11" Background="#150F2A">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#1C1340"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Grid Margin="16,14">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Width="38" Height="38"
-                                                CornerRadius="10" Background="#1E0A45">
-                                            <TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="17" Foreground="#C084FC"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <StackPanel Grid.Column="1" Margin="13,0,0,0" VerticalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                                                <TextBlock Text="Secure Container" FontSize="13" FontWeight="SemiBold"
-                                                           Foreground="#E9D5FF"/>
-                                                <Border Margin="8,0,0,0" CornerRadius="4" Padding="5,1"
-                                                        Background="#2A1060">
-                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#A855F7"/>
-                                                </Border>
-                                            </StackPanel>
-                                            <TextBlock Text="Know when your file is opened" FontSize="11"
-                                                       Foreground="#8B5CF6"/>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource BgHoverBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid Margin="16,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="38" Height="38"
+                                            CornerRadius="10" Background="{DynamicResource IconBgPurpleBrush}">
+                                        <TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="17" Foreground="#C084FC"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="13,0,0,0" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                            <TextBlock Text="Secure Container" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <Border x:Name="HomeCardProBadge"
+                                                    Margin="8,0,0,0" CornerRadius="4" Padding="5,1"
+                                                    Background="#2A1060">
+                                                <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#A855F7"/>
+                                            </Border>
                                         </StackPanel>
-                                        <TextBlock Grid.Column="2" Text="›" FontSize="18"
-                                                   Foreground="#A855F7" VerticalAlignment="Center" Opacity="0.7"/>
-                                    </Grid>
-                                </Border>
+                                        <TextBlock Text="Know when your file is opened" FontSize="11"
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="›" FontSize="18"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center" Opacity="0.5"/>
+                                </Grid>
                             </Border>
 
                             <!-- Card 4: History -->
@@ -518,103 +520,148 @@
                             </Border>
                         </UniformGrid>
 
-                        <!-- Pro upsell strip -->
-                        <Border CornerRadius="12" Margin="0,0,0,16" Padding="1"
-                                Background="#0A0618">
+                        <!-- Pro upsell strip — hidden for Pro users -->
+                        <Border x:Name="HomeProUpsellStrip"
+                                CornerRadius="12" Margin="0,0,0,16"
+                                BorderBrush="#3B1D72" BorderThickness="1"
+                                Background="{DynamicResource BgCardBrush}">
                             <Border.Effect>
-                                <DropShadowEffect Color="#7C3AED" BlurRadius="20" Opacity="0.2" ShadowDepth="0"/>
+                                <DropShadowEffect Color="#7C3AED" BlurRadius="14" Opacity="0.15" ShadowDepth="0"/>
                             </Border.Effect>
-                            <Border CornerRadius="11" Padding="18,14">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#0F0926" Offset="0"/>
-                                        <GradientStop Color="#0D1117" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                            <Border CornerRadius="4" Padding="6,2" Background="#2A1060" Margin="0,0,8,0">
-                                                <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#A855F7"/>
-                                            </Border>
-                                            <TextBlock Text="Unlock the full Starkive experience" FontSize="13" FontWeight="SemiBold" Foreground="#E9D5FF" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
-                                            <TextBlock Text="Open tracking + email alerts" Foreground="#9CA3AF" FontSize="11" Margin="0,0,16,0"/>
-                                            <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
-                                            <TextBlock Text="Cloud backup" Foreground="#9CA3AF" FontSize="11" Margin="0,0,16,0"/>
-                                            <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
-                                            <TextBlock Text="SSZ sharing" Foreground="#9CA3AF" FontSize="11"/>
-                                        </StackPanel>
+                            <Grid Margin="18,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <Border CornerRadius="4" Padding="6,2" Background="#2A1060" Margin="0,0,8,0">
+                                            <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#A855F7"/>
+                                        </Border>
+                                        <TextBlock Text="Unlock the full Starkive experience" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1" Content="Upgrade →"
-                                            VerticalAlignment="Center" Margin="16,0,0,0"
-                                            Padding="16,8" FontSize="12" FontWeight="SemiBold"
-                                            Cursor="Hand"
-                                            Click="HomeCardPro_Click">
-                                        <Button.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#7C3AED" Offset="0"/>
-                                                <GradientStop Color="#A855F7" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Button.Background>
-                                        <Button.Foreground>
-                                            <SolidColorBrush Color="White"/>
-                                        </Button.Foreground>
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </Grid>
-                            </Border>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Open tracking + email alerts" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,16,0"/>
+                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Cloud backup" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,16,0"/>
+                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="SSZ sharing" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Upgrade →"
+                                        VerticalAlignment="Center" Margin="16,0,0,0"
+                                        Padding="16,8" FontSize="12" FontWeight="SemiBold"
+                                        Cursor="Hand"
+                                        Click="HomeCardPro_Click">
+                                    <Button.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#7C3AED" Offset="0"/>
+                                            <GradientStop Color="#A855F7" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Button.Background>
+                                    <Button.Foreground>
+                                        <SolidColorBrush Color="White"/>
+                                    </Button.Foreground>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Pro Active ribbon — shown only for Pro subscribers -->
+                        <Border x:Name="HomeProActiveStrip"
+                                CornerRadius="12" Margin="0,0,0,16"
+                                BorderBrush="#166534" BorderThickness="1"
+                                Background="{DynamicResource BgCardBrush}"
+                                Visibility="Collapsed">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#16A34A" BlurRadius="12" Opacity="0.12" ShadowDepth="0"/>
+                            </Border.Effect>
+                            <Grid Margin="18,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Green glow icon -->
+                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8"
+                                        Background="#0F2A1A" Margin="0,0,14,0">
+                                    <TextBlock Text="✦" FontSize="15" Foreground="#22C55E"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Starkive Pro — Active" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="#4ADE80" Margin="0,0,0,3"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="✓ Secure Container" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,14,0"/>
+                                        <TextBlock Text="✓ Open notifications" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,14,0"/>
+                                        <TextBlock Text="✓ Cloud sync" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Border Grid.Column="2" CornerRadius="6" Padding="10,5"
+                                        Background="#0F2A1A" Margin="16,0,0,0"
+                                        Cursor="Hand" MouseLeftButtonUp="GoProBtn_Click">
+                                    <TextBlock Text="Manage →" FontSize="11" FontWeight="Medium"
+                                               Foreground="#4ADE80"/>
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <!-- Drop zone (secondary) -->
-                        <Grid Margin="0,0,0,16" MinHeight="56">
-                            <Rectangle Stroke="{DynamicResource BorderBrush}"
-                                       StrokeThickness="1.5" StrokeDashArray="4 3"
+                        <Grid Margin="0,0,0,16" MinHeight="64">
+                            <Rectangle x:Name="HomeDropRect"
+                                       Stroke="#2563EB"
+                                       StrokeThickness="1.5" StrokeDashArray="5 4"
                                        RadiusX="10" RadiusY="10"
-                                       x:Name="HomeDropRect"
+                                       Opacity="0.35"
                                        IsHitTestVisible="False"/>
                             <Border x:Name="HomeDropZone" CornerRadius="10"
-                                    Background="Transparent" Cursor="Hand"
-                                    AllowDrop="True" MinHeight="56"
+                                    Background="{DynamicResource BgCardBrush}"
+                                    Cursor="Hand" AllowDrop="True" MinHeight="64"
                                     Drop="HomeDropZone_Drop"
                                     DragOver="DropZone_DragOver"
                                     DragEnter="HomeDropZone_DragEnter"
-                                    DragLeave="HomeDropZone_DragLeave">
+                                    DragLeave="HomeDropZone_DragLeave"
+                                    Opacity="0.7">
                                 <StackPanel Orientation="Horizontal"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            Margin="0,14">
-                                    <!-- Upload arrow icon -->
-                                    <Canvas Width="24" Height="24" VerticalAlignment="Center">
-                                        <Line X1="12" Y1="20" X2="12" Y2="6"
-                                              Stroke="#1A56DB" StrokeThickness="1.8"
-                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                        <Polyline Points="7,11 12,6 17,11"
-                                                  Stroke="#1A56DB" StrokeThickness="1.8"
-                                                  StrokeLineJoin="Round" StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round" Fill="Transparent"/>
-                                        <Line X1="5" Y1="20" X2="19" Y2="20"
-                                              Stroke="#1A56DB" StrokeThickness="1.8"
-                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Opacity="0.4"/>
-                                    </Canvas>
-                                    <TextBlock Text="Drop any file here to compress"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextMutedBrush}"
-                                               Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            Margin="0,18">
+                                    <Border Width="28" Height="28" CornerRadius="6"
+                                            Background="{DynamicResource IconBgBlueBrush}"
+                                            VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <Canvas Width="16" Height="16"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Line X1="8" Y1="13" X2="8" Y2="3"
+                                                  Stroke="#3B82F6" StrokeThickness="1.6"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                            <Polyline Points="4,7 8,3 12,7"
+                                                      Stroke="#3B82F6" StrokeThickness="1.6"
+                                                      StrokeLineJoin="Round" StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round" Fill="Transparent"/>
+                                            <Line X1="2" Y1="14" X2="14" Y2="14"
+                                                  Stroke="#3B82F6" StrokeThickness="1.4"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  Opacity="0.5"/>
+                                        </Canvas>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Drop any file here to compress"
+                                                   FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="or click Zip &amp; Encrypt to browse"
+                                                   FontSize="10.5"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </Grid>
