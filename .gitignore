@@ -14,6 +14,7 @@ packaging/
 *.env
 .env.*
 appsettings.*.json
+Starkive/Secrets.cs
 
 # Installer binaries (generated)
 Installer/dialog.bmp
