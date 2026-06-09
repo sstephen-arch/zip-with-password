@@ -109,8 +109,8 @@ internal static class SszHelper
 
         ct.ThrowIfCancellationRequested();
 
-        // Phone-home: fire-and-forget, never blocks opening.
-        _ = ApiService.ReportOpenAsync(fileToken, starName, Path.GetFileName(sszPath));
+        // NOTE: ReportOpenAsync is called by the UI layer after this returns,
+        // so the caller can display the creator identity from the response.
 
         progress?.Report((10, "Decrypting..."));
         ZipHelper.ExtractEncryptedZipFromBytes(payload, outputFolder, password, progress, ct);
