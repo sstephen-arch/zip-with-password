@@ -19,7 +19,7 @@ internal static class AppConstants
     //   Platform: Mobile and desktop → Redirect URI: http://localhost:7839/oauth/callback
     //   API permissions: Files.ReadWrite.AppFolder, User.Read, offline_access
     //
-    internal const string GoogleDriveClientId     = ""; // e.g. "123456.apps.googleusercontent.com"
-    internal const string GoogleDriveClientSecret = ""; // from Google Cloud Console (desktop apps need this)
-    internal const string OneDriveClientId        = ""; // e.g. "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    internal const string GoogleDriveClientId     = "670041068289-mnnkn4vskk0a4ta8jkbm55t7mm4m88p1.apps.googleusercontent.com";
+    internal const string GoogleDriveClientSecret = "REDACTED_ROTATE_THIS_SECRET";
+    internal const string OneDriveClientId        = "fd991f87-b72a-4c82-92f8-d725fa4dd804";
 }
