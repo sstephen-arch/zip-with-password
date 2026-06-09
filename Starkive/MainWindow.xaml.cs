@@ -1276,14 +1276,23 @@ public partial class MainWindow : Window
 
     private void RefreshVaultSection()
     {
-        var entries     = SavedPasswordStore.GetAll();
-        bool hasCloud   = CloudBackup.VaultSyncManager.ConnectedProviders.Any();
-        string cloudLabel = CloudBackup.VaultSyncManager.ConnectedProviders
-            .Select(p => p.ProviderName).FirstOrDefault() ?? "";
+        var entries = SavedPasswordStore.GetAll();
 
+        // Badge is driven by the entry's own CloudProvider field — not by whether
+        // a drive happens to be connected right now.
         _vaultVMs = entries
-            .Select(e => new VaultEntryViewModel(e, hasCloud, cloudLabel))
+            .Select(e =>
+            {
+                bool   isCloud    = !string.IsNullOrEmpty(e.CloudProvider);
+                string cloudLabel = e.CloudProvider ?? "";
+                return new VaultEntryViewModel(e, isCloud, cloudLabel);
+            })
             .ToList();
+
+        // Header sync badge: only show if at least one connected provider exists
+        bool hasCloud     = CloudBackup.VaultSyncManager.ConnectedProviders.Any();
+        string syncLabel  = CloudBackup.VaultSyncManager.ConnectedProviders
+            .Select(p => p.ProviderName).FirstOrDefault() ?? "";
 
         VaultList.ItemsSource    = _vaultVMs;
         VaultEmptyState.Visibility = _vaultVMs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -1306,7 +1315,7 @@ public partial class MainWindow : Window
             VaultSyncBadge.SetValue(Border.BorderThicknessProperty, new Thickness(1));
             VaultSyncIcon.Text      = "";  // cloud icon
             VaultSyncIcon.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
-            VaultSyncLabel.Text     = $"Synced · {cloudLabel}";
+            VaultSyncLabel.Text     = $"Synced · {syncLabel}";
             VaultSyncLabel.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0xDE, 0x80));
         }
         else
