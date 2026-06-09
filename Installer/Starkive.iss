@@ -1,10 +1,10 @@
 ; ─────────────────────────────────────────────────────────────────────────────
 ;  Starkive  –  Inno Setup script
-;  Produces: Starkive-Setup-1.2.0.exe
+;  Produces: Starkive-Setup-1.3.0.exe
 ; ─────────────────────────────────────────────────────────────────────────────
 
 #define AppName      "Starkive"
-#define AppVersion   "1.2.0"
+#define AppVersion   "1.3.0"
 #define AppPublisher "DePaolo Consulting LLC"
 #define AppURL       "https://starkive.app"
 #define AppExeName   "Starkive.exe"
