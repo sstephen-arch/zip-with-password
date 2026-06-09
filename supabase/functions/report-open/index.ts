@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { PDFDocument, rgb, StandardFonts } from "npm:pdf-lib@1.17.1";
 
 // ── Environment ───────────────────────────────────────────────────────────────
 const SUPABASE_URL     = Deno.env.get("SUPABASE_URL")!;
@@ -141,10 +141,11 @@ Deno.serve(async (req: Request) => {
 </div>`;
 
   // ── 9. Send email via Resend (3 attempts with backoff) ───────────────────
+  const emailSubject = `[Starkive] ${resolvedStar} - "${resolvedFile}" was opened`;
   const emailPayload: Record<string, unknown> = {
     from:    `Starkive <${FROM_EMAIL}>`,
     to:      [ownerEmail],
-    subject: `[Starkive] ${resolvedStar} - "${resolvedFile}" was opened`,
+    subject: emailSubject,
     html,
   };
   if (pdfBase64) {
@@ -195,7 +196,7 @@ Deno.serve(async (req: Request) => {
       await supabase.from("pending_notifications").insert({
         audit_event_id: auditId,
         owner_email:    ownerEmail,
-        subject:        emailPayload.subject,
+        subject:        emailSubject,
         html_body:      html,
         pdf_base64:     pdfBase64,
         pdf_filename:   pdfBase64 ? `Starkive_${resolvedStar}_Certificate.pdf` : null,
