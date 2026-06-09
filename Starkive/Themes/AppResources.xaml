@@ -51,6 +51,21 @@
         <SolidColorBrush x:Key="ProBrush"    Color="#C084FC"/>
         <SolidColorBrush x:Key="ProDimBrush" Color="#1AC084FC"/>
 
+        <!-- ── Icon tile backgrounds (quick-action cards) ── -->
+        <SolidColorBrush x:Key="IconBgBlueBrush"   Color="#0C1F50"/>
+        <SolidColorBrush x:Key="IconBgGreenBrush"  Color="#0A2018"/>
+        <SolidColorBrush x:Key="IconBgPurpleBrush" Color="#1A0D3A"/>
+        <SolidColorBrush x:Key="IconBgAmberBrush"  Color="#1A1408"/>
+
+        <!-- ── Tinted banner / callout backgrounds ── -->
+        <SolidColorBrush x:Key="BannerSuccessBgBrush" Color="#0A2018"/>
+        <SolidColorBrush x:Key="BannerWarnBgBrush"    Color="#1A0E0A"/>
+        <SolidColorBrush x:Key="BannerInfoBgBrush"    Color="#0A1E42"/>
+
+        <!-- ── Go Pro sidebar button ── -->
+        <SolidColorBrush x:Key="GoProBgBrush"     Color="#1A0D3A"/>
+        <SolidColorBrush x:Key="GoProBorderBrush" Color="#40C084FC"/>
+
         <!-- ── TextBox ── uses DynamicResource so light mode works ── -->
         <Style x:Key="DarkTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background"               Value="{DynamicResource BgInputBrush}"/>

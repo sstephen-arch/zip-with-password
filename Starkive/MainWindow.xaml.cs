@@ -987,6 +987,21 @@ public partial class MainWindow : Window
         // ── Accent dims ──
         SetBrush("AccentDimBrush",        light ? "#DBEAFE" : "#162044");
         SetBrush("AccentGlowBrush",       light ? "#401A56DB" : "#1F1A56DB");
+
+        // ── Quick-action card icon tile backgrounds ──
+        SetBrush("IconBgBlueBrush",       light ? "#DBEAFE" : "#0C1F50");
+        SetBrush("IconBgGreenBrush",      light ? "#DCFCE7" : "#0A2018");
+        SetBrush("IconBgPurpleBrush",     light ? "#F3E8FF" : "#1A0D3A");
+        SetBrush("IconBgAmberBrush",      light ? "#FEF3C7" : "#1A1408");
+
+        // ── Tinted banner / callout backgrounds ──
+        SetBrush("BannerSuccessBgBrush",  light ? "#F0FDF4" : "#0A2018");
+        SetBrush("BannerWarnBgBrush",     light ? "#FFF7ED" : "#1A0E0A");
+        SetBrush("BannerInfoBgBrush",     light ? "#EFF6FF" : "#0A1E42");
+
+        // ── Go Pro sidebar button ──
+        SetBrush("GoProBgBrush",          light ? "#FAF5FF" : "#1A0D3A");
+        SetBrush("GoProBorderBrush",      light ? "#D8B4FE" : "#40C084FC");
     }
 
     private void SetBrush(string key, string hex)
