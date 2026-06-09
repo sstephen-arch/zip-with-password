@@ -826,6 +826,23 @@ public partial class MainWindow : Window
                     : "ZIP created successfully.";
             }
             ZipSuccessBanner.Visibility = Visibility.Visible;
+
+            // Show cloud upload options if an SSZ was just created and a drive is connected
+            CloudUploadPanel.Visibility       = Visibility.Collapsed;
+            CloudUploadResultPanel.Visibility = Visibility.Collapsed;
+            CopyCloudLinkBtn.Visibility       = Visibility.Collapsed;
+            _lastCreatedSszPath               = _isSszMode ? output : null;
+
+            if (_isSszMode && _lastCreatedSszPath != null)
+            {
+                var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+                var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+                UploadGDriveBtn.IsEnabled   = gdrive.IsConnected;
+                UploadOneDriveBtn.IsEnabled = onedrive.IsConnected;
+                if (gdrive.IsConnected || onedrive.IsConnected)
+                    CloudUploadPanel.Visibility = Visibility.Visible;
+            }
+
             bool saveChecked = (_pwdMode == "Passphrase")
                 ? ChkSavePassphrase.IsChecked == true
                 : ChkSavePassword.IsChecked == true;
@@ -833,6 +850,55 @@ public partial class MainWindow : Window
                 SavedPasswordStore.Save(output, password);
         }
         else ShowZipError($"Error: {errMsg}");
+    }
+
+    private string? _lastCreatedSszPath;
+    private string? _lastCloudLink;
+
+    private async void UploadGDriveBtn_Click(object sender, RoutedEventArgs e)
+        => await UploadSszToCloudAsync(CloudBackup.VaultSyncManager.Providers[0], "Google Drive");
+
+    private async void UploadOneDriveBtn_Click(object sender, RoutedEventArgs e)
+        => await UploadSszToCloudAsync(CloudBackup.VaultSyncManager.Providers[1], "OneDrive");
+
+    private async Task UploadSszToCloudAsync(CloudBackup.ICloudProvider provider, string name)
+    {
+        if (_lastCreatedSszPath == null) return;
+        UploadGDriveBtn.IsEnabled   = false;
+        UploadOneDriveBtn.IsEnabled = false;
+        CloudUploadResultPanel.Visibility = Visibility.Visible;
+        CloudUploadResultText.Text = $"Uploading to {name}…";
+        CopyCloudLinkBtn.Visibility = Visibility.Collapsed;
+
+        try
+        {
+            string? link = await provider.UploadSszAsync(_lastCreatedSszPath);
+            if (link != null)
+            {
+                _lastCloudLink = link;
+                CloudUploadResultText.Text = $"Uploaded to {name}. Share the link:";
+                CopyCloudLinkBtn.Visibility = Visibility.Visible;
+                AppLog.Write($"SSZ uploaded to {name}: {link}");
+            }
+            else
+            {
+                CloudUploadResultText.Text = $"Upload to {name} failed. Check log for details.";
+            }
+        }
+        catch (Exception ex)
+        {
+            CloudUploadResultText.Text = $"Upload error: {ex.Message}";
+            AppLog.Write($"SSZ upload to {name} exception: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private void CopyCloudLinkBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (_lastCloudLink != null)
+        {
+            Clipboard.SetText(_lastCloudLink);
+            CopyCloudLinkBtn.Content = "Copied!";
+        }
     }
 
     private void ShowZipError(string msg)

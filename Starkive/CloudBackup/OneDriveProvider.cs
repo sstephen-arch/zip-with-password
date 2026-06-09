@@ -26,7 +26,7 @@ internal sealed class OneDriveProvider : ICloudProvider
 
     private const string Authority     = "https://login.microsoftonline.com/consumers/oauth2/v2.0";
     private const string GraphBase     = "https://graph.microsoft.com/v1.0";
-    private const string Scope         = "Files.ReadWrite.AppFolder User.Read offline_access";
+    private const string Scope         = "Files.ReadWrite.AppFolder Files.ReadWrite User.Read offline_access";
     private const string BackupFileName = "StarkiveVault.enc";
 
     private static readonly string _tokenPath = Path.Combine(
@@ -99,6 +99,49 @@ internal sealed class OneDriveProvider : ICloudProvider
             AppLog.Write($"OneDrive upload failed: {(int)resp.StatusCode} — {err}");
             throw new IOException($"OneDrive upload failed: {(int)resp.StatusCode}");
         }
+    }
+
+    // ── Upload SSZ file (shareable) ───────────────────────────────────────────
+
+    public async Task<string?> UploadSszAsync(string filePath, CancellationToken ct = default)
+    {
+        await EnsureFreshTokenAsync(ct);
+        using var http = BuildClient();
+
+        string fileName  = Path.GetFileName(filePath);
+        byte[] fileBytes = await File.ReadAllBytesAsync(filePath, ct);
+
+        // PUT to /me/drive/root:/Starkive/{filename}:/content
+        var content = new ByteArrayContent(fileBytes);
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+
+        var putResp = await http.PutAsync(
+            $"{GraphBase}/me/drive/root:/Starkive/{Uri.EscapeDataString(fileName)}:/content",
+            content, ct);
+
+        if (!putResp.IsSuccessStatusCode)
+        {
+            string err = await putResp.Content.ReadAsStringAsync(ct);
+            AppLog.Write($"OneDrive SSZ upload failed: {(int)putResp.StatusCode} — {err}");
+            return null;
+        }
+
+        var item = await putResp.Content.ReadFromJsonAsync<GraphItem>(cancellationToken: ct);
+        if (item?.Id == null) return null;
+
+        // Create a shareable link (anyone with link can view)
+        var linkResp = await http.PostAsJsonAsync(
+            $"{GraphBase}/me/drive/items/{item.Id}/createLink",
+            new { type = "view", scope = "anonymous" }, ct);
+
+        if (!linkResp.IsSuccessStatusCode)
+        {
+            AppLog.Write($"OneDrive createLink failed: {(int)linkResp.StatusCode}");
+            return item.WebUrl; // fall back to direct URL
+        }
+
+        var linkData = await linkResp.Content.ReadFromJsonAsync<GraphShareLink>(cancellationToken: ct);
+        return linkData?.Link?.WebUrl ?? item.WebUrl;
     }
 
     // ── Download ──────────────────────────────────────────────────────────────
@@ -218,5 +261,21 @@ internal sealed class OneDriveProvider : ICloudProvider
         [JsonPropertyName("access_token")]  public string  AccessToken  { get; init; } = "";
         [JsonPropertyName("refresh_token")] public string? RefreshToken { get; init; }
         [JsonPropertyName("expires_in")]    public int     ExpiresIn    { get; init; } = 3600;
+    }
+
+    private sealed class GraphItem
+    {
+        [JsonPropertyName("id")]     public string? Id     { get; init; }
+        [JsonPropertyName("webUrl")] public string? WebUrl { get; init; }
+    }
+
+    private sealed class GraphShareLink
+    {
+        [JsonPropertyName("link")] public GraphLink? Link { get; init; }
+    }
+
+    private sealed class GraphLink
+    {
+        [JsonPropertyName("webUrl")] public string? WebUrl { get; init; }
     }
 }
