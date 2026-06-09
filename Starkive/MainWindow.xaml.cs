@@ -221,6 +221,7 @@ public partial class MainWindow : Window
         ZipSection.Visibility      = section == "Zip"      ? Visibility.Visible : Visibility.Collapsed;
         UnzipSection.Visibility    = section == "Unzip"    ? Visibility.Visible : Visibility.Collapsed;
         HistorySection.Visibility  = section == "History"  ? Visibility.Visible : Visibility.Collapsed;
+        VaultSection.Visibility    = section == "Vault"    ? Visibility.Visible : Visibility.Collapsed;
         SettingsSection.Visibility = section == "Settings" ? Visibility.Visible : Visibility.Collapsed;
 
         // Nav items + accent bars
@@ -231,6 +232,7 @@ public partial class MainWindow : Window
             (btn: NavUnzip,    accent: NavUnzipAccent,    tag: "Unzip"),
             (btn: NavHistory,  accent: NavHistoryAccent,  tag: "History"),
             (btn: NavSettings, accent: NavSettingsAccent, tag: "Settings"),
+            (btn: NavVault,    accent: NavVaultAccent,    tag: "Vault"),
         };
 
         var accentColor = (SolidColorBrush)FindResource("AccentBrush");
@@ -249,6 +251,7 @@ public partial class MainWindow : Window
         if (section == "History")  RefreshHistorySection();
         if (section == "Settings") RefreshSettingsSection();
         if (section == "Home")     RefreshHomeSection();
+        if (section == "Vault")    RefreshVaultSection();
     }
 
     // ─── Sidebar collapse/expand ─────────────────────────────────────────────
@@ -284,6 +287,7 @@ public partial class MainWindow : Window
         NavUnzipText.Visibility      = textVis;
         NavHistoryText.Visibility    = textVis;
         NavSettingsText.Visibility   = textVis;
+        NavVaultText.Visibility      = textVis;
         VersionText.Visibility       = textVis;
         GoProLabel.Visibility        = textVis;
         GoProPrice.Visibility        = textVis;
@@ -1259,6 +1263,97 @@ public partial class MainWindow : Window
             RefreshHistorySection();
         }
     }
+
+    // ─── Vault ────────────────────────────────────────────────────────────────
+    private List<VaultEntryViewModel> _vaultVMs = [];
+
+    private void RefreshVaultSection()
+    {
+        var entries     = SavedPasswordStore.GetAll();
+        bool hasCloud   = CloudBackup.VaultSyncManager.ConnectedProviders.Any();
+        string cloudLabel = CloudBackup.VaultSyncManager.ConnectedProviders
+            .Select(p => p.ProviderName).FirstOrDefault() ?? "";
+
+        _vaultVMs = entries
+            .Select(e => new VaultEntryViewModel(e, hasCloud, cloudLabel))
+            .ToList();
+
+        VaultList.ItemsSource    = _vaultVMs;
+        VaultEmptyState.Visibility = _vaultVMs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        // Subtitle
+        VaultSubtitle.Text = _vaultVMs.Count == 0
+            ? "Your saved passwords live here, encrypted on this device."
+            : $"{_vaultVMs.Count} saved password{(_vaultVMs.Count == 1 ? "" : "s")}";
+
+        // Nav badge — show count when > 0
+        NavVaultBadge.Visibility = _vaultVMs.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        NavVaultCount.Text       = _vaultVMs.Count.ToString();
+
+        // Cloud sync status badge in header
+        if (hasCloud)
+        {
+            VaultSyncBadge.Visibility = Visibility.Visible;
+            VaultSyncBadge.Background = new SolidColorBrush(Color.FromArgb(0x22, 0x22, 0xC5, 0x5E));
+            VaultSyncBadge.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromArgb(0x40, 0x16, 0xA3, 0x4A)));
+            VaultSyncBadge.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+            VaultSyncIcon.Text      = "";  // cloud icon
+            VaultSyncIcon.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+            VaultSyncLabel.Text     = $"Synced · {cloudLabel}";
+            VaultSyncLabel.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0xDE, 0x80));
+        }
+        else
+        {
+            VaultSyncBadge.Visibility = Visibility.Visible;
+            VaultSyncBadge.Background = new SolidColorBrush(Color.FromArgb(0x18, 0x94, 0xA3, 0xB8));
+            VaultSyncBadge.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromArgb(0x30, 0x94, 0xA3, 0xB8)));
+            VaultSyncBadge.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+            VaultSyncIcon.Text       = "";  // local/device icon
+            VaultSyncIcon.Foreground  = (SolidColorBrush)FindResource("TextMutedBrush");
+            VaultSyncLabel.Text      = "Local only · Connect cloud in Settings";
+            VaultSyncLabel.Foreground = (SolidColorBrush)FindResource("TextMutedBrush");
+        }
+    }
+
+    private void VaultReveal_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is string key)
+        {
+            var vm = _vaultVMs.FirstOrDefault(v => v.Key == key);
+            if (vm != null) vm.IsRevealed = !vm.IsRevealed;
+        }
+    }
+
+    private void VaultCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is string key)
+        {
+            var vm = _vaultVMs.FirstOrDefault(v => v.Key == key);
+            if (vm != null)
+            {
+                Clipboard.SetText(vm.Password);
+                ShowToast("Password copied.");
+            }
+        }
+    }
+
+    private void VaultDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is string key)
+        {
+            var vm = _vaultVMs.FirstOrDefault(v => v.Key == key);
+            string name = vm?.Hint ?? "this entry";
+            if (MessageBox.Show($"Delete the saved password for \"{name}\"?",
+                "Starkive", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                SavedPasswordStore.DeleteByKey(key);
+                RefreshVaultSection();
+            }
+        }
+    }
+
+    private void VaultGoToZip_Click(object sender, RoutedEventArgs e)
+        => ShowSection("Zip");
 
     // ─── Settings ─────────────────────────────────────────────────────────────
     private void RefreshSettingsSection()

@@ -62,6 +62,15 @@ internal static class SavedPasswordStore
         if (_entries.RemoveAll(e => e.Key == key) > 0) Persist();
     }
 
+    internal static void DeleteByKey(string key)
+    {
+        if (_entries.RemoveAll(e => e.Key == key) > 0) Persist();
+    }
+
+    /// <summary>Returns all saved entries, newest first.</summary>
+    internal static IReadOnlyList<SavedEntry> GetAll()
+        => _entries.OrderByDescending(e => e.SavedAt).ToList().AsReadOnly();
+
     // ── Cloud sync support ────────────────────────────────────────────────────
 
     /// <summary>

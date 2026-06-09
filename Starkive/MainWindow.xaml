@@ -181,6 +181,34 @@
                                        VerticalAlignment="Center"/>
                         </Grid>
                     </Button>
+
+                    <!-- Vault -->
+                    <Button x:Name="NavVault" Click="Nav_Click" Tag="Vault"
+                            Style="{StaticResource NavButtonStyle}">
+                        <Grid Margin="10,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="NavVaultIcon" Grid.Column="0"
+                                       Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="NavVaultText"
+                                           Text="Vault" FontSize="12.5"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                           VerticalAlignment="Center"/>
+                                <Border x:Name="NavVaultBadge" CornerRadius="8" Padding="5,1"
+                                        Background="{DynamicResource AccentBrush}" Margin="6,0,0,0"
+                                        Visibility="Collapsed">
+                                    <TextBlock x:Name="NavVaultCount" Text="0" FontSize="9"
+                                               FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
                 <!-- Footer -->
@@ -257,6 +285,7 @@
                     <Rectangle x:Name="NavUnzipAccent"/>
                     <Rectangle x:Name="NavHistoryAccent"/>
                     <Rectangle x:Name="NavSettingsAccent"/>
+                    <Rectangle x:Name="NavVaultAccent"/>
                 </Canvas>
 
             </Grid>
@@ -1525,6 +1554,177 @@
                                    Text="No operations yet."
                                    FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                    Margin="0,8,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- VAULT SECTION -->
+            <Grid x:Name="VaultSection" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" Background="{DynamicResource HeroGradientBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid Margin="28,20,28,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Password Vault" FontSize="22" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock x:Name="VaultSubtitle" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <!-- Cloud sync status badge -->
+                        <Border x:Name="VaultSyncBadge" Grid.Column="1" CornerRadius="8"
+                                Padding="10,5" VerticalAlignment="Center" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="VaultSyncIcon" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock x:Name="VaultSyncLabel" FontSize="11" FontWeight="Medium"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Body -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="28,20,28,28">
+
+                        <!-- Empty state -->
+                        <Border x:Name="VaultEmptyState" CornerRadius="12"
+                                Background="{DynamicResource BgCardBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Padding="32,40" Visibility="Collapsed">
+                            <StackPanel HorizontalAlignment="Center">
+                                <Border Width="52" Height="52" CornerRadius="14"
+                                        Background="{DynamicResource IconBgBlueBrush}"
+                                        HorizontalAlignment="Center" Margin="0,0,0,14">
+                                    <TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="22" Foreground="#3B82F6"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="No saved passwords yet" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Check 'Save password to this device' when creating a ZIP."
+                                           FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,16"
+                                           TextAlignment="Center" TextWrapping="Wrap"/>
+                                <Button Content="Go to Zip &amp; Encrypt"
+                                        Style="{StaticResource GhostButtonStyle}"
+                                        Padding="16,8" FontSize="12" HorizontalAlignment="Center"
+                                        Click="VaultGoToZip_Click"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Entry list — populated from code-behind -->
+                        <ItemsControl x:Name="VaultList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="12" Margin="0,0,0,8"
+                                            Background="{DynamicResource BgCardBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1">
+                                        <Grid Margin="16,14">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="10"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Row 1: file info + delete -->
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="9"
+                                                        Background="{DynamicResource IconBgBlueBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="15" Foreground="#3B82F6"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="13,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Hint}" FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                        <TextBlock Text="{Binding FormattedDate}" FontSize="10.5"
+                                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        <!-- Cloud badge -->
+                                                        <Border x:Name="EntryCloudBadge"
+                                                                Visibility="{Binding CloudBadgeVisibility}"
+                                                                CornerRadius="4" Padding="5,1" Margin="8,0,0,0"
+                                                                Background="{DynamicResource IconBgBlueBrush}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets"
+                                                                           FontSize="9" Foreground="#3B82F6"
+                                                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                                                <TextBlock Text="{Binding CloudLabel}" FontSize="9"
+                                                                           FontWeight="SemiBold" Foreground="#3B82F6"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <!-- Local badge -->
+                                                        <Border Visibility="{Binding LocalBadgeVisibility}"
+                                                                CornerRadius="4" Padding="5,1" Margin="8,0,0,0"
+                                                                Background="{DynamicResource BgPrimaryBrush}">
+                                                            <TextBlock Text="Local" FontSize="9" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Content="&#xE74D;"
+                                                        FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        Padding="6,4" VerticalAlignment="Center"
+                                                        ToolTip="Delete saved password"
+                                                        Tag="{Binding Key}"
+                                                        Click="VaultDelete_Click"/>
+                                            </Grid>
+
+                                            <!-- Row 3: password row -->
+                                            <Border Grid.Row="2" CornerRadius="8"
+                                                    Background="{DynamicResource BgPrimaryBrush}"
+                                                    Padding="12,9">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding PasswordDisplay}"
+                                                               FontFamily="Consolas" FontSize="12.5"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Button Grid.Column="1"
+                                                            Content="{Binding RevealLabel}"
+                                                            Style="{StaticResource GhostButtonStyle}"
+                                                            FontSize="11" Padding="8,3" Margin="8,0,0,0"
+                                                            Tag="{Binding Key}"
+                                                            Click="VaultReveal_Click"/>
+                                                    <Button Grid.Column="2" Content="Copy"
+                                                            Style="{StaticResource GhostButtonStyle}"
+                                                            FontSize="11" Padding="8,3" Margin="4,0,0,0"
+                                                            Tag="{Binding Key}"
+                                                            Click="VaultCopy_Click"/>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

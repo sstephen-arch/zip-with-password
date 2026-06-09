@@ -4,7 +4,7 @@
 ; ─────────────────────────────────────────────────────────────────────────────
 
 #define AppName      "Starkive"
-#define AppVersion   "1.3.4"
+#define AppVersion   "1.3.5"
 #define AppPublisher "DePaolo Consulting LLC"
 #define AppURL       "https://starkive.app"
 #define AppExeName   "Starkive.exe"
