@@ -1005,6 +1005,10 @@ public partial class MainWindow : Window
         OneDriveButton.Content = onedrive.IsConnected ? "Disconnect" : "Connect";
         GDriveButton.IsEnabled   = gConfigured;
         OneDriveButton.IsEnabled = odConfigured;
+
+        // Show setup warning only if either credential is missing
+        CloudSetupWarning.Visibility = (!gConfigured || !odConfigured)
+            ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void GDriveButton_Click(object sender, RoutedEventArgs e)
