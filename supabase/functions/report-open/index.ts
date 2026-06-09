@@ -36,13 +36,13 @@ Deno.serve(async (req: Request) => {
   const opener_ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null;
   const user_agent = req.headers.get("user-agent") ?? null;
 
-  await supabase.from("audit_events").insert({
+  const { data: auditRow } = await supabase.from("audit_events").insert({
     file_id:    file.id,
     event_type: "file_opened",
     ip_address: opener_ip,
     user_agent,
     opened_at:  now,
-  });
+  }).select("id").single();
 
   // ── Increment open counter ───────────────────────────────────────────────
   await supabase
@@ -99,12 +99,11 @@ Deno.serve(async (req: Request) => {
     });
 
     // Mark notified_at if email sent successfully
-    if (emailResp.ok) {
+    if (emailResp.ok && auditRow?.id) {
       await supabase
         .from("audit_events")
         .update({ notified_at: now })
-        .eq("file_id", file.id)
-        .eq("opened_at", now);
+        .eq("id", auditRow.id);
     }
   }
 

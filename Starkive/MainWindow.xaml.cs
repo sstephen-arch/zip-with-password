@@ -243,7 +243,32 @@ public partial class MainWindow : Window
         => ShowSection("Unzip");
 
     private void HomeCardPro_Click(object sender, MouseButtonEventArgs e)
-        => OpenAuthDialog();
+    {
+        // Navigate to Zip & Encrypt with Secure Container pre-selected
+        ShowSection("Zip");
+        if (AuthManager.IsProUser)
+        {
+            // Directly activate SSZ mode — user is already Pro
+            _isSszMode = true;
+            SelectSegment(BtnFmtSsz, new[] { BtnFmtZip, BtnFmtSsz });
+            RecipientHintPanel.Visibility = Visibility.Visible;
+            ZipCreateButton.Content = "Create Secure Container";
+            string current = ZipOutputBox.Text;
+            if (current.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                ZipOutputBox.Text = Path.ChangeExtension(current, ".ssz");
+        }
+        else
+        {
+            // Prompt login/upgrade, then activate SSZ if they become Pro
+            if (!RequirePro("Secure Container (.ssz)"))
+            {
+                ShowSection("Zip");
+                SelectSegment(BtnFmtSsz, new[] { BtnFmtZip, BtnFmtSsz });
+                RecipientHintPanel.Visibility = Visibility.Visible;
+                ZipCreateButton.Content = "Create Secure Container";
+            }
+        }
+    }
 
     private void HomeCardHistory_Click(object sender, MouseButtonEventArgs e)
         => ShowSection("History");
@@ -841,8 +866,8 @@ public partial class MainWindow : Window
         UnzipErrorText.Visibility     = Visibility.Collapsed;
         UnzipSuccessBanner.Visibility = Visibility.Collapsed;
 
-        if (string.IsNullOrWhiteSpace(UnzipSourceBox.Text) || UnzipSourceBox.Text == "No ZIP file selected")
-        { ShowUnzipError("Please select a ZIP file."); return; }
+        if (string.IsNullOrWhiteSpace(UnzipSourceBox.Text) || UnzipSourceBox.Text == "No file selected")
+        { ShowUnzipError("Please select a .zip or .ssz file."); return; }
         if (string.IsNullOrWhiteSpace(UnzipOutputBox.Text))
         { ShowUnzipError("Please specify an output folder."); return; }
         if (UnzipPasswordBox.Password.Length == 0)
@@ -926,7 +951,7 @@ public partial class MainWindow : Window
 
         bool installed         = ContextMenuInstaller.IsInstalled();
         CtxMenuStatusText.Text = installed
-            ? "Installed. \"Starkive — Zip with password...\" appears when you right-click files and folders."
+            ? "Installed. Right-click any file or folder to zip, or any .zip/.ssz file to decrypt."
             : "Not installed. Click Install to add Starkive to your right-click context menu.";
         CtxMenuButton.Content  = installed ? "Uninstall" : "Install";
     }

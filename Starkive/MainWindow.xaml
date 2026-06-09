@@ -1110,7 +1110,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="UnzipSourceBox"
                                              Style="{StaticResource DarkTextBoxStyle}"
-                                             IsReadOnly="True" Text="No ZIP file selected"/>
+                                             IsReadOnly="True" Text="No file selected"/>
                                     <Button Grid.Column="1" Content="Change"
                                             Style="{StaticResource InlineButtonStyle}"
                                             Margin="6,0,0,0"
