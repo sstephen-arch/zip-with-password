@@ -23,8 +23,9 @@ public partial class MainWindow : Window
     private string      _activePassword  = string.Empty;
     private int         _wordCount       = 4;
     private string      _separator       = "·";
-    private bool        _isSszMode            = false;
-    private bool        _suppressThemeChange  = true;   // true until constructor finishes init
+    private bool        _isSszMode                  = false;
+    private bool        _sszCreatedWhileLoggedOut   = false;
+    private bool        _suppressThemeChange        = true;   // true until constructor finishes init
     private DispatcherTimer? _toastTimer;
 
     // ─── Wordlist ─────────────────────────────────────────────────────────────
@@ -773,7 +774,8 @@ public partial class MainWindow : Window
                 success = true;
                 if (AuthManager.IsLoggedIn)
                 {
-                    _ = ApiService.RegisterSszFileAsync(new SszFileRecord
+                    // Await registration so we know if it succeeded before showing success
+                    await ApiService.RegisterSszFileAsync(new SszFileRecord
                     {
                         OwnerId          = AuthManager.UserId ?? "",
                         FileToken        = result.FileToken,
@@ -782,6 +784,13 @@ public partial class MainWindow : Window
                         Sha256Hash       = Convert.ToHexString(result.PayloadHash).ToLowerInvariant(),
                         RecipientHint    = string.IsNullOrEmpty(recipientHint) ? null : recipientHint,
                     });
+                    AppLog.Write($"SSZ created & registered: {Path.GetFileName(output)}, token {result.FileToken}");
+                }
+                else
+                {
+                    // File created but NOT registered — open notifications won't fire
+                    AppLog.Write($"SSZ created WITHOUT registration (not logged in): {Path.GetFileName(output)}");
+                    _sszCreatedWhileLoggedOut = true;
                 }
             }
             catch (Exception ex) { errMsg = ex.Message; }
@@ -802,9 +811,17 @@ public partial class MainWindow : Window
 
         if (success)
         {
-            ZipSuccessText.Text = _isSszMode
-                ? "Secure Container created successfully."
-                : "ZIP created successfully.";
+            if (_isSszMode && _sszCreatedWhileLoggedOut)
+            {
+                ZipSuccessText.Text = "Secure Container created. Sign in to enable open notifications.";
+                _sszCreatedWhileLoggedOut = false;
+            }
+            else
+            {
+                ZipSuccessText.Text = _isSszMode
+                    ? "Secure Container created successfully."
+                    : "ZIP created successfully.";
+            }
             ZipSuccessBanner.Visibility = Visibility.Visible;
             bool saveChecked = (_pwdMode == "Passphrase")
                 ? ChkSavePassphrase.IsChecked == true
@@ -954,12 +971,77 @@ public partial class MainWindow : Window
             ? "Installed. Right-click any file or folder to zip, or any .zip/.ssz file to decrypt."
             : "Not installed. Click Install to add Starkive to your right-click context menu.";
         CtxMenuButton.Content  = installed ? "Uninstall" : "Install";
+
+        RefreshCloudStatus();
     }
 
     private void SettingsBrowseFolder_Click(object sender, RoutedEventArgs e)
     {
         string folder = BrowseForFolder("Select default output folder");
         if (!string.IsNullOrEmpty(folder)) DefaultFolderBox.Text = folder;
+    }
+
+    // ─── Cloud Backup ─────────────────────────────────────────────────────────
+
+    private void RefreshCloudStatus()
+    {
+        var gdrive   = CloudBackup.VaultSyncManager.Providers[0]; // GoogleDriveProvider
+        var onedrive = CloudBackup.VaultSyncManager.Providers[1]; // OneDriveProvider
+
+        bool gConfigured = !string.IsNullOrEmpty(AppConstants.GoogleDriveClientId);
+        bool odConfigured = !string.IsNullOrEmpty(AppConstants.OneDriveClientId);
+
+        GDriveStatusText.Text  = !gConfigured  ? "OAuth not configured"
+                                : gdrive.IsConnected   ? $"Connected: {gdrive.ConnectedAccount}"
+                                : "Not connected";
+        OneDriveStatusText.Text = !odConfigured ? "OAuth not configured"
+                                : onedrive.IsConnected ? $"Connected: {onedrive.ConnectedAccount}"
+                                : "Not connected";
+
+        GDriveButton.Content   = gdrive.IsConnected   ? "Disconnect" : "Connect";
+        OneDriveButton.Content = onedrive.IsConnected ? "Disconnect" : "Connect";
+        GDriveButton.IsEnabled   = gConfigured;
+        OneDriveButton.IsEnabled = odConfigured;
+    }
+
+    private async void GDriveButton_Click(object sender, RoutedEventArgs e)
+    {
+        var provider = CloudBackup.VaultSyncManager.Providers[0];
+        GDriveButton.IsEnabled = false;
+        GDriveStatusText.Text  = provider.IsConnected ? "Disconnecting…" : "Opening browser…";
+        try
+        {
+            if (provider.IsConnected)
+                await provider.DisconnectAsync();
+            else
+            {
+                bool ok = await provider.ConnectAsync();
+                if (ok) _ = CloudBackup.VaultSyncManager.PushAsync(); // initial upload
+                else GDriveStatusText.Text = "Connection cancelled.";
+            }
+        }
+        catch (Exception ex) { GDriveStatusText.Text = $"Error: {ex.Message}"; }
+        finally { RefreshCloudStatus(); GDriveButton.IsEnabled = !string.IsNullOrEmpty(AppConstants.GoogleDriveClientId); }
+    }
+
+    private async void OneDriveButton_Click(object sender, RoutedEventArgs e)
+    {
+        var provider = CloudBackup.VaultSyncManager.Providers[1];
+        OneDriveButton.IsEnabled = false;
+        OneDriveStatusText.Text  = provider.IsConnected ? "Disconnecting…" : "Opening browser…";
+        try
+        {
+            if (provider.IsConnected)
+                await provider.DisconnectAsync();
+            else
+            {
+                bool ok = await provider.ConnectAsync();
+                if (ok) _ = CloudBackup.VaultSyncManager.PushAsync(); // initial upload
+                else OneDriveStatusText.Text = "Connection cancelled.";
+            }
+        }
+        catch (Exception ex) { OneDriveStatusText.Text = $"Error: {ex.Message}"; }
+        finally { RefreshCloudStatus(); OneDriveButton.IsEnabled = !string.IsNullOrEmpty(AppConstants.OneDriveClientId); }
     }
 
     private void OpenDataFolder_Click(object sender, RoutedEventArgs e)

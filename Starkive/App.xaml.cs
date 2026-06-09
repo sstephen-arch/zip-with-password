@@ -38,6 +38,9 @@ public partial class App : Application
 
         SavedPasswordStore.Initialize();
 
+        // Non-blocking: pull cloud vault backup (merges into local on success).
+        _ = Starkive.CloudBackup.VaultSyncManager.PullAndMergeAsync();
+
         // Non-blocking: load cached auth token + refresh if near expiry.
         _ = AuthManager.InitializeAsync();
 

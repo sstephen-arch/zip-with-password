@@ -96,29 +96,54 @@ internal static class ApiService
     {
         try
         {
-            await _http.PostAsJsonAsync(
+            var resp = await _http.PostAsJsonAsync(
                 AppConstants.SupabaseUrl + "/rest/v1/ssz_files",
                 record);
+            if (!resp.IsSuccessStatusCode)
+            {
+                string body = await resp.Content.ReadAsStringAsync();
+                AppLog.Write($"RegisterSszFile failed: HTTP {(int)resp.StatusCode} — {body}");
+            }
+            else
+            {
+                AppLog.Write($"RegisterSszFile OK for token {record.FileToken}");
+            }
         }
-        catch { /* fire-and-forget — never surface to UI */ }
+        catch (Exception ex)
+        {
+            AppLog.Write($"RegisterSszFile exception: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     // ── Open notification (phone-home) ────────────────────────────────────────
 
     /// <summary>
     /// Fire-and-forget: call from SszHelper.Open() without awaiting.
+    /// Retries once on failure and logs errors to the app log file.
     /// </summary>
     internal static async Task ReportOpenAsync(string fileToken)
     {
-        try
+        const string url = AppConstants.SupabaseUrl + "/functions/v1/report-open";
+        var payload = new { file_token = fileToken };
+
+        for (int attempt = 1; attempt <= 2; attempt++)
         {
-            // Calls a Supabase Edge Function that inserts the audit_event row
-            // using service_role (the desktop app never writes audit_events directly).
-            await _http.PostAsJsonAsync(
-                AppConstants.SupabaseUrl + "/functions/v1/report-open",
-                new { file_token = fileToken });
+            try
+            {
+                // Use a dedicated short-timeout client for phone-home so it never
+                // blocks the main HttpClient connection pool.
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                client.DefaultRequestHeaders.Add("apikey", AppConstants.SupabaseAnonKey);
+                var resp = await client.PostAsJsonAsync(url, payload);
+                AppLog.Write($"ReportOpen attempt {attempt}: HTTP {(int)resp.StatusCode}");
+                if (resp.IsSuccessStatusCode) return;
+            }
+            catch (Exception ex)
+            {
+                AppLog.Write($"ReportOpen attempt {attempt} error: {ex.GetType().Name}: {ex.Message}");
+                if (attempt == 1) await Task.Delay(2000); // brief pause before retry
+            }
         }
-        catch { }
     }
 
     // ── Pro status ────────────────────────────────────────────────────────────

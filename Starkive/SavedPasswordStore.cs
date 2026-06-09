@@ -62,6 +62,50 @@ internal static class SavedPasswordStore
         if (_entries.RemoveAll(e => e.Key == key) > 0) Persist();
     }
 
+    // ── Cloud sync support ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns the current entries as unencrypted UTF-8 JSON bytes.
+    /// Used by VaultSyncManager before encrypting for cloud upload.
+    /// </summary>
+    internal static byte[] ExportPlaintextJson()
+        => Encoding.UTF8.GetBytes(JsonSerializer.Serialize(_entries));
+
+    /// <summary>
+    /// Merges entries from cloud plaintext JSON into local store.
+    /// Cloud wins on conflict (newer SavedAt wins per key).
+    /// </summary>
+    internal static void MergeFromPlaintextJson(byte[] utf8Json)
+    {
+        try
+        {
+            var remote = JsonSerializer.Deserialize<List<SavedEntry>>(
+                Encoding.UTF8.GetString(utf8Json)) ?? [];
+
+            bool changed = false;
+            foreach (var remoteEntry in remote)
+            {
+                var local = _entries.FirstOrDefault(e => e.Key == remoteEntry.Key);
+                if (local == null)
+                {
+                    _entries.Add(remoteEntry);
+                    changed = true;
+                }
+                else if (remoteEntry.SavedAt > local.SavedAt)
+                {
+                    _entries.Remove(local);
+                    _entries.Add(remoteEntry);
+                    changed = true;
+                }
+            }
+            if (changed) Persist();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"VaultMerge error: {ex.Message}");
+        }
+    }
+
     // ── Private ───────────────────────────────────────────────────────────────
 
     private static string MakeKey(string path)
@@ -85,6 +129,9 @@ internal static class SavedPasswordStore
             File.WriteAllBytes(StorePath, encrypted);
         }
         catch { }
+
+        // Fire-and-forget cloud push
+        _ = CloudBackup.VaultSyncManager.PushAsync();
     }
 }
 
