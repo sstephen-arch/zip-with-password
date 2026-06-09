@@ -31,4 +31,10 @@ internal interface ICloudProvider
     /// Download the vault bytes. Returns null if no backup exists yet.
     /// </summary>
     Task<byte[]?> DownloadVaultAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Upload an SSZ file to the user's cloud drive (visible folder, shareable).
+    /// Returns a shareable link URL, or null on failure.
+    /// </summary>
+    Task<string?> UploadSszAsync(string filePath, CancellationToken ct = default);
 }

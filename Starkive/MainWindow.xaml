@@ -1042,17 +1042,45 @@
                                    Visibility="Collapsed"/>
                         <Border x:Name="ZipSuccessBanner"
                                 Background="{DynamicResource BannerSuccessBgBrush}" BorderBrush="{DynamicResource SuccessBrush}"
-                                BorderThickness="1" CornerRadius="8" Padding="14,10"
+                                BorderThickness="1" CornerRadius="8" Padding="14,12"
                                 Margin="0,10,0,0" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="OK" FontSize="13"
-                                           Foreground="{DynamicResource SuccessBrush}"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock x:Name="ZipSuccessText"
-                                           Text="ZIP created successfully."
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <!-- Status row -->
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="✓" FontSize="13"
+                                               Foreground="{DynamicResource SuccessBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="ZipSuccessText"
+                                               Text="ZIP created successfully."
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Cloud upload row — shown only when SSZ + Drive connected -->
+                                <StackPanel x:Name="CloudUploadPanel" Orientation="Horizontal"
+                                            Margin="0,10,0,0" Visibility="Collapsed">
+                                    <TextBlock Text="Upload to:"
+                                               FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <Button x:Name="UploadGDriveBtn" Content="☁ Google Drive"
+                                            FontSize="11" Padding="10,4" Margin="0,0,8,0"
+                                            Click="UploadGDriveBtn_Click"/>
+                                    <Button x:Name="UploadOneDriveBtn" Content="☁ OneDrive"
+                                            FontSize="11" Padding="10,4"
+                                            Click="UploadOneDriveBtn_Click"/>
+                                </StackPanel>
+
+                                <!-- Upload result row -->
+                                <StackPanel x:Name="CloudUploadResultPanel" Orientation="Horizontal"
+                                            Margin="0,8,0,0" Visibility="Collapsed">
+                                    <TextBlock x:Name="CloudUploadResultText"
+                                               FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <Button x:Name="CopyCloudLinkBtn" Content="Copy Link"
+                                            FontSize="11" Padding="8,3" Margin="10,0,0,0"
+                                            Click="CopyCloudLinkBtn_Click" Visibility="Collapsed"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>

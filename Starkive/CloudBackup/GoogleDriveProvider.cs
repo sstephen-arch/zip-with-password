@@ -26,7 +26,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
 
     private const string TokenEndpoint = "https://oauth2.googleapis.com/token";
     private const string DriveApiBase  = "https://www.googleapis.com";
-    private const string Scope         = "https://www.googleapis.com/auth/drive.appdata email profile";
+    private const string Scope         = "https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file email profile";
     private const string BackupFileName = "StarkiveVault.enc";
 
     private static readonly string _tokenPath = Path.Combine(
@@ -128,6 +128,54 @@ internal sealed class GoogleDriveProvider : ICloudProvider
             AppLog.Write($"GoogleDrive upload failed: {(int)resp.StatusCode} — {err}");
             throw new IOException($"Google Drive upload failed: {(int)resp.StatusCode}");
         }
+    }
+
+    // ── Upload SSZ file (shareable) ───────────────────────────────────────────
+
+    public async Task<string?> UploadSszAsync(string filePath, CancellationToken ct = default)
+    {
+        await EnsureFreshTokenAsync(ct);
+        using var http = BuildClient();
+
+        string fileName = Path.GetFileName(filePath);
+        byte[] fileBytes = await File.ReadAllBytesAsync(filePath, ct);
+
+        // Upload the file to Drive root (drive.file scope)
+        var metadata = new { name = fileName, mimeType = "application/octet-stream" };
+        string metaJson = JsonSerializer.Serialize(metadata);
+
+        using var form = new MultipartFormDataContent("boundary");
+        form.Add(new StringContent(metaJson, Encoding.UTF8, "application/json"), "metadata");
+        form.Add(new ByteArrayContent(fileBytes) { Headers = { ContentType = MediaTypeHeaderValue.Parse("application/octet-stream") } }, "file");
+
+        var uploadResp = await http.PostAsync(
+            $"{DriveApiBase}/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", form, ct);
+
+        if (!uploadResp.IsSuccessStatusCode)
+        {
+            string err = await uploadResp.Content.ReadAsStringAsync(ct);
+            AppLog.Write($"GoogleDrive SSZ upload failed: {(int)uploadResp.StatusCode} — {err}");
+            return null;
+        }
+
+        var uploaded = await uploadResp.Content.ReadFromJsonAsync<DriveFile>(cancellationToken: ct);
+        if (uploaded?.Id == null) return null;
+
+        // Make it accessible to anyone with the link
+        var permResp = await http.PostAsJsonAsync(
+            $"{DriveApiBase}/drive/v3/permissions/{uploaded.Id}",
+            new { type = "anyone", role = "reader" }, ct);
+
+        if (!permResp.IsSuccessStatusCode)
+        {
+            AppLog.Write($"GoogleDrive share permission failed: {(int)permResp.StatusCode}");
+        }
+
+        // Fetch the shareable link
+        var fileResp = await http.GetFromJsonAsync<DriveFile>(
+            $"{DriveApiBase}/drive/v3/files/{uploaded.Id}?fields=webViewLink", ct);
+
+        return fileResp?.WebViewLink;
     }
 
     // ── Download ──────────────────────────────────────────────────────────────
@@ -265,6 +313,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     }
     private sealed class DriveFile
     {
-        [JsonPropertyName("id")] public string? Id { get; init; }
+        [JsonPropertyName("id")]          public string? Id          { get; init; }
+        [JsonPropertyName("webViewLink")] public string? WebViewLink { get; init; }
     }
 }
