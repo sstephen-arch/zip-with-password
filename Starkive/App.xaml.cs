@@ -41,16 +41,27 @@ public partial class App : Application
         // Non-blocking: load cached auth token + refresh if near expiry.
         _ = AuthManager.InitializeAsync();
 
-        string? sourcePath = e.Args.Length >= 1 ? e.Args[0] : null;
-
-        // .ssz files are opened directly — MainWindow handles the decrypt UI.
-        if (sourcePath != null &&
-            sourcePath.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase) &&
-            File.Exists(sourcePath))
+        // --unzip "path" — right-click "Decrypt with Starkive" on a .zip file
+        if (e.Args.Length >= 2 &&
+            e.Args[0].Equals("--unzip", StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(e.Args[1]))
         {
             var window = new MainWindow(null);
             window.Show();
-            window.OpenSszFile(sourcePath);
+            window.OpenUnzipFile(e.Args[1]);
+            return;
+        }
+
+        string? sourcePath = e.Args.Length >= 1 ? e.Args[0] : null;
+
+        // .ssz and .zip files passed directly → open to Unzip panel
+        if (sourcePath != null && File.Exists(sourcePath) &&
+            (sourcePath.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase) ||
+             sourcePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)))
+        {
+            var window = new MainWindow(null);
+            window.Show();
+            window.OpenUnzipFile(sourcePath);
             return;
         }
 

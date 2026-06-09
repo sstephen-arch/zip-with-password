@@ -323,10 +323,12 @@ public partial class MainWindow : Window
         return candidate;
     }
 
-    internal void OpenSszFile(string sszPath)
+    internal void OpenSszFile(string sszPath) => OpenUnzipFile(sszPath);
+
+    internal void OpenUnzipFile(string path)
     {
         ShowSection("Unzip");
-        SetUnzipSource(sszPath);
+        SetUnzipSource(path);
     }
 
     // ─── Drop zone (Zip panel) ────────────────────────────────────────────────

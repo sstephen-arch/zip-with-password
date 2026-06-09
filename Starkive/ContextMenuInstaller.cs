@@ -5,14 +5,23 @@ namespace Starkive;
 
 public static class ContextMenuInstaller
 {
-    private const string MenuLabel  = "Starkive — Zip with password...";
-    private const string SubKeyName = "Starkive";
+    private const string MenuLabel       = "Starkive — Zip with password...";
+    private const string DecryptLabel    = "Decrypt with Starkive";
+    private const string SubKeyName      = "Starkive";
+    private const string DecryptKeyName  = "StarkiveDecrypt";
 
     private static readonly string[] TargetPaths =
     [
         @"SOFTWARE\Classes\*\shell",
         @"SOFTWARE\Classes\Directory\shell",
         @"SOFTWARE\Classes\Directory\Background\shell",
+    ];
+
+    // Paths where "Decrypt with Starkive" appears (zip + ssz files only)
+    private static readonly string[] DecryptTargetPaths =
+    [
+        @"SOFTWARE\Classes\SystemFileAssociations\.zip\shell",
+        @"SOFTWARE\Classes\SystemFileAssociations\.ssz\shell",
     ];
 
     public static void Install()
@@ -39,6 +48,22 @@ public static class ContextMenuInstaller
                 : $"\"{exePath}\" \"%1\"");
         }
 
+        // "Decrypt with Starkive" on .zip and .ssz files
+        foreach (string basePath in DecryptTargetPaths)
+        {
+            using var shellKey = root.OpenSubKey(basePath, writable: true)
+                              ?? root.CreateSubKey(basePath);
+            if (shellKey is null) continue;
+
+            using var menuKey = shellKey.CreateSubKey(DecryptKeyName);
+            if (menuKey is null) continue;
+            menuKey.SetValue("", DecryptLabel);
+            menuKey.SetValue("Icon", $"\"{exePath}\"");
+
+            using var cmdKey = menuKey.CreateSubKey("command");
+            cmdKey?.SetValue("", $"\"{exePath}\" --unzip \"%1\"");
+        }
+
         RegisterFileAssociation();
 
         var s = SettingsManager.Load();
@@ -54,6 +79,12 @@ public static class ContextMenuInstaller
         {
             using var shellKey = root.OpenSubKey(basePath, writable: true);
             shellKey?.DeleteSubKeyTree(SubKeyName, throwOnMissingSubKey: false);
+        }
+
+        foreach (string basePath in DecryptTargetPaths)
+        {
+            using var shellKey = root.OpenSubKey(basePath, writable: true);
+            shellKey?.DeleteSubKeyTree(DecryptKeyName, throwOnMissingSubKey: false);
         }
 
         UnregisterFileAssociation();
