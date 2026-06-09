@@ -125,8 +125,10 @@ public partial class MainWindow : Window
         try
         {
             await Task.Delay(3000);
+            AppLog.Write($"UpdateCheck: current={AppConstants.AppVersion}");
             var (latest, downloadUrl) = await ApiService.GetLatestReleaseAsync();
-            if (string.IsNullOrEmpty(latest)) return;
+            AppLog.Write($"UpdateCheck: latest={latest ?? "null"} url={downloadUrl ?? "null"}");
+            if (string.IsNullOrEmpty(latest) || string.IsNullOrEmpty(downloadUrl)) return;
 
             if (Version.TryParse(latest, out var latestVer) &&
                 Version.TryParse(AppConstants.AppVersion, out var currentVer) &&
@@ -134,12 +136,23 @@ public partial class MainWindow : Window
             {
                 _updateUrl     = downloadUrl;
                 _updateVersion = latest;
-                UpdateBannerText.Text      = $"⬆  Starkive {latest} is available. Click Install Update — it takes about 30 seconds.";
-                UpdateDownloadBtn.Content  = "Install Update";
-                UpdateBanner.Visibility    = Visibility.Visible;
+                AppLog.Write($"UpdateCheck: showing banner for {latest}");
+                Dispatcher.Invoke(() =>
+                {
+                    UpdateBannerText.Text     = $"⬆  Starkive {latest} is available — click Install Update (takes ~30 sec).";
+                    UpdateDownloadBtn.Content = "Install Update";
+                    UpdateBanner.Visibility   = Visibility.Visible;
+                });
+            }
+            else
+            {
+                AppLog.Write($"UpdateCheck: already up to date ({AppConstants.AppVersion} >= {latest})");
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLog.Write($"UpdateCheck error: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     private void UpdateDownload_Click(object sender, RoutedEventArgs e)
