@@ -2,6 +2,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,6 +33,8 @@ internal sealed class OneDriveProvider : ICloudProvider
     private static readonly string _tokenPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Starkive", "cloud", "onedrive_token.json");
+
+    private static readonly HttpClient _sharedHttp = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     private OneDriveToken? _token;
 
@@ -162,7 +165,6 @@ internal sealed class OneDriveProvider : ICloudProvider
 
     private async Task<OneDriveToken?> ExchangeCodeAsync(string code, string verifier, CancellationToken ct)
     {
-        using var http = new HttpClient();
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["code"]          = code,
@@ -171,7 +173,7 @@ internal sealed class OneDriveProvider : ICloudProvider
             ["grant_type"]    = "authorization_code",
             ["code_verifier"] = verifier,
         });
-        var resp = await http.PostAsync($"{Authority}/token", form, ct);
+        var resp = await _sharedHttp.PostAsync($"{Authority}/token", form, ct);
         if (!resp.IsSuccessStatusCode) return null;
         var raw = await resp.Content.ReadFromJsonAsync<TokenRaw>(cancellationToken: ct);
         if (raw?.AccessToken == null) return null;
@@ -187,14 +189,13 @@ internal sealed class OneDriveProvider : ICloudProvider
         if (_token == null) throw new InvalidOperationException("Not connected to OneDrive.");
         if (_token.ExpiresAt > DateTime.UtcNow) return;
 
-        using var http = new HttpClient();
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["refresh_token"] = _token.RefreshToken,
             ["client_id"]     = ClientId,
             ["grant_type"]    = "refresh_token",
         });
-        var resp = await http.PostAsync($"{Authority}/token", form, ct);
+        var resp = await _sharedHttp.PostAsync($"{Authority}/token", form, ct);
         if (!resp.IsSuccessStatusCode)
         {
             _token = null;
@@ -214,9 +215,10 @@ internal sealed class OneDriveProvider : ICloudProvider
     {
         try
         {
-            using var http = new HttpClient();
-            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var me = await http.GetFromJsonAsync<JsonElement>($"{GraphBase}/me?$select=mail,userPrincipalName", ct);
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"{GraphBase}/me?$select=mail,userPrincipalName");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var resp = await _sharedHttp.SendAsync(req, ct);
+            var me   = await resp.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
             if (me.TryGetProperty("mail", out var m) && m.GetString() is string mail) return mail;
             if (me.TryGetProperty("userPrincipalName", out var u)) return u.GetString();
             return null;
@@ -226,10 +228,9 @@ internal sealed class OneDriveProvider : ICloudProvider
 
     private HttpClient BuildClient()
     {
-        var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization =
+        _sharedHttp.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
-        return client;
+        return _sharedHttp;
     }
 
     private static OneDriveToken? LoadToken()
@@ -237,7 +238,9 @@ internal sealed class OneDriveProvider : ICloudProvider
         try
         {
             if (!File.Exists(_tokenPath)) return null;
-            return JsonSerializer.Deserialize<OneDriveToken>(File.ReadAllText(_tokenPath));
+            var encrypted = File.ReadAllBytes(_tokenPath);
+            var plaintext = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.CurrentUser);
+            return JsonSerializer.Deserialize<OneDriveToken>(Encoding.UTF8.GetString(plaintext));
         }
         catch { return null; }
     }
@@ -245,7 +248,9 @@ internal sealed class OneDriveProvider : ICloudProvider
     private static void SaveToken(OneDriveToken token)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_tokenPath)!);
-        File.WriteAllText(_tokenPath, JsonSerializer.Serialize(token));
+        var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(token));
+        var encrypted = ProtectedData.Protect(plaintext, null, DataProtectionScope.CurrentUser);
+        File.WriteAllBytes(_tokenPath, encrypted);
     }
 
     // ── Models ────────────────────────────────────────────────────────────────
