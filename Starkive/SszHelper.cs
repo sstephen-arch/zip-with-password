@@ -15,6 +15,9 @@ namespace Starkive;
 ///   [60-91] Payload SHA-256:32 bytes     (SHA-256 of the encrypted payload bytes)
 ///   [92-99] Payload length: int64 LE
 ///   [100..] Payload:        WinZip AES-256 encrypted ZIP (via SharpZipLib)
+///
+/// Star name: derived deterministically from the file token via StarNames.GetForToken().
+/// It is NOT stored in the binary — it is always recomputed from the token.
 /// </summary>
 internal static class SszHelper
 {
@@ -31,43 +34,41 @@ internal static class SszHelper
         IProgress<(int percent, string status)>? progress = null,
         CancellationToken ct = default)
     {
-        // Build the encrypted ZIP payload in memory.
         progress?.Report((0, "Building encrypted payload..."));
         byte[] payload = ZipHelper.CreateEncryptedZipBytes(sourcePath, password, progress, ct);
 
         ct.ThrowIfCancellationRequested();
 
-        // Compute SHA-256 of the payload for tamper detection.
         byte[] hash      = SHA256.HashData(payload);
         Guid   fileToken = Guid.NewGuid();
+        string starName  = StarNames.GetForToken(fileToken);
         string senderId  = AuthManager.UserId ?? new string('0', 36);
 
-        // Pad/truncate sender ID to exactly 36 bytes (UUID string length).
         byte[] senderBytes = new byte[36];
         byte[] senderRaw   = Encoding.ASCII.GetBytes(senderId.PadRight(36)[..36]);
         Array.Copy(senderRaw, senderBytes, Math.Min(senderRaw.Length, 36));
 
-        string? outputDir = Path.GetDirectoryName(outputPath);
+        // Rename the output path to include the star name before the extension
+        // e.g. "MyFiles.ssz" → "MyFiles_Vega.ssz"
+        string finalOutput = AppendStarToPath(outputPath, starName);
+
+        string? outputDir = Path.GetDirectoryName(finalOutput);
         if (!string.IsNullOrEmpty(outputDir)) Directory.CreateDirectory(outputDir);
 
-        using var fs = File.Create(outputPath);
+        using var fs = File.Create(finalOutput);
         using var bw = new BinaryWriter(fs, Encoding.ASCII, leaveOpen: false);
 
-        // Header
         bw.Write(Magic);
         bw.Write(Version);
         bw.Write(fileToken.ToByteArray());  // 16 bytes
         bw.Write(senderBytes);              // 36 bytes
         bw.Write(hash);                     // 32 bytes
         bw.Write((long)payload.Length);     // 8 bytes
-        // Total header: 4+4+16+36+32+8 = 100 bytes ✓
-
-        // Payload
         bw.Write(payload);
 
         progress?.Report((100, "Done"));
 
-        return new SszCreateResult(fileToken.ToString(), senderId, hash, payload.LongLength);
+        return new SszCreateResult(fileToken.ToString(), senderId, hash, payload.LongLength, starName, finalOutput);
     }
 
     // ── Open ──────────────────────────────────────────────────────────────────
@@ -82,7 +83,6 @@ internal static class SszHelper
         using var fs = File.OpenRead(sszPath);
         using var br = new BinaryReader(fs, Encoding.ASCII, leaveOpen: false);
 
-        // Validate magic
         byte[] magic = br.ReadBytes(4);
         if (!magic.SequenceEqual(Magic))
             throw new InvalidDataException("Not a valid Starkive Secure Container (.ssz) file.");
@@ -91,15 +91,15 @@ internal static class SszHelper
         if (version != Version)
             throw new InvalidDataException($"Unsupported SSZ version: {version}. Update Starkive to open this file.");
 
-        // Read header fields
         byte[] tokenBytes  = br.ReadBytes(16);
         byte[] senderBytes = br.ReadBytes(36);
         byte[] storedHash  = br.ReadBytes(32);
         long   payloadLen  = br.ReadInt64();
 
-        string fileToken = new Guid(tokenBytes).ToString();
+        Guid   tokenGuid = new Guid(tokenBytes);
+        string fileToken = tokenGuid.ToString();
+        string starName  = StarNames.GetForToken(tokenGuid);  // always derivable from token
 
-        // Read and verify payload
         progress?.Report((5, "Verifying file integrity..."));
         byte[] payload = br.ReadBytes((int)payloadLen);
 
@@ -110,9 +110,8 @@ internal static class SszHelper
         ct.ThrowIfCancellationRequested();
 
         // Phone-home: fire-and-forget, never blocks opening.
-        _ = ApiService.ReportOpenAsync(fileToken);
+        _ = ApiService.ReportOpenAsync(fileToken, starName, Path.GetFileName(sszPath));
 
-        // Decrypt and extract payload
         progress?.Report((10, "Decrypting..."));
         ZipHelper.ExtractEncryptedZipFromBytes(payload, outputFolder, password, progress, ct);
     }
@@ -133,13 +132,36 @@ internal static class SszHelper
             byte[] tokenBytes = br.ReadBytes(16);
             byte[] senderRaw  = br.ReadBytes(36);
 
+            var tokenGuid = new Guid(tokenBytes);
             return new SszHeader(
                 Version:    version,
-                FileToken:  new Guid(tokenBytes).ToString(),
-                SenderId:   Encoding.ASCII.GetString(senderRaw).TrimEnd('\0', ' ')
+                FileToken:  tokenGuid.ToString(),
+                SenderId:   Encoding.ASCII.GetString(senderRaw).TrimEnd('\0', ' '),
+                StarName:   StarNames.GetForToken(tokenGuid)
             );
         }
         catch { return null; }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Inserts the star name before the file extension.
+    /// "archive.ssz" → "archive_Vega.ssz"
+    /// "archive"     → "archive_Vega.ssz"
+    /// </summary>
+    internal static string AppendStarToPath(string path, string starName)
+    {
+        string dir  = Path.GetDirectoryName(path) ?? "";
+        string name = Path.GetFileNameWithoutExtension(path);
+        string ext  = Path.GetExtension(path);
+        if (string.IsNullOrEmpty(ext)) ext = ".ssz";
+
+        // Don't double-append if the name already ends with the star
+        if (name.EndsWith($"_{starName}", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        return Path.Combine(dir, $"{name}_{starName}{ext}");
     }
 }
 
@@ -149,11 +171,14 @@ internal sealed record SszCreateResult(
     string FileToken,
     string SenderId,
     byte[] PayloadHash,
-    long   PayloadBytes
+    long   PayloadBytes,
+    string StarName,
+    string FinalOutputPath   // may differ from requested path if star was appended
 );
 
 internal sealed record SszHeader(
     uint   Version,
     string FileToken,
-    string SenderId
+    string SenderId,
+    string StarName
 );

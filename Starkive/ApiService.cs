@@ -121,10 +121,10 @@ internal static class ApiService
     /// Fire-and-forget: call from SszHelper.Open() without awaiting.
     /// Retries once on failure and logs errors to the app log file.
     /// </summary>
-    internal static async Task ReportOpenAsync(string fileToken)
+    internal static async Task ReportOpenAsync(string fileToken, string starName = "", string fileName = "")
     {
         const string url = AppConstants.SupabaseUrl + "/functions/v1/report-open";
-        var payload = new { file_token = fileToken };
+        var payload = new { file_token = fileToken, star_name = starName, file_name = fileName };
 
         for (int attempt = 1; attempt <= 2; attempt++)
         {
@@ -203,6 +203,7 @@ internal sealed class SszFileRecord
     [JsonPropertyName("file_size_bytes")]   public long?  FileSizeBytes   { get; init; }
     [JsonPropertyName("sha256_hash")]       public string Sha256Hash      { get; init; } = "";
     [JsonPropertyName("recipient_hint")]    public string? RecipientHint  { get; init; }
+    [JsonPropertyName("star_name")]         public string? StarName       { get; init; }
 }
 
 internal sealed class VersionResponse

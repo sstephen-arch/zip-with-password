@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private string      _separator       = "·";
     private bool        _isSszMode                  = false;
     private bool        _sszCreatedWhileLoggedOut   = false;
+    private string      _lastStarName               = "";
     private bool        _suppressThemeChange        = true;   // true until constructor finishes init
     private DispatcherTimer? _toastTimer;
 
@@ -772,6 +773,8 @@ public partial class MainWindow : Window
             {
                 var result = await Task.Run(() => SszHelper.Create(source, output, password, prog));
                 success = true;
+                output = result.FinalOutputPath;
+                _lastStarName = result.StarName;
                 if (AuthManager.IsLoggedIn)
                 {
                     // Await registration so we know if it succeeded before showing success
@@ -783,12 +786,12 @@ public partial class MainWindow : Window
                         FileSizeBytes    = new FileInfo(output).Length,
                         Sha256Hash       = Convert.ToHexString(result.PayloadHash).ToLowerInvariant(),
                         RecipientHint    = string.IsNullOrEmpty(recipientHint) ? null : recipientHint,
+                        StarName         = result.StarName,
                     });
-                    AppLog.Write($"SSZ created & registered: {Path.GetFileName(output)}, token {result.FileToken}");
+                    AppLog.Write($"SSZ created & registered: {Path.GetFileName(output)}, star={result.StarName}, token={result.FileToken}");
                 }
                 else
                 {
-                    // File created but NOT registered — open notifications won't fire
                     AppLog.Write($"SSZ created WITHOUT registration (not logged in): {Path.GetFileName(output)}");
                     _sszCreatedWhileLoggedOut = true;
                 }
@@ -813,13 +816,13 @@ public partial class MainWindow : Window
         {
             if (_isSszMode && _sszCreatedWhileLoggedOut)
             {
-                ZipSuccessText.Text = "Secure Container created. Sign in to enable open notifications.";
+                ZipSuccessText.Text = $"Container \"{_lastStarName}\" created. Sign in to enable open notifications.";
                 _sszCreatedWhileLoggedOut = false;
             }
             else
             {
                 ZipSuccessText.Text = _isSszMode
-                    ? "Secure Container created successfully."
+                    ? $"Secure Container \"{_lastStarName}\" created successfully."
                     : "ZIP created successfully.";
             }
             ZipSuccessBanner.Visibility = Visibility.Visible;
