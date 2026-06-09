@@ -122,15 +122,19 @@ public partial class MainWindow : Window
     {
         try
         {
-            string? latest = await ApiService.GetLatestVersionAsync();
+            // Small delay so the window renders before the network call
+            await Task.Delay(3000);
+
+            var (latest, htmlUrl) = await ApiService.GetLatestReleaseAsync();
             if (string.IsNullOrEmpty(latest)) return;
 
             if (Version.TryParse(latest, out var latestVer) &&
                 Version.TryParse(AppConstants.AppVersion, out var currentVer) &&
                 latestVer > currentVer)
             {
-                _updateUrl = $"https://github.com/sstephen-arch/zip-with-password/releases/latest";
-                UpdateBannerText.Text = $"Starkive {latest} is available — you're on {AppConstants.AppVersion}.";
+                // Use the release page URL from GitHub if available, fallback to /releases/latest
+                _updateUrl = htmlUrl ?? "https://github.com/sstephen-arch/zip-with-password/releases/latest";
+                UpdateBannerText.Text = $"⬆  Starkive {latest} is available — you're on v{AppConstants.AppVersion}. Click Download to get it.";
                 UpdateBanner.Visibility = Visibility.Visible;
             }
         }

@@ -181,15 +181,24 @@ internal static class ApiService
 
     // ── Version check ─────────────────────────────────────────────────────────
 
-    internal static async Task<string?> GetLatestVersionAsync()
+    // ── GitHub release check ──────────────────────────────────────────────────
+    // Hits the GitHub Releases API — no edge function required.
+    // Returns the latest semver string (e.g. "1.4.0"), or null on any failure.
+
+    internal static async Task<(string? Version, string? HtmlUrl)> GetLatestReleaseAsync()
     {
+        const string url = "https://api.github.com/repos/sstephen-arch/zip-with-password/releases/latest";
         try
         {
-            var resp = await _http.GetFromJsonAsync<VersionResponse>(
-                AppConstants.SupabaseUrl + "/functions/v1/version");
-            return resp?.Version;
+            // GitHub API requires a User-Agent header (already set on _http via BuildClient)
+            var resp = await _http.GetFromJsonAsync<GitHubReleaseResponse>(url);
+            if (resp is null) return (null, null);
+
+            // tag_name is "v1.3.0" — strip the leading 'v' for version comparison
+            string version = resp.TagName?.TrimStart('v') ?? "";
+            return (version, resp.HtmlUrl);
         }
-        catch { return null; }
+        catch { return (null, null); }
     }
 }
 
@@ -220,7 +229,10 @@ internal sealed class SszFileRecord
     [JsonPropertyName("star_name")]         public string? StarName       { get; init; }
 }
 
-internal sealed class VersionResponse
+// GitHub Releases API minimal shape
+internal sealed class GitHubReleaseResponse
 {
-    [JsonPropertyName("version")] public string Version { get; init; } = "";
+    [JsonPropertyName("tag_name")] public string? TagName  { get; init; }
+    [JsonPropertyName("html_url")] public string? HtmlUrl  { get; init; }
+    [JsonPropertyName("name")]     public string? Name     { get; init; }
 }
