@@ -244,7 +244,7 @@
                     <StackPanel x:Name="VersionPanel" Orientation="Horizontal"
                                 Margin="14,0,0,8" VerticalAlignment="Center">
                         <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="VersionText" Text="v1.3.1" FontSize="10"
+                        <TextBlock x:Name="VersionText" Text="v1.3.2" FontSize="10"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontFamily="Consolas" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>

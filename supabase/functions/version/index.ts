@@ -2,7 +2,7 @@
 // The app polls this on startup to show the in-app update banner.
 
 const CURRENT_VERSION = "1.3.2";
-const DOWNLOAD_URL    = "https://github.com/sstephen-arch/zip-with-password/releases/download/v1.3.1/Starkive-Setup-1.3.1.exe";
+const DOWNLOAD_URL    = "https://github.com/sstephen-arch/zip-with-password/releases/download/v1.3.2/Starkive-Setup-1.3.2.exe";
 
 Deno.serve((_req: Request) => {
   return new Response(
