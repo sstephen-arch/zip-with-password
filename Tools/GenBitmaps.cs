@@ -54,66 +54,84 @@ class GenBitmaps
         Console.WriteLine("Done.");
     }
 
-    // ── InnoSetup: side panel  164 × 314 ─────────────────────────────────────
+    // ── InnoSetup: side panel  410 × 786 (2.5× for HiDPI sharpness) ──────────
     static void MakeInnoSide(string path)
     {
-        const int W = 164, H = 314;
+        // Render at 2.5× so the bitmap stays crisp when Windows scales it up.
+        // InnoSetup scales the image to fill its panel height regardless of pixel size.
+        const int W = 410, H = 786;
         using var bmp = new Bitmap(W, H, PixelFormat.Format24bppRgb);
         using var g   = Graphics.FromImage(bmp);
-        g.SmoothingMode     = SmoothingMode.AntiAlias;
-        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        g.SmoothingMode        = SmoothingMode.AntiAlias;
+        g.InterpolationMode    = InterpolationMode.HighQualityBicubic;
+        g.TextRenderingHint    = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 
-        // Dark navy gradient background
+        // ── Background: dark-to-mid navy gradient ──
         using var bg = new LinearGradientBrush(
             new Point(0, 0), new Point(0, H),
-            Color.FromArgb(0x0A, 0x10, 0x2A),
-            Color.FromArgb(0x12, 0x3A, 0x8A));
+            Color.FromArgb(0x08, 0x0D, 0x1F),
+            Color.FromArgb(0x0D, 0x28, 0x6B));
         g.FillRectangle(bg, 0, 0, W, H);
+
+        // Subtle right-edge vignette so it blends into the white content panel
+        using var vg = new LinearGradientBrush(
+            new Point(W - 40, 0), new Point(W, 0),
+            Color.Transparent, Color.FromArgb(30, 0, 0, 0));
+        g.FillRectangle(vg, W - 40, 0, 40, H);
 
         int cx = W / 2;
 
-        // ── Measure the full content block so we can centre it vertically ──
-        using var fName = new Font("Segoe UI", 19, FontStyle.Bold,    GraphicsUnit.Pixel);
-        using var fTag  = new Font("Segoe UI",  9, FontStyle.Regular, GraphicsUnit.Pixel);
-        using var fVer  = new Font("Segoe UI",  8, FontStyle.Regular, GraphicsUnit.Pixel);
+        // ── App icon tile: dark rounded square + wheel mark ──────────────────
+        int tileSize = 110;
+        float tileX  = cx - tileSize / 2f;
+        float tileY  = H * 0.28f - tileSize / 2f;   // 28% from top
+        float corner = tileSize * 0.22f;
 
-        int    markR    = 28;           // wheel radius
-        int    markDiam = markR * 2;
-        float  gap1     = 14;           // mark → divider gap
-        float  divH     = 1;
-        float  gap2     = 12;           // divider → name gap
-        SizeF  ns       = g.MeasureString("Starkive", fName);
-        float  gap3     = 5;
-        string tag      = "Zip. Encrypt. Stay safe.";
-        SizeF  ts       = g.MeasureString(tag, fTag);
+        // Tile shadow
+        using var shadowPath = RoundedRect(tileX + 4, tileY + 6, tileSize, tileSize, corner);
+        using var shadowBrush = new SolidBrush(Color.FromArgb(60, 0, 0, 0));
+        g.FillPath(shadowBrush, shadowPath);
 
-        float totalH = markDiam + gap1 + divH + gap2 + ns.Height + gap3 + ts.Height;
-        float blockTop = (H - totalH) / 2f;   // vertically centred
+        // Tile background (matches app icon dark bg)
+        using var tilePath = RoundedRect(tileX, tileY, tileSize, tileSize, corner);
+        g.FillPath(new SolidBrush(Color.FromArgb(0x0A, 0x0E, 0x1A)), tilePath);
 
-        // Wheel mark
-        int markCY = (int)(blockTop + markR);
-        DrawWheelMark(g, cx, markCY, markR);
+        // Subtle inner border on tile
+        using var tileBorderPen = new Pen(Color.FromArgb(40, Blue), 1.5f);
+        g.DrawPath(tileBorderPen, tilePath);
 
-        // Divider
-        float divY = blockTop + markDiam + gap1;
-        using var div = new Pen(Color.FromArgb(55, White), divH);
-        g.DrawLine(div, 22, divY, W - 22, divY);
+        // Wheel mark centred inside the tile
+        int markCX = cx;
+        int markCY = (int)(tileY + tileSize / 2f);
+        DrawWheelMark(g, markCX, markCY, (int)(tileSize * 0.33f));
+
+        // ── Text block ───────────────────────────────────────────────────────
+        float textTop = tileY + tileSize + 32;
 
         // Product name
-        float nameY = divY + gap2;
+        using var fName = new Font("Segoe UI", 46, FontStyle.Bold, GraphicsUnit.Pixel);
+        SizeF ns = g.MeasureString("Starkive", fName);
         g.DrawString("Starkive", fName, new SolidBrush(White),
-            cx - ns.Width / 2, nameY);
+            cx - ns.Width / 2f, textTop);
 
         // Tagline
-        float tagY = nameY + ns.Height + gap3;
+        using var fTag = new Font("Segoe UI", 20, FontStyle.Regular, GraphicsUnit.Pixel);
+        string tag = "Zip. Encrypt. Stay safe.";
+        SizeF ts = g.MeasureString(tag, fTag);
         g.DrawString(tag, fTag, new SolidBrush(BlueLight),
-            cx - ts.Width / 2, tagY);
+            cx - ts.Width / 2f, textTop + ns.Height + 8);
 
-        // Version — pinned to bottom
+        // Thin divider below tagline
+        float divY = textTop + ns.Height + 8 + ts.Height + 22;
+        using var div = new Pen(Color.FromArgb(45, White), 1f);
+        g.DrawLine(div, 55, divY, W - 55, divY);
+
+        // Version — pinned near bottom
+        using var fVer = new Font("Segoe UI", 17, FontStyle.Regular, GraphicsUnit.Pixel);
         string ver = "v 1.2.0";
         SizeF vs = g.MeasureString(ver, fVer);
-        g.DrawString(ver, fVer, new SolidBrush(Color.FromArgb(100, White)),
-            cx - vs.Width / 2, H - 18);
+        g.DrawString(ver, fVer, new SolidBrush(Color.FromArgb(90, White)),
+            cx - vs.Width / 2f, H - 48);
 
         bmp.Save(path, ImageFormat.Bmp);
         Console.WriteLine($"Written {path}");
