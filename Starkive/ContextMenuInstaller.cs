@@ -39,6 +39,8 @@ public static class ContextMenuInstaller
             if (menuKey is null) continue;
             menuKey.SetValue("", MenuLabel);
             menuKey.SetValue("Icon", $"\"{exePath}\"");
+            // NeverDefault prevents this from becoming the default verb accidentally
+            menuKey.SetValue("NeverDefault", "");
 
             using var cmdKey = menuKey.CreateSubKey("command");
             if (cmdKey is null) continue;
