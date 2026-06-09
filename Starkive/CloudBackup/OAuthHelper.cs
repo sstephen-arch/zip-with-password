@@ -67,7 +67,7 @@ internal static class OAuthHelper
         const string html = "<html><body style='font-family:sans-serif;padding:40px'>"
             + "<h2>✅ Connected! You can close this tab.</h2></body></html>";
         var buf = Encoding.UTF8.GetBytes(html);
-        ctx.Response.ContentType = "text/html";
+        ctx.Response.ContentType = "text/html; charset=utf-8";
         ctx.Response.ContentLength64 = buf.Length;
         await ctx.Response.OutputStream.WriteAsync(buf, cts.Token);
         ctx.Response.Close();
