@@ -325,9 +325,6 @@ public partial class MainWindow : Window
 
     internal void OpenSszFile(string sszPath)
     {
-        if (RequirePro("Opening Starkive Secure Containers (.ssz)")) return;
-
-        // Navigate to Unzip panel and pre-fill the source path.
         ShowSection("Unzip");
         SetUnzipSource(sszPath);
     }
@@ -799,8 +796,13 @@ public partial class MainWindow : Window
     // ─── Unzip ────────────────────────────────────────────────────────────────
     private void SetUnzipSource(string path)
     {
-        if (!path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-        { ShowUnzipError("Please select a .zip file."); return; }
+        bool isZip = path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+        bool isSsz = path.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase);
+        if (!isZip && !isSsz)
+        { ShowUnzipError("Please select a .zip or .ssz file."); return; }
+
+        if (isSsz && RequirePro("Opening Starkive Secure Containers (.ssz)")) return;
+
         UnzipSourceBox.Text = path;
         UnzipOutputBox.Text = Path.Combine(
             Path.GetDirectoryName(path) ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
@@ -819,8 +821,8 @@ public partial class MainWindow : Window
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Select ZIP file to extract",
-            Filter = "ZIP Archives (*.zip)|*.zip|All Files (*.*)|*.*"
+            Title = "Select file to extract",
+            Filter = "Starkive files (*.zip;*.ssz)|*.zip;*.ssz|ZIP Archives (*.zip)|*.zip|Secure Containers (*.ssz)|*.ssz|All Files (*.*)|*.*"
         };
         if (dlg.ShowDialog() == true) SetUnzipSource(dlg.FileName);
     }
@@ -859,7 +861,15 @@ public partial class MainWindow : Window
         });
 
         bool success = false; string? errMsg = null;
-        try { await Task.Run(() => ZipHelper.ExtractEncryptedZip(zipPath, outFolder, password, prog)); success = true; }
+        bool isSszSource = zipPath.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase);
+        try
+        {
+            if (isSszSource)
+                await Task.Run(() => SszHelper.Open(zipPath, outFolder, password, prog, CancellationToken.None));
+            else
+                await Task.Run(() => ZipHelper.ExtractEncryptedZip(zipPath, outFolder, password, prog));
+            success = true;
+        }
         catch (Exception ex) { errMsg = ex.Message; }
 
         UnzipProgressPanel.Visibility = Visibility.Collapsed;
