@@ -1379,15 +1379,27 @@
                                    Visibility="Collapsed"/>
                         <Border x:Name="UnzipSuccessBanner"
                                 Background="{DynamicResource BannerSuccessBgBrush}" BorderBrush="{DynamicResource SuccessBrush}"
-                                BorderThickness="1" CornerRadius="8" Padding="14,10"
+                                BorderThickness="1" CornerRadius="8" Padding="14,12"
                                 Margin="0,10,0,0" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="OK" FontSize="13"
-                                           Foreground="{DynamicResource SuccessBrush}"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Text="Extraction complete." FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="✓" FontSize="13"
+                                               Foreground="{DynamicResource SuccessBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Extraction complete." FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <!-- Sent by — only visible for SSZ files when creator identity is known -->
+                                <StackPanel x:Name="UnzipSentByPanel" Orientation="Horizontal"
+                                            Margin="0,6,0,0" Visibility="Collapsed">
+                                    <TextBlock Text="Sent by" FontSize="11"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="UnzipSentByText" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>

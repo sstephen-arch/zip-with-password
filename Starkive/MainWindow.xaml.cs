@@ -1127,6 +1127,10 @@ public partial class MainWindow : Window
 
         bool success = false; string? errMsg = null;
         bool isSszSource = zipPath.EndsWith(".ssz", StringComparison.OrdinalIgnoreCase);
+
+        // Peek SSZ header before decryption so we have the token ready for phone-home
+        SszHeader? sszHeader = isSszSource ? SszHelper.PeekHeader(zipPath) : null;
+
         try
         {
             if (isSszSource)
@@ -1145,7 +1149,27 @@ public partial class MainWindow : Window
             Success = success, ErrorMessage = errMsg ?? string.Empty
         });
 
-        if (success) UnzipSuccessBanner.Visibility = Visibility.Visible;
+        if (success)
+        {
+            // Reset "Sent by" panel
+            UnzipSentByPanel.Visibility = Visibility.Collapsed;
+            UnzipSuccessBanner.Visibility = Visibility.Visible;
+
+            // For SSZ files: phone-home and show creator identity
+            if (isSszSource && sszHeader != null)
+            {
+                var sentBy = await ApiService.ReportOpenAsync(
+                    sszHeader.FileToken,
+                    sszHeader.StarName,
+                    Path.GetFileName(zipPath));
+
+                if (!string.IsNullOrWhiteSpace(sentBy))
+                {
+                    UnzipSentByText.Text        = sentBy;
+                    UnzipSentByPanel.Visibility = Visibility.Visible;
+                }
+            }
+        }
         else ShowUnzipError(errMsg?.Contains("password", StringComparison.OrdinalIgnoreCase) == true
             ? "Wrong password or the file is not encrypted."
             : $"Error: {errMsg}");

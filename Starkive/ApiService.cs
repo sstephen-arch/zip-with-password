@@ -118,10 +118,10 @@ internal static class ApiService
     // ── Open notification (phone-home) ────────────────────────────────────────
 
     /// <summary>
-    /// Fire-and-forget: call from SszHelper.Open() without awaiting.
-    /// Retries once on failure and logs errors to the app log file.
+    /// Calls report-open and returns the creator's email if the server provides it,
+    /// or null on failure. Retries once on network error.
     /// </summary>
-    internal static async Task ReportOpenAsync(string fileToken, string starName = "", string fileName = "")
+    internal static async Task<string?> ReportOpenAsync(string fileToken, string starName = "", string fileName = "")
     {
         const string url = AppConstants.SupabaseUrl + "/functions/v1/report-open";
         var payload = new { file_token = fileToken, star_name = starName, file_name = fileName };
@@ -130,20 +130,34 @@ internal static class ApiService
         {
             try
             {
-                // Use a dedicated short-timeout client for phone-home so it never
-                // blocks the main HttpClient connection pool.
                 using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 client.DefaultRequestHeaders.Add("apikey", AppConstants.SupabaseAnonKey);
                 var resp = await client.PostAsJsonAsync(url, payload);
                 AppLog.Write($"ReportOpen attempt {attempt}: HTTP {(int)resp.StatusCode}");
-                if (resp.IsSuccessStatusCode) return;
+                if (resp.IsSuccessStatusCode)
+                {
+                    // Edge function returns {"ok":true,"sent_by":"email"} — extract sent_by if present
+                    try
+                    {
+                        var json = await resp.Content.ReadFromJsonAsync<ReportOpenResponse>();
+                        return json?.SentBy;
+                    }
+                    catch { return null; }
+                }
             }
             catch (Exception ex)
             {
                 AppLog.Write($"ReportOpen attempt {attempt} error: {ex.GetType().Name}: {ex.Message}");
-                if (attempt == 1) await Task.Delay(2000); // brief pause before retry
+                if (attempt == 1) await Task.Delay(2000);
             }
         }
+        return null;
+    }
+
+    private sealed class ReportOpenResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("sent_by")]
+        public string? SentBy { get; init; }
     }
 
     // ── Pro status ────────────────────────────────────────────────────────────

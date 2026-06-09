@@ -83,7 +83,7 @@ Deno.serve(async (req: Request) => {
   // ── 7. Build PDF certificate (failure does NOT block email) ──────────────
   let pdfBase64: string | null = null;
   try {
-    const pdfBytes = await buildNotificationPdf(resolvedFile, resolvedStar, openTime, newCount, file.recipient_hint ?? null);
+    const pdfBytes = await buildNotificationPdf(resolvedFile, resolvedStar, openTime, newCount, file.recipient_hint ?? null, ownerEmail);
     pdfBase64 = encodeBase64(pdfBytes);
   } catch (e) { console.error("[report-open] PDF build error:", e); }
 
@@ -105,7 +105,8 @@ Deno.serve(async (req: Request) => {
       <p style="margin:0 0 10px"><strong>Star identity:</strong> &#9733; ${escHtml(resolvedStar)}</p>
       ${recipientLine}
       <p style="margin:0 0 10px"><strong>Time:</strong> ${openTime}</p>
-      <p style="margin:0"><strong>Total opens:</strong> ${newCount}</p>
+      <p style="margin:0 0 10px"><strong>Total opens:</strong> ${newCount}</p>
+      <p style="margin:0;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:6px"><strong>Sent by:</strong> ${escHtml(ownerEmail)}</p>
     </div>
     ${pdfBase64 ? '<p style="margin:0 0 8px;font-size:12px;color:#6b7280">A PDF open certificate is attached to this email.</p>' : ""}
     <p style="margin:0;font-size:12px;color:#6b7280">You are receiving this because you created a Starkive protected file.</p>
@@ -146,7 +147,10 @@ Deno.serve(async (req: Request) => {
     }
   } catch (e) { console.error("[report-open] Email send exception:", e); }
 
-  return new Response("ok", { status: 200 });
+  // Return creator email so the app can display "Sent by [email]" to the opener
+  return new Response(JSON.stringify({ ok: true, sent_by: ownerEmail }), {
+    status: 200, headers: { "Content-Type": "application/json" },
+  });
 });
 
 // ── PDF certificate ───────────────────────────────────────────────────────────
@@ -159,6 +163,7 @@ async function buildNotificationPdf(
   openTime:      string,
   openCount:     number,
   recipientHint: string | null,
+  sentBy:        string | null,
 ): Promise<Uint8Array> {
   const doc  = await PDFDocument.create();
   const page = doc.addPage([595, 420]); // A5 landscape
@@ -216,6 +221,7 @@ async function buildNotificationPdf(
     ["Open count", openCount.toString()],
   ];
   if (recipientHint) rows.splice(1, 0, ["Opened by", sanitizeForPdf(recipientHint)]);
+  if (sentBy)        rows.push(["Sent by",   sanitizeForPdf(sentBy)]);
 
   let rowY = height - 212;
   for (const [label, value] of rows) {
