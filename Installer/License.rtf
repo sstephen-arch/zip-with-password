@@ -18,7 +18,14 @@ Certain Pro features require a Starkive account. By creating an account you agre
 \bullet  File metadata (filename, size, SHA-256 hash, recipient hint) is stored securely in our cloud to power the audit trail.\line
 \bullet  We do not store, access, or transmit the contents of your encrypted files.\line\line
 
-{\b 3a. Creator Identity Disclosure (Secure Container)}\line
+{\b 3a. Open-Event Data (Secure Container)}\line
+When a Secure Container (.ssz) file is opened, Starkive logs the following data for each open event and includes it in the notification sent to the creator:\line
+\bullet  {\b Date and time} of the open event (UTC).\line
+\bullet  {\b Country} from which the file was opened, derived from the network address at country level only (e.g. "United States"). No city, postal code, or precise location is recorded or transmitted.\line
+\bullet  {\b Open count} — the total number of times the file has been opened.\line
+Country-level geographic data does not constitute personal data under GDPR Article 4(1) and is processed under the legitimate interest of the creator (GDPR Art. 6(1)(f)) to verify delivery and detect unauthorised access. IP addresses are not stored beyond the immediate geo-lookup and are not included in any notification.\line\line
+
+{\b 3b. Creator Identity Disclosure (Secure Container)}\line
 When you create a Secure Container (.ssz) file, your Starkive account email address is associated with that file in our system. By creating and distributing a Secure Container you consent to:\line
 \bullet  Your account email being included in the open-notification certificate (PDF) delivered to your own inbox when the file is opened.\line
 \bullet  Your account email being displayed to the recipient in the application when they successfully decrypt the file, so they know who sent it.\line
