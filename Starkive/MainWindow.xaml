@@ -1636,6 +1636,8 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="10"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="8"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <!-- Row 1: file info + delete -->
@@ -1719,6 +1721,38 @@
                                                             Click="VaultCopy_Click"/>
                                                 </Grid>
                                             </Border>
+
+                                            <!-- Row 5: open/locate actions (hidden when neither path nor URL available) -->
+                                            <StackPanel Grid.Row="4" Orientation="Horizontal">
+                                                <!-- Open Location — local entries with a stored path -->
+                                                <Button Visibility="{Binding OpenLocalBtnVisibility}"
+                                                        IsEnabled="{Binding LocalFileExists}"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        FontSize="11" Padding="8,4" Margin="0,0,6,0"
+                                                        ToolTip="{Binding OpenLocalTooltip}"
+                                                        Tag="{Binding}"
+                                                        Click="VaultOpenLocal_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets"
+                                                                   FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                        <TextBlock Text="Open Location" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <!-- Open in Drive — cloud entries with a share URL -->
+                                                <Button Visibility="{Binding OpenCloudBtnVisibility}"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        FontSize="11" Padding="8,4" Margin="0,0,6,0"
+                                                        ToolTip="{Binding CloudUrl}"
+                                                        Tag="{Binding}"
+                                                        Click="VaultOpenCloud_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets"
+                                                                   FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                        <TextBlock Text="Open in Drive" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

@@ -34,16 +34,44 @@ internal static class SavedPasswordStore
 
     /// <summary>
     /// Save a password for a given output file path.
+    /// Pass cloudUrl/cloudFileId/cloudProvider when the file was uploaded to a cloud drive.
     /// </summary>
-    internal static void Save(string outputPath, string password)
+    internal static void Save(
+        string  outputPath,
+        string  password,
+        string? cloudUrl      = null,
+        string? cloudFileId   = null,
+        string? cloudProvider = null)
     {
         string key = MakeKey(outputPath);
         _entries.RemoveAll(e => e.Key == key);
         _entries.Add(new SavedEntry(
-            Key:       key,
-            Hint:      Path.GetFileName(outputPath),
-            Password:  password,
-            SavedAt:   DateTime.UtcNow));
+            Key:           key,
+            Hint:          Path.GetFileName(outputPath),
+            Password:      password,
+            SavedAt:       DateTime.UtcNow,
+            OutputPath:    outputPath,
+            CloudUrl:      cloudUrl,
+            CloudFileId:   cloudFileId,
+            CloudProvider: cloudProvider));
+        Persist();
+    }
+
+    /// <summary>
+    /// Update cloud metadata on an existing entry (called after a successful upload).
+    /// </summary>
+    internal static void UpdateCloudInfo(string outputPath, string cloudUrl, string cloudFileId, string cloudProvider)
+    {
+        string key   = MakeKey(outputPath);
+        var    entry = _entries.FirstOrDefault(e => e.Key == key);
+        if (entry == null) return;
+        _entries.Remove(entry);
+        _entries.Add(entry with
+        {
+            CloudUrl      = cloudUrl,
+            CloudFileId   = cloudFileId,
+            CloudProvider = cloudProvider,
+        });
         Persist();
     }
 
@@ -145,8 +173,13 @@ internal static class SavedPasswordStore
 }
 
 internal sealed record SavedEntry(
-    [property: JsonPropertyName("key")]      string   Key,
-    [property: JsonPropertyName("hint")]     string   Hint,
-    [property: JsonPropertyName("password")] string   Password,
-    [property: JsonPropertyName("saved_at")] DateTime SavedAt
+    [property: JsonPropertyName("key")]        string   Key,
+    [property: JsonPropertyName("hint")]       string   Hint,
+    [property: JsonPropertyName("password")]   string   Password,
+    [property: JsonPropertyName("saved_at")]   DateTime SavedAt,
+    // Added v1.3.6 — null for entries saved before this version
+    [property: JsonPropertyName("output_path")]   string?  OutputPath   = null,
+    [property: JsonPropertyName("cloud_url")]     string?  CloudUrl     = null,
+    [property: JsonPropertyName("cloud_file_id")] string?  CloudFileId  = null,
+    [property: JsonPropertyName("cloud_provider")]string?  CloudProvider= null
 );

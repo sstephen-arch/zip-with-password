@@ -130,9 +130,8 @@ internal static class ApiService
         {
             try
             {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-                client.DefaultRequestHeaders.Add("apikey", AppConstants.SupabaseAnonKey);
-                var resp = await client.PostAsJsonAsync(url, payload);
+                // Reuse the static _http — never create a new HttpClient per call (socket exhaustion)
+                var resp = await _http.PostAsJsonAsync(url, payload);
                 AppLog.Write($"ReportOpen attempt {attempt}: HTTP {(int)resp.StatusCode}");
                 if (resp.IsSuccessStatusCode)
                 {

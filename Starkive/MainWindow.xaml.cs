@@ -975,6 +975,13 @@ public partial class MainWindow : Window
                 CloudUploadResultText.Text = $"Uploaded to {name}. Share the link:";
                 CopyCloudLinkBtn.Visibility = Visibility.Visible;
                 AppLog.Write($"SSZ uploaded to {name}: {link}");
+
+                // Patch vault entry so the Vault section can show "Open in Drive"
+                SavedPasswordStore.UpdateCloudInfo(
+                    _lastCreatedSszPath,
+                    cloudUrl:      link,
+                    cloudFileId:   link,   // Drive share link doubles as ID for now
+                    cloudProvider: name);
             }
             else
             {
@@ -1354,6 +1361,54 @@ public partial class MainWindow : Window
 
     private void VaultGoToZip_Click(object sender, RoutedEventArgs e)
         => ShowSection("Zip");
+
+    /// <summary>Opens Explorer with the local encrypted file selected.</summary>
+    private void VaultOpenLocal_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is not VaultEntryViewModel vm) return;
+        if (string.IsNullOrEmpty(vm.OutputPath)) return;
+
+        if (!System.IO.File.Exists(vm.OutputPath))
+        {
+            ShowToast("File not found — it may have been moved or deleted.");
+            return;
+        }
+
+        try
+        {
+            // Open Explorer with the file highlighted
+            System.Diagnostics.Process.Start("explorer.exe",
+                $"/select,\"{vm.OutputPath}\"");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"VaultOpenLocal error: {ex.Message}");
+            ShowToast("Could not open file location.");
+        }
+    }
+
+    /// <summary>Opens the cloud share link in the default browser.</summary>
+    private void VaultOpenCloud_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is not VaultEntryViewModel vm) return;
+        if (string.IsNullOrEmpty(vm.CloudUrl)) return;
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName        = vm.CloudUrl,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"VaultOpenCloud error: {ex.Message}");
+            // Fallback: copy to clipboard
+            Clipboard.SetText(vm.CloudUrl);
+            ShowToast("Could not open browser — link copied to clipboard.");
+        }
+    }
 
     // ─── Settings ─────────────────────────────────────────────────────────────
     private void RefreshSettingsSection()

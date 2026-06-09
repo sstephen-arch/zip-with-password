@@ -41,6 +41,33 @@ internal sealed class VaultEntryViewModel : INotifyPropertyChanged
     public Visibility LocalBadgeVisibility => _cloudSynced ? Visibility.Collapsed : Visibility.Visible;
     public string     CloudLabel           => _cloudProviderName;
 
+    // ── Source / location ─────────────────────────────────────────────────────
+    /// Full path to the encrypted output file on disk (may be null for legacy entries).
+    public string?    OutputPath      => _entry.OutputPath;
+
+    /// True if the local file still exists at the saved path.
+    public bool       LocalFileExists =>
+        _entry.OutputPath != null && System.IO.File.Exists(_entry.OutputPath);
+
+    /// Shareable cloud URL (Google Drive / OneDrive share link).
+    public string?    CloudUrl        => _entry.CloudUrl;
+
+    /// True when a cloud URL is available.
+    public bool       HasCloudUrl     => !string.IsNullOrEmpty(_entry.CloudUrl);
+
+    // Button visibility rules:
+    //   "Open Location" — shown for local entries that have a stored path
+    //   "Open in Drive" — shown for cloud entries that have a URL
+    public Visibility OpenLocalBtnVisibility =>
+        (!_cloudSynced && _entry.OutputPath != null) ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility OpenCloudBtnVisibility =>
+        (_cloudSynced && HasCloudUrl) ? Visibility.Visible : Visibility.Collapsed;
+
+    /// Tooltip for the Open Location button — grey text if file is missing.
+    public string OpenLocalTooltip =>
+        LocalFileExists ? $"Open folder: {_entry.OutputPath}" : "File not found at original location";
+
     // ── Password reveal ───────────────────────────────────────────────────────
     public bool IsRevealed
     {
