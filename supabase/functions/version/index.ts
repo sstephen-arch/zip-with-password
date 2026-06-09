@@ -1,8 +1,8 @@
 // Starkive version endpoint — update CURRENT_VERSION when shipping a new release.
 // The app polls this on startup to show the in-app update banner.
 
-const CURRENT_VERSION = "1.3.6";
-const DOWNLOAD_URL    = "https://github.com/sstephen-arch/zip-with-password/releases/download/v1.3.6/Starkive-Setup-1.3.6.exe";
+const CURRENT_VERSION = "1.3.7";
+const DOWNLOAD_URL    = "https://github.com/sstephen-arch/zip-with-password/releases/download/v1.3.7/Starkive-Setup-1.3.7.exe";
 
 Deno.serve((_req: Request) => {
   return new Response(
