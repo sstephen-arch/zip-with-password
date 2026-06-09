@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private int         _wordCount       = 4;
     private string      _separator       = "·";
     private bool        _isSszMode                  = false;
+    private string      _saveDest                   = "Local"; // "Local" | "GoogleDrive" | "OneDrive"
     private bool        _sszCreatedWhileLoggedOut   = false;
     private string      _lastStarName               = "";
     private bool        _suppressThemeChange        = true;   // true until constructor finishes init
@@ -735,6 +736,9 @@ public partial class MainWindow : Window
         // Update create button label and output extension
         ZipCreateButton.Content = ssz ? "Create Secure Container" : "Create Encrypted ZIP";
 
+        // Show/hide cloud destination buttons (only relevant for SSZ)
+        RefreshSaveDestButtons();
+
         // Switch output extension
         string current = ZipOutputBox.Text;
         if (ssz && current.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
@@ -753,7 +757,11 @@ public partial class MainWindow : Window
         ZipCreateButton.IsEnabled   = false;
 
         string source   = ZipSourceBox.Text.TrimEnd('\\', '/');
-        string output   = ZipOutputBox.Text;
+        // For cloud destinations use a temp path; for local use the box value
+        bool   toCloud  = _isSszMode && _saveDest != "Local";
+        string output   = toCloud
+            ? Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(ZipOutputBox.Text) + ".ssz")
+            : ZipOutputBox.Text;
         string password = ResolveActivePassword();
         double progWidth = ((Border)ZipProgressBar.Parent).ActualWidth;
 
@@ -821,13 +829,18 @@ public partial class MainWindow : Window
             }
             else
             {
+                string destLabel = _saveDest switch {
+                    "GoogleDrive" => " → uploading to Google Drive…",
+                    "OneDrive"    => " → uploading to OneDrive…",
+                    _             => " created successfully."
+                };
                 ZipSuccessText.Text = _isSszMode
-                    ? $"Secure Container \"{_lastStarName}\" created successfully."
+                    ? $"Secure Container \"{_lastStarName}\"{destLabel}"
                     : "ZIP created successfully.";
             }
             ZipSuccessBanner.Visibility = Visibility.Visible;
 
-            // Show cloud upload options if an SSZ was just created and a drive is connected
+            // Reset upload panels
             CloudUploadPanel.Visibility       = Visibility.Collapsed;
             CloudUploadResultPanel.Visibility = Visibility.Collapsed;
             CopyCloudLinkBtn.Visibility       = Visibility.Collapsed;
@@ -835,12 +848,24 @@ public partial class MainWindow : Window
 
             if (_isSszMode && _lastCreatedSszPath != null)
             {
-                var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
-                var onedrive = CloudBackup.VaultSyncManager.Providers[1];
-                UploadGDriveBtn.IsEnabled   = gdrive.IsConnected;
-                UploadOneDriveBtn.IsEnabled = onedrive.IsConnected;
-                if (gdrive.IsConnected || onedrive.IsConnected)
-                    CloudUploadPanel.Visibility = Visibility.Visible;
+                if (toCloud)
+                {
+                    // Auto-upload immediately since user chose cloud as destination
+                    var provider = _saveDest == "GoogleDrive"
+                        ? CloudBackup.VaultSyncManager.Providers[0]
+                        : CloudBackup.VaultSyncManager.Providers[1];
+                    await UploadSszToCloudAsync(provider, _saveDest == "GoogleDrive" ? "Google Drive" : "OneDrive");
+                }
+                else
+                {
+                    // Show manual upload buttons if any drive is connected
+                    var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+                    var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+                    UploadGDriveBtn.IsEnabled   = gdrive.IsConnected;
+                    UploadOneDriveBtn.IsEnabled = onedrive.IsConnected;
+                    if (gdrive.IsConnected || onedrive.IsConnected)
+                        CloudUploadPanel.Visibility = Visibility.Visible;
+                }
             }
 
             bool saveChecked = (_pwdMode == "Passphrase")
@@ -900,6 +925,63 @@ public partial class MainWindow : Window
             CopyCloudLinkBtn.Content = "Copied!";
         }
     }
+
+    // ─── Save destination picker ──────────────────────────────────────────────
+
+    private void RefreshSaveDestButtons()
+    {
+        var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+        var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+
+        // Cloud options only available in SSZ mode when connected
+        BtnDestGDrive.Visibility   = (_isSszMode && gdrive.IsConnected)   ? Visibility.Visible : Visibility.Collapsed;
+        BtnDestOneDrive.Visibility = (_isSszMode && onedrive.IsConnected) ? Visibility.Visible : Visibility.Collapsed;
+
+        // If switching away from SSZ and a cloud dest was selected, reset to local
+        if (!_isSszMode && _saveDest != "Local") SetSaveDest("Local");
+
+        UpdateSaveDestUI();
+    }
+
+    private void SaveDest_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string dest)
+            SetSaveDest(dest);
+    }
+
+    private void SetSaveDest(string dest)
+    {
+        _saveDest = dest;
+        UpdateSaveDestUI();
+    }
+
+    private void UpdateSaveDestUI()
+    {
+        var allDestBtns = new[] { BtnDestLocal, BtnDestGDrive, BtnDestOneDrive };
+
+        foreach (var btn in allDestBtns)
+            SelectSegment(btn == GetDestButton(_saveDest) ? btn : null!, allDestBtns);
+
+        bool isLocal = _saveDest == "Local";
+        LocalPathRow.Visibility  = isLocal ? Visibility.Visible : Visibility.Collapsed;
+        CloudDestRow.Visibility  = isLocal ? Visibility.Collapsed : Visibility.Visible;
+
+        if (!isLocal)
+        {
+            bool isGDrive = _saveDest == "GoogleDrive";
+            CloudDestTitle.Text    = isGDrive ? "Google Drive" : "OneDrive";
+            CloudDestSubtitle.Text = isGDrive
+                ? "Your file will be uploaded to Google Drive and a shareable link copied to your clipboard."
+                : "Your file will be uploaded to OneDrive → Starkive folder and a shareable link copied to your clipboard.";
+        }
+    }
+
+    private Button GetDestButton(string dest) => dest switch
+    {
+        "GoogleDrive" => BtnDestGDrive,
+        "OneDrive"    => BtnDestOneDrive,
+        _             => BtnDestLocal,
+    };
 
     private void ShowZipError(string msg)
     {
@@ -1075,6 +1157,9 @@ public partial class MainWindow : Window
         // Show setup warning only if either credential is missing
         CloudSetupWarning.Visibility = (!gConfigured || !odConfigured)
             ? Visibility.Visible : Visibility.Collapsed;
+
+        // Keep the Zip & Encrypt destination picker in sync
+        RefreshSaveDestButtons();
     }
 
     private async void GDriveButton_Click(object sender, RoutedEventArgs e)

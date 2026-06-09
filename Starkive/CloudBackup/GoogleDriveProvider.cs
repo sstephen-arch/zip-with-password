@@ -163,7 +163,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
 
         // Make it accessible to anyone with the link
         var permResp = await http.PostAsJsonAsync(
-            $"{DriveApiBase}/drive/v3/permissions/{uploaded.Id}",
+            $"{DriveApiBase}/drive/v3/files/{uploaded.Id}/permissions",
             new { type = "anyone", role = "reader" }, ct);
 
         if (!permResp.IsSuccessStatusCode)

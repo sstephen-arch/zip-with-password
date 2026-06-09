@@ -698,10 +698,51 @@
                                             Click="ZipBrowseSource_Click"/>
                                 </Grid>
                                 <Rectangle Height="1" Fill="#152030" Margin="0,12"/>
-                                <TextBlock Text="SAVE AS" FontSize="10" FontWeight="SemiBold"
+
+                                <!-- SAVE TO destination picker (cloud options appear when connected + SSZ mode) -->
+                                <TextBlock Text="SAVE TO" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
-                                <Grid>
+                                           Margin="0,0,0,8"/>
+
+                                <!-- Destination tabs -->
+                                <Border Background="{DynamicResource BgInputBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="6" Padding="2" Margin="0,0,0,10">
+                                    <StackPanel x:Name="SaveDestPanel" Orientation="Horizontal">
+                                        <Button x:Name="BtnDestLocal" Content="💾  Local Folder"
+                                                Tag="Local"
+                                                Style="{StaticResource SegmentButtonStyle}"
+                                                MinWidth="120" Padding="10,6"
+                                                Click="SaveDest_Click"/>
+                                        <Button x:Name="BtnDestGDrive"
+                                                Tag="GoogleDrive"
+                                                Style="{StaticResource SegmentButtonStyle}"
+                                                MinWidth="130" Padding="10,6"
+                                                Visibility="Collapsed"
+                                                Click="SaveDest_Click">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="G" FontWeight="Bold" FontSize="13"
+                                                           Foreground="#4285F4" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Google Drive" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="BtnDestOneDrive"
+                                                Tag="OneDrive"
+                                                Style="{StaticResource SegmentButtonStyle}"
+                                                MinWidth="120" Padding="10,6"
+                                                Visibility="Collapsed"
+                                                Click="SaveDest_Click">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="⬡" FontSize="13"
+                                                           Foreground="#0078D4" Margin="0,0,5,0"/>
+                                                <TextBlock Text="OneDrive" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Local path row -->
+                                <Grid x:Name="LocalPathRow">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -713,6 +754,22 @@
                                             Margin="6,0,0,0"
                                             Click="ZipBrowseOutput_Click"/>
                                 </Grid>
+
+                                <!-- Cloud destination info row -->
+                                <Border x:Name="CloudDestRow"
+                                        Background="{DynamicResource BgInputBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="6"
+                                        Padding="12,10" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock x:Name="CloudDestTitle"
+                                                   FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock x:Name="CloudDestSubtitle"
+                                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                                   Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </Border>
 
