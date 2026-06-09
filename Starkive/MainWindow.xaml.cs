@@ -83,6 +83,9 @@ public partial class MainWindow : Window
         }
 
         VersionText.Text = $"v{AppConstants.AppVersion}";
+        // Dynamic greeting
+        var hour = DateTime.Now.Hour;
+        HomeGreeting.Text = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
         ShowSection("Home");
         SetPasswordMode("Password");
         SelectSegment(BtnModePassword, new[] { BtnModePassword, BtnModePassphrase });
@@ -245,6 +248,10 @@ public partial class MainWindow : Window
 
     private void HomeCardUnzip_Click(object sender, MouseButtonEventArgs e)
         => ShowSection("Unzip");
+
+    // Button variant (RoutedEventHandler) for hero CTA and Pro upsell button
+    private void HomeCardPro_Click(object sender, RoutedEventArgs e)
+        => ShowSection("Zip");
 
     private void HomeCardPro_Click(object sender, MouseButtonEventArgs e)
     {
