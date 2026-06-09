@@ -118,35 +118,76 @@ public partial class MainWindow : Window
     }
 
     private string? _updateUrl;
+    private string? _updateVersion;
 
     private async Task CheckForUpdateAsync()
     {
         try
         {
-            // Small delay so the window renders before the network call
             await Task.Delay(3000);
-
-            var (latest, htmlUrl) = await ApiService.GetLatestReleaseAsync();
+            var (latest, downloadUrl) = await ApiService.GetLatestReleaseAsync();
             if (string.IsNullOrEmpty(latest)) return;
 
             if (Version.TryParse(latest, out var latestVer) &&
                 Version.TryParse(AppConstants.AppVersion, out var currentVer) &&
                 latestVer > currentVer)
             {
-                // Use the release page URL from GitHub if available, fallback to /releases/latest
-                _updateUrl = htmlUrl ?? "https://github.com/sstephen-arch/zip-with-password/releases/latest";
-                UpdateBannerText.Text = $"⬆  Starkive {latest} is available — you're on v{AppConstants.AppVersion}. Click Download to get it.";
-                UpdateBanner.Visibility = Visibility.Visible;
+                _updateUrl     = downloadUrl;
+                _updateVersion = latest;
+                UpdateBannerText.Text      = $"⬆  Starkive {latest} is available. Click Install Update — it takes about 30 seconds.";
+                UpdateDownloadBtn.Content  = "Install Update";
+                UpdateBanner.Visibility    = Visibility.Visible;
             }
         }
-        catch { /* version check is optional — never surface errors */ }
+        catch { }
     }
 
     private void UpdateDownload_Click(object sender, RoutedEventArgs e)
     {
         if (_updateUrl != null)
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_updateUrl)
-                { UseShellExecute = true });
+            _ = AutoInstallUpdateAsync(_updateUrl, _updateVersion ?? "");
+    }
+
+    private async Task AutoInstallUpdateAsync(string downloadUrl, string version)
+    {
+        UpdateDownloadBtn.IsEnabled = false;
+
+        try
+        {
+            // ── 1. Download ──────────────────────────────────────────────────
+            UpdateBannerText.Text = "Downloading update…";
+            string tempPath = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), $"StarkiveSetup-{version}.exe");
+
+            using (var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(5) })
+            {
+                var bytes = await http.GetByteArrayAsync(downloadUrl);
+                await System.IO.File.WriteAllBytesAsync(tempPath, bytes);
+            }
+
+            // ── 2. Run installer silently then exit ──────────────────────────
+            // /VERYSILENT = no UI at all; /NORESTART = don't reboot Windows
+            // Inno Setup's CloseApplications=yes will close this process before
+            // overwriting the exe, then relaunch the new version automatically.
+            UpdateBannerText.Text = "Installing…";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tempPath,
+                "/VERYSILENT /NORESTART /CLOSEAPPLICATIONS")
+            {
+                UseShellExecute = true,
+                Verb            = "runas",   // request elevation for Program Files write
+            });
+
+            // Give the installer a moment to start, then shut down this instance
+            await Task.Delay(1500);
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"Auto-update failed: {ex.Message}");
+            UpdateBannerText.Text     = "Download failed — check your connection and try again.";
+            UpdateDownloadBtn.Content  = "Retry";
+            UpdateDownloadBtn.IsEnabled = true;
+        }
     }
 
     private void UpdateDismiss_Click(object sender, RoutedEventArgs e)
