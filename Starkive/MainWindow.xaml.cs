@@ -315,10 +315,11 @@ public partial class MainWindow : Window
         string name = Path.GetFileNameWithoutExtension(source);
         if (string.IsNullOrWhiteSpace(name))
             name = new DirectoryInfo(source).Name;
-        string candidate = Path.Combine(dir, name + ".zip");
+        string ext = _isSszMode ? ".ssz" : ".zip";
+        string candidate = Path.Combine(dir, name + ext);
         int i = 1;
         while (File.Exists(candidate))
-            candidate = Path.Combine(dir, $"{name} ({i++}).zip");
+            candidate = Path.Combine(dir, $"{name} ({i++}){ext}");
         return candidate;
     }
 
@@ -407,12 +408,14 @@ public partial class MainWindow : Window
 
     private void ZipBrowseOutput_Click(object sender, RoutedEventArgs e)
     {
+        bool isSsz = _isSszMode;
         var dlg = new SaveFileDialog
         {
-            Title = "Save ZIP as...",
-            Filter = "ZIP Archive (*.zip)|*.zip",
-            DefaultExt = ".zip",
-            FileName = Path.GetFileName(ZipOutputBox.Text),
+            Title      = isSsz ? "Save Secure Container as..." : "Save ZIP as...",
+            Filter     = isSsz ? "Starkive Secure Container (*.ssz)|*.ssz"
+                                : "ZIP Archive (*.zip)|*.zip",
+            DefaultExt = isSsz ? ".ssz" : ".zip",
+            FileName   = Path.GetFileName(ZipOutputBox.Text),
             InitialDirectory = Path.GetDirectoryName(ZipOutputBox.Text)
                             ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
         };
@@ -662,8 +665,9 @@ public partial class MainWindow : Window
         { error = "Please select a file or folder to zip."; return false; }
         if (string.IsNullOrWhiteSpace(ZipOutputBox.Text))
         { error = "Please specify a destination path."; return false; }
-        if (!ZipOutputBox.Text.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-        { error = "Destination must end with .zip"; return false; }
+        string requiredExt = _isSszMode ? ".ssz" : ".zip";
+        if (!ZipOutputBox.Text.EndsWith(requiredExt, StringComparison.OrdinalIgnoreCase))
+        { error = $"Destination must end with {requiredExt}"; return false; }
 
         string pwd = ResolveActivePassword();
         if (string.IsNullOrEmpty(pwd))
@@ -773,6 +777,9 @@ public partial class MainWindow : Window
 
         if (success)
         {
+            ZipSuccessText.Text = _isSszMode
+                ? "Secure Container created successfully."
+                : "ZIP created successfully.";
             ZipSuccessBanner.Visibility = Visibility.Visible;
             bool saveChecked = (_pwdMode == "Passphrase")
                 ? ChkSavePassphrase.IsChecked == true

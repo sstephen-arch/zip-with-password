@@ -1048,7 +1048,8 @@
                                 <TextBlock Text="OK" FontSize="13"
                                            Foreground="{DynamicResource SuccessBrush}"
                                            VerticalAlignment="Center"/>
-                                <TextBlock Text="ZIP created successfully."
+                                <TextBlock x:Name="ZipSuccessText"
+                                           Text="ZIP created successfully."
                                            FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            Margin="8,0,0,0" VerticalAlignment="Center"/>
