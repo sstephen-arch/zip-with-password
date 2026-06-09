@@ -94,6 +94,7 @@ public partial class MainWindow : Window
         RefreshHistorySection();
         RefreshHomeSection();
         RefreshSettingsSection();
+        UpdateSaveDestUI(); // init tile styles on startup
 
         // Restore saved theme (suppress SelectionChanged during init)
         _suppressThemeChange = true;
@@ -933,14 +934,30 @@ public partial class MainWindow : Window
         var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
         var onedrive = CloudBackup.VaultSyncManager.Providers[1];
 
-        // Cloud options only available in SSZ mode when connected
-        BtnDestGDrive.Visibility   = (_isSszMode && gdrive.IsConnected)   ? Visibility.Visible : Visibility.Collapsed;
-        BtnDestOneDrive.Visibility = (_isSszMode && onedrive.IsConnected) ? Visibility.Visible : Visibility.Collapsed;
+        // Update subtitles to reflect connection state
+        DestGDriveSub.Text   = gdrive.IsConnected   ? gdrive.ConnectedAccount   ?? "Connected" : "Not connected — tap to connect";
+        DestOneDriveSub.Text = onedrive.IsConnected ? onedrive.ConnectedAccount ?? "Connected" : "Not connected — tap to connect";
 
-        // If switching away from SSZ and a cloud dest was selected, reset to local
-        if (!_isSszMode && _saveDest != "Local") SetSaveDest("Local");
+        // If cloud was selected but we lost connection, reset to local
+        if (_saveDest == "GoogleDrive" && !gdrive.IsConnected)   SetSaveDest("Local");
+        if (_saveDest == "OneDrive"    && !onedrive.IsConnected) SetSaveDest("Local");
 
         UpdateSaveDestUI();
+    }
+
+    private void DestTile_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is Border tile && tile.Tag is string dest)
+        {
+            var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+            var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+
+            // If cloud selected but not connected, prompt to go to Settings instead
+            if (dest == "GoogleDrive" && !gdrive.IsConnected) { SetSaveDest("GoogleDrive"); return; }
+            if (dest == "OneDrive"    && !onedrive.IsConnected) { SetSaveDest("OneDrive"); return; }
+
+            SetSaveDest(dest);
+        }
     }
 
     private void SaveDest_Click(object sender, RoutedEventArgs e)
@@ -949,31 +966,76 @@ public partial class MainWindow : Window
             SetSaveDest(dest);
     }
 
+    private void CloudDestConnectBtn_Click(object sender, RoutedEventArgs e)
+    {
+        // Navigate to Settings tab and scroll to cloud backup
+        ShowSection("Settings");
+    }
+
     private void SetSaveDest(string dest)
     {
         _saveDest = dest;
         UpdateSaveDestUI();
     }
 
+    private static readonly System.Windows.Media.SolidColorBrush TileActiveBorder =
+        new(System.Windows.Media.Color.FromRgb(0x1A, 0x56, 0xDB));
+    private static readonly System.Windows.Media.SolidColorBrush TileInactiveBorder =
+        new(System.Windows.Media.Color.FromRgb(0x1E, 0x2D, 0x3D));
+    private static readonly System.Windows.Media.SolidColorBrush TileActiveBg =
+        new(System.Windows.Media.Color.FromArgb(0x1A, 0x1A, 0x56, 0xDB));
+    private static readonly System.Windows.Media.SolidColorBrush TileInactiveBg =
+        new(System.Windows.Media.Color.FromRgb(0x0D, 0x1A, 0x26));
+
     private void UpdateSaveDestUI()
     {
-        var allDestBtns = new[] { BtnDestLocal, BtnDestGDrive, BtnDestOneDrive };
+        var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+        var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+        bool isLocal   = _saveDest == "Local";
+        bool isGDrive  = _saveDest == "GoogleDrive";
+        bool isOD      = _saveDest == "OneDrive";
 
-        foreach (var btn in allDestBtns)
-            SelectSegment(btn == GetDestButton(_saveDest) ? btn : null!, allDestBtns);
+        // Style the three tiles
+        StyleDestTile(DestTileLocal,    isLocal);
+        StyleDestTile(DestTileGDrive,   isGDrive);
+        StyleDestTile(DestTileOneDrive, isOD);
 
-        bool isLocal = _saveDest == "Local";
-        LocalPathRow.Visibility  = isLocal ? Visibility.Visible : Visibility.Collapsed;
-        CloudDestRow.Visibility  = isLocal ? Visibility.Collapsed : Visibility.Visible;
+        // Dim tiles that require SSZ but we're in ZIP mode
+        double cloudOpacity = _isSszMode ? 1.0 : 0.45;
+        DestTileGDrive.Opacity   = cloudOpacity;
+        DestTileOneDrive.Opacity = cloudOpacity;
+        DestTileGDrive.IsEnabled   = _isSszMode;
+        DestTileOneDrive.IsEnabled = _isSszMode;
+
+        // Show/hide the local path box
+        LocalPathRow.Visibility = isLocal ? Visibility.Visible : Visibility.Collapsed;
+
+        // Show/hide the cloud info box
+        CloudDestRow.Visibility = (!isLocal) ? Visibility.Visible : Visibility.Collapsed;
 
         if (!isLocal)
         {
-            bool isGDrive = _saveDest == "GoogleDrive";
-            CloudDestTitle.Text    = isGDrive ? "Google Drive" : "OneDrive";
-            CloudDestSubtitle.Text = isGDrive
-                ? "Your file will be uploaded to Google Drive and a shareable link copied to your clipboard."
-                : "Your file will be uploaded to OneDrive → Starkive folder and a shareable link copied to your clipboard.";
+            bool connected = isGDrive ? gdrive.IsConnected : onedrive.IsConnected;
+            string name    = isGDrive ? "Google Drive" : "OneDrive";
+            string account = isGDrive ? (gdrive.ConnectedAccount ?? "") : (onedrive.ConnectedAccount ?? "");
+
+            CloudDestTitle.Text = connected
+                ? $"{name} · {account}"
+                : $"{name} — Not connected";
+            CloudDestSubtitle.Text = connected
+                ? $"File will be uploaded to {name} and a shareable link copied to your clipboard."
+                : $"Connect {name} in Settings to use this option.";
+            CloudDestConnectBtn.Visibility = connected ? Visibility.Collapsed : Visibility.Visible;
+
+            // If not connected, reset to local silently
+            if (!connected) { isLocal = true; LocalPathRow.Visibility = Visibility.Visible; }
         }
+    }
+
+    private static void StyleDestTile(Border tile, bool active)
+    {
+        tile.BorderBrush = active ? TileActiveBorder : TileInactiveBorder;
+        tile.Background  = active ? TileActiveBg     : TileInactiveBg;
     }
 
     private Button GetDestButton(string dest) => dest switch
