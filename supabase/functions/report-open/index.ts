@@ -38,6 +38,9 @@ Deno.serve(async (req: Request) => {
   const newCount = (file.open_count ?? 0) + 1;
   const opener_ip  = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null;
   const user_agent = req.headers.get("user-agent") ?? null;
+  // Cloudflare injects cf-ipcountry on every edge-function request — ISO 3166-1 alpha-2.
+  // Country-level geo is not personal data under GDPR Art.4(1); logged under legitimate interest.
+  const country_code = req.headers.get("cf-ipcountry") ?? null; // e.g. "US", "GB", "XX" if unknown
 
   // ── 2. Increment open counter (fire-and-forget) ──────────────────────────
   supabase.from("ssz_files")
@@ -50,7 +53,7 @@ Deno.serve(async (req: Request) => {
   try {
     const { data: ae, error: aeErr } = await supabase
       .from("audit_events")
-      .insert({ file_id: file.id, event_type: "file_opened", ip_address: opener_ip, user_agent, opened_at: now })
+      .insert({ file_id: file.id, event_type: "file_opened", ip_address: opener_ip, user_agent, country_code, opened_at: now })
       .select("id")
       .single();
     if (aeErr) console.error("[report-open] audit_events insert error:", JSON.stringify(aeErr));
@@ -83,7 +86,7 @@ Deno.serve(async (req: Request) => {
   // ── 7. Build PDF certificate (failure does NOT block email) ──────────────
   let pdfBase64: string | null = null;
   try {
-    const pdfBytes = await buildNotificationPdf(resolvedFile, resolvedStar, openTime, newCount, file.recipient_hint ?? null, ownerEmail);
+    const pdfBytes = await buildNotificationPdf(resolvedFile, resolvedStar, openTime, newCount, file.recipient_hint ?? null, ownerEmail, country_code);
     pdfBase64 = encodeBase64(pdfBytes);
   } catch (e) { console.error("[report-open] PDF build error:", e); }
 
@@ -91,6 +94,16 @@ Deno.serve(async (req: Request) => {
   const recipientLine = file.recipient_hint
     ? `<p style="margin:0 0 8px"><strong>Opened by:</strong> ${escHtml(file.recipient_hint)}</p>`
     : "";
+
+  // Country flag emoji (U+1F1E6 + offset) — safe in HTML email; skipped in PDF
+  const countryDisplay = country_code && country_code !== "XX" && country_code !== "T1"
+    ? (() => {
+        const flag = String.fromCodePoint(
+          ...country_code.toUpperCase().split("").map(c => 0x1F1E6 + c.charCodeAt(0) - 65)
+        );
+        return `${flag} ${country_code}`;
+      })()
+    : null;
 
   const html = `
 <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:540px;margin:0 auto;color:#1a2535">
@@ -105,6 +118,7 @@ Deno.serve(async (req: Request) => {
       <p style="margin:0 0 10px"><strong>Star identity:</strong> &#9733; ${escHtml(resolvedStar)}</p>
       ${recipientLine}
       <p style="margin:0 0 10px"><strong>Time:</strong> ${openTime}</p>
+      ${countryDisplay ? `<p style="margin:0 0 10px"><strong>Country:</strong> ${escHtml(countryDisplay)}</p>` : ""}
       <p style="margin:0 0 10px"><strong>Total opens:</strong> ${newCount}</p>
       <p style="margin:0;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:6px"><strong>Sent by:</strong> ${escHtml(ownerEmail)}</p>
     </div>
@@ -164,6 +178,7 @@ async function buildNotificationPdf(
   openCount:     number,
   recipientHint: string | null,
   sentBy:        string | null,
+  countryCode:   string | null,
 ): Promise<Uint8Array> {
   const doc  = await PDFDocument.create();
   const page = doc.addPage([595, 420]); // A5 landscape
@@ -221,7 +236,10 @@ async function buildNotificationPdf(
     ["Open count", openCount.toString()],
   ];
   if (recipientHint) rows.splice(1, 0, ["Opened by", sanitizeForPdf(recipientHint)]);
-  if (sentBy)        rows.push(["Sent by",   sanitizeForPdf(sentBy)]);
+  // Country: safe to show — 2-letter ISO code only, not personal data
+  if (countryCode && countryCode !== "XX" && countryCode !== "T1")
+    rows.splice(rows.findIndex(r => r[0] === "Opened at") + 1, 0, ["Country", countryCode]);
+  if (sentBy) rows.push(["Sent by", sanitizeForPdf(sentBy)]);
 
   let rowY = height - 212;
   for (const [label, value] of rows) {
