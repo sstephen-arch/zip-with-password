@@ -759,19 +759,19 @@
                 <StackPanel>
 
                     <!-- Header -->
-                    <StackPanel Margin="22,20,22,0">
-                        <TextBlock Text="Zip &amp; Encrypt" FontSize="20" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,3"/>
+                    <StackPanel Margin="22,12,22,0">
+                        <TextBlock Text="Zip &amp; Encrypt" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,2"/>
                         <TextBlock Text="Add files or folders, set a password, create an AES-256 encrypted archive."
-                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Body -->
-                    <StackPanel Margin="28,16,28,24">
+                    <StackPanel Margin="28,10,28,12">
 
                         <!-- Drop zone -->
-                        <Grid Margin="0,0,0,16" Height="120">
+                        <Grid Margin="0,0,0,8" Height="76">
                             <Rectangle x:Name="ZipDropRect"
                                        Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
@@ -817,11 +817,11 @@
                         <!-- SOURCE card -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="SOURCE" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -842,11 +842,11 @@
                         <!-- SAVE TO card — always visible, shows all destinations -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="SAVE TO" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,10"/>
+                                           Margin="0,0,0,7"/>
 
                                 <!-- Three destination tiles always visible -->
                                 <Grid>
@@ -860,7 +860,7 @@
 
                                     <!-- Local -->
                                     <Border x:Name="DestTileLocal" Grid.Column="0"
-                                            CornerRadius="8" Padding="12,10"
+                                            CornerRadius="8" Padding="10,7"
                                             BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="Local">
                                         <StackPanel>
@@ -878,7 +878,7 @@
 
                                     <!-- Google Drive -->
                                     <Border x:Name="DestTileGDrive" Grid.Column="2"
-                                            CornerRadius="8" Padding="12,10"
+                                            CornerRadius="8" Padding="10,7"
                                             BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="GoogleDrive">
                                         <StackPanel>
@@ -966,11 +966,11 @@
                         <!-- OUTPUT FORMAT card -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="OUTPUT FORMAT" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,8"/>
+                                           Margin="0,0,0,5"/>
                                 <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <Grid>
@@ -1020,11 +1020,11 @@
                         <!-- PASSWORD MODE card (Fix 4d) -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="PASSWORD MODE" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,8"/>
+                                           Margin="0,0,0,5"/>
                                 <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <Grid>
@@ -1056,7 +1056,7 @@
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextLabelBrush}"
-                                               Margin="0,0,0,5"/>
+                                               Margin="0,0,0,3"/>
                                     <Border Background="{DynamicResource BgCardBrush}"
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1" CornerRadius="10">
@@ -1069,7 +1069,7 @@
                                     <TextBlock Text="CONFIRM PASSWORD" FontSize="10"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextLabelBrush}"
-                                               Margin="0,0,0,5"/>
+                                               Margin="0,0,0,3"/>
                                     <Border Background="{DynamicResource BgCardBrush}"
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1" CornerRadius="10">
@@ -1081,7 +1081,7 @@
                             </Grid>
 
                             <!-- Strength bar -->
-                            <Grid Margin="0,10,0,2">
+                            <Grid Margin="0,6,0,2">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -1115,7 +1115,7 @@
 
                             <!-- Auto-generate section (inline, collapsible) -->
                             <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                                    Margin="0,14,0,0" Padding="0,12,0,0">
+                                    Margin="0,8,0,0" Padding="0,8,0,0">
                                 <StackPanel>
                                     <Button x:Name="BtnAutoGenToggle"
                                             Content="&#x2022;&#x2022;&#x2022; Generate a strong password for me"
@@ -1338,15 +1338,15 @@
             <ScrollViewer x:Name="UnzipSection" VerticalScrollBarVisibility="Auto"
                           Background="Transparent" Visibility="Collapsed">
                 <StackPanel>
-                    <StackPanel Margin="22,20,22,0">
-                        <TextBlock Text="Unzip &amp; Decrypt" FontSize="20" FontWeight="SemiBold"
+                    <StackPanel Margin="22,12,22,0">
+                        <TextBlock Text="Unzip &amp; Decrypt" FontSize="18" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,3"/>
                         <TextBlock Text="Select an AES-256 encrypted ZIP, enter the password, and extract."
-                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
-                    <StackPanel Margin="28,16,28,24">
-                        <Grid Margin="0,0,0,16" Height="100">
+                    <StackPanel Margin="28,10,28,12">
+                        <Grid Margin="0,0,0,8" Height="76">
                             <Rectangle Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
                                        RadiusX="8" RadiusY="8" IsHitTestVisible="False"/>
@@ -1373,11 +1373,11 @@
                         </Grid>
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="ZIP FILE" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1391,10 +1391,10 @@
                                             Margin="6,0,0,0"
                                             Click="UnzipBrowseSource_Click"/>
                                 </Grid>
-                                <Rectangle Height="1" Fill="#152030" Margin="0,12"/>
+                                <Rectangle Height="1" Fill="#152030" Margin="0,8"/>
                                 <TextBlock Text="EXTRACT TO" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1411,11 +1411,11 @@
                         </Border>
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,3"/>
                                 <Border Background="{DynamicResource BgCardBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="10">
