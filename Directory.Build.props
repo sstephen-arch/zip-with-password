@@ -3,7 +3,7 @@
        Starkive.csproj and installer.wxs both read from here.
        Bump this before every release — nowhere else. -->
   <PropertyGroup>
-    <StarkiveVersion>1.4.1</StarkiveVersion>
+    <StarkiveVersion>1.4.2</StarkiveVersion>
     <Version>$(StarkiveVersion)</Version>
     <AssemblyVersion>$(StarkiveVersion).0</AssemblyVersion>
     <FileVersion>$(StarkiveVersion).0</FileVersion>

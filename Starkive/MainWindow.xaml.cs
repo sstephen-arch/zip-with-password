@@ -1592,10 +1592,10 @@ public partial class MainWindow : Window
         SetBrush("NavActiveBorderBrush", "Transparent");
         SetBrush("BorderBrush",          "#38383A");  // Apple separator dark
         SetBrush("BorderSubtleBrush",    "#2C2C2E");  // subtle divider
-        SetBrush("TextPrimaryBrush",     "#F5F5F7");  // Apple label dark
-        SetBrush("TextSecondaryBrush",   "#AEAEB2");  // Apple secondaryLabel dark
-        SetBrush("TextMutedBrush",       "#8E8E93");  // Apple tertiaryLabel dark
-        SetBrush("TextLabelBrush",       "#636366");  // Apple quaternaryLabel (decorative only)
+        SetBrush("TextPrimaryBrush",     "#F5F5F7");  // Apple label dark       — 16:1 on #1C1C1E ✓
+        SetBrush("TextSecondaryBrush",   "#C7C7CC");  // Apple secondaryLabel  — 10.8:1            ✓
+        SetBrush("TextMutedBrush",       "#AEAEB2");  // Apple tertiaryLabel   —  8.2:1            ✓
+        SetBrush("TextLabelBrush",       "#98989D");  // section headers       —  6.3:1 on #1C1C1E ✓
         SetBrush("AccentDimBrush",       "#002A6B");  // deep blue tint for selected bg
         SetBrush("AccentGlowBrush",      "#400071E3");
         SetBrush("IconBgBlueBrush",      "#002A6B");
@@ -1670,10 +1670,10 @@ public partial class MainWindow : Window
         SetBrush("NavActiveBorderBrush", "Transparent");
         SetBrush("BorderBrush",          "#4E4A44");  // warm medium separator
         SetBrush("BorderSubtleBrush",    "#3E3A34");  // warm subtle separator
-        SetBrush("TextPrimaryBrush",     "#F2EDE4");  // warm near-white
-        SetBrush("TextSecondaryBrush",   "#B8B0A6");  // warm medium — 7.1:1 ✓
-        SetBrush("TextMutedBrush",       "#8A8278");  // warm muted — 4.9:1 ✓
-        SetBrush("TextLabelBrush",       "#6A6460");  // decorative only
+        SetBrush("TextPrimaryBrush",     "#F2EDE4");  // warm near-white — 14.8:1 ✓
+        SetBrush("TextSecondaryBrush",   "#CEC8C0");  // warm medium     —  9.8:1 ✓
+        SetBrush("TextMutedBrush",       "#B8B0A6");  // warm muted      —  7.1:1 ✓
+        SetBrush("TextLabelBrush",       "#9A948C");  // section headers —  5.1:1 ✓
         SetBrush("AccentDimBrush",       "#002060");  // deep blue tint
         SetBrush("AccentGlowBrush",      "#400071E3");
         SetBrush("IconBgBlueBrush",      "#1A2840");
