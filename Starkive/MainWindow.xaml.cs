@@ -92,6 +92,18 @@ public partial class MainWindow : Window
         }
 
         VersionText.Text = $"v{AppConstants.AppVersion}";
+        // Apply theme FIRST so nav brush snapshots use the correct theme colors
+        _suppressThemeChange = true;
+        ThemeComboBox.SelectedIndex = _settings.Theme switch
+        {
+            "Light"    => 1,
+            "Titanium" => 2,
+            "System"   => 3,
+            _          => 0,   // Dark (default)
+        };
+        _suppressThemeChange = false;
+        ApplyTheme(_settings.Theme);
+
         // Dynamic greeting
         var hour = DateTime.Now.Hour;
         HomeGreeting.Text = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -107,18 +119,6 @@ public partial class MainWindow : Window
         RefreshHomeSection();
         RefreshSettingsSection();
         UpdateSaveDestUI(); // init tile styles on startup
-
-        // Restore saved theme (suppress SelectionChanged during init)
-        _suppressThemeChange = true;
-        ThemeComboBox.SelectedIndex = _settings.Theme switch
-        {
-            "Light"    => 1,
-            "Titanium" => 2,
-            "System"   => 3,
-            _          => 0,   // Dark (default)
-        };
-        _suppressThemeChange = false;
-        ApplyTheme(_settings.Theme);
 
         RefreshProStatus();
 
