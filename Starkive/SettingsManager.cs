@@ -10,7 +10,8 @@ public class AppSettings
     public int    MaxHistoryEntries    { get; set; } = 100;
     public bool   SidebarCollapsed     { get; set; } = false;
     public bool   AuditTrailEnabled    { get; set; } = false;
-    public string Theme                { get; set; } = "Dark";
+    public string Theme                { get; set; } = "Light";
+    public string LastSeenVersion      { get; set; } = "";
     // Security / notification prefs
     public bool   ClearClipboardAfterCopy { get; set; } = true;   // auto-clear clipboard after 30s
     public int    ClipboardClearSeconds   { get; set; } = 30;
