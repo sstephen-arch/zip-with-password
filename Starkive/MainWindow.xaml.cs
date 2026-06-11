@@ -384,12 +384,38 @@ public partial class MainWindow : Window
 
     private void UpgradeToPro_Click(object sender, RoutedEventArgs e)
     {
-        // Always open the auth dialog when the user explicitly clicks
-        // "Upgrade to Pro" — even if they're already signed in — so they can
-        // sign in with a different address or re-verify their Pro account.
-        var dlg = new OtpDialog { Owner = this };
-        dlg.ShowDialog();
-        RefreshProStatus();
+        // Signed-in free users go straight to checkout on the website;
+        // everyone else signs in first, then continues to checkout.
+        if (!AuthManager.IsLoggedIn)
+        {
+            var dlg = new OtpDialog { Owner = this };
+            dlg.ShowDialog();
+            RefreshProStatus();
+        }
+        if (AuthManager.IsLoggedIn && !AuthManager.IsProUser)
+            OpenUrl("https://starkive.app/#pricing");
+    }
+
+    private void ViewDashboard_Click(object sender, RoutedEventArgs e)
+        => OpenUrl("https://starkive.app/dashboard");
+
+    /// <summary>Opens a URL in the default browser; copies it on failure.</summary>
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName        = url,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"OpenUrl error: {ex.Message}");
+            Clipboard.SetText(url);
+            ShowToast("Could not open browser — link copied to clipboard.");
+        }
     }
 
     private void OpenAuthDialog()
@@ -397,10 +423,10 @@ public partial class MainWindow : Window
         if (AuthManager.IsLoggedIn)
         {
             // Already signed in — take them to Settings where the Pro card lives
-            // and show a hint if they're not yet Pro.
+            // and send them to checkout if they're not yet Pro.
             ShowSection("Settings");
             if (!AuthManager.IsProUser)
-                ShowToast("Signed in. Visit starkive.app to activate Pro.");
+                OpenUrl("https://starkive.app/#pricing");
             return;
         }
         var dlg = new OtpDialog { Owner = this };
@@ -411,6 +437,10 @@ public partial class MainWindow : Window
     // ─── ZIP source helpers ───────────────────────────────────────────────────
     private void SetZipSource(string path)
     {
+        // Clear results from any previous run
+        ZipSuccessBanner.Visibility = Visibility.Collapsed;
+        ZipErrorText.Visibility     = Visibility.Collapsed;
+
         ZipSourceBox.Text = path;
         ZipOutputBox.Text = BuildDefaultZipOutput(path);
     }
@@ -863,6 +893,9 @@ public partial class MainWindow : Window
                 success = true;
                 output = result.FinalOutputPath;
                 _lastStarName = result.StarName;
+                // The star name is appended to the filename — show the real path
+                // so users know what to look for on disk.
+                if (!toCloud) ZipOutputBox.Text = output;
                 if (AuthManager.IsLoggedIn)
                 {
                     // Await registration so we know if it succeeded before showing success
@@ -912,7 +945,7 @@ public partial class MainWindow : Window
                 string destLabel = _saveDest switch {
                     "GoogleDrive" => " → uploading to Google Drive…",
                     "OneDrive"    => " → uploading to OneDrive…",
-                    _             => " created successfully."
+                    _             => $" saved as {Path.GetFileName(output)}"
                 };
                 ZipSuccessText.Text = _isSszMode
                     ? $"Secure Container \"{_lastStarName}\"{destLabel}"
@@ -1146,6 +1179,10 @@ public partial class MainWindow : Window
         { ShowUnzipError("Please select a .zip or .ssz file."); return; }
 
         if (isSsz && RequirePro("Opening Starkive Secure Containers (.ssz)")) return;
+
+        // Clear results from any previous extraction
+        UnzipSuccessBanner.Visibility = Visibility.Collapsed;
+        UnzipErrorText.Visibility     = Visibility.Collapsed;
 
         UnzipSourceBox.Text = path;
         UnzipOutputBox.Text = Path.Combine(
@@ -1571,6 +1608,9 @@ public partial class MainWindow : Window
             case "Titanium": ApplyTitaniumTheme(); break;
             default:         ApplyDarkTheme();     break;  // "Dark" + fallback
         }
+
+        if (ThemeStatusText != null)
+            ThemeStatusText.Text = $"{theme} theme is active";
     }
 
     // ── Dark  ─────────────────────────────────────────────────────────────────
@@ -1607,6 +1647,9 @@ public partial class MainWindow : Window
         SetBrush("BannerInfoBgBrush",    "#002A6B");
         SetBrush("GoProBgBrush",         "#2A0A50");
         SetBrush("GoProBorderBrush",     "#9F67E0");
+        SetBrush("ProTextBrush",         "#C084FC");  // bright purple on dark
+        SetBrush("ProSubTextBrush",      "#A78BFA");  // softer purple on dark
+        SetBrush("ProBadgeBgBrush",      "#3A2070");  // deep purple chip
         SetGradient("HeroGradientBrush", "#2C2C2E", "#1C1C1E");
         SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
         SetGradient("AccentGradientBrush","#0071E3","#0077ED");
@@ -1646,6 +1689,9 @@ public partial class MainWindow : Window
         SetBrush("BannerInfoBgBrush",    "#EBF3FF");
         SetBrush("GoProBgBrush",         "#F3EFFE");
         SetBrush("GoProBorderBrush",     "#9F67E0");
+        SetBrush("ProTextBrush",         "#6D28D9");  // deep purple on light — 6.6:1 on #F3EFFE ✓
+        SetBrush("ProSubTextBrush",      "#7C5DA8");  // muted purple on light
+        SetBrush("ProBadgeBgBrush",      "#E5D8FA");  // pale purple chip
         SetGradient("HeroGradientBrush", "#F5F5F7", "#FFFFFF");
         SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
         SetGradient("AccentGradientBrush","#0071E3","#0077ED");
@@ -1685,6 +1731,9 @@ public partial class MainWindow : Window
         SetBrush("BannerInfoBgBrush",    "#1A2840");
         SetBrush("GoProBgBrush",         "#2A1040");
         SetBrush("GoProBorderBrush",     "#9F67E0");
+        SetBrush("ProTextBrush",         "#C9A8F0");  // warm-leaning purple on charcoal
+        SetBrush("ProSubTextBrush",      "#AC92D8");  // softer warm purple
+        SetBrush("ProBadgeBgBrush",      "#3A2458");  // deep purple chip
         SetGradient("HeroGradientBrush", "#2E2A25", "#1E1B17");
         SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
         SetGradient("AccentGradientBrush","#0071E3","#0077ED");
@@ -1734,23 +1783,10 @@ public partial class MainWindow : Window
     {
         bool isPro = AuthManager.IsProUser;
 
-        // Sidebar button
-        if (isPro)
-        {
-            GoProBtn.Background     = new SolidColorBrush(Color.FromArgb(0x22, 0x16, 0xA3, 0x4A));
-            GoProLabel.Text         = "Starkive Pro";
-            GoProLabel.Foreground   = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
-            GoProPrice.Text         = "Active ✓";
-            GoProPrice.Foreground   = new SolidColorBrush(Color.FromArgb(0xCC, 0x16, 0xA3, 0x4A));
-        }
-        else
-        {
-            GoProBtn.Background     = new SolidColorBrush(Color.FromArgb(0x14, 0xC0, 0x84, 0xFC));
-            GoProLabel.Text         = "Go Pro";
-            GoProLabel.Foreground   = new SolidColorBrush(Color.FromRgb(0xC0, 0x84, 0xFC));
-            GoProPrice.Text         = "$2.99/mo";
-            GoProPrice.Foreground   = new SolidColorBrush(Color.FromArgb(0x99, 0xC0, 0x84, 0xFC));
-        }
+        // Sidebar card — colors come from theme-aware Pro brushes in XAML;
+        // only the wording changes between free and Pro.
+        GoProLabel.Text = isPro ? "Starkive Pro" : "Go Pro";
+        GoProPrice.Text = isPro ? "Active ✓"     : "$2.99/mo";
 
         // Settings page — swap upgrade card ↔ active badge
         ProUpgradeCard.Visibility = isPro ? Visibility.Collapsed : Visibility.Visible;

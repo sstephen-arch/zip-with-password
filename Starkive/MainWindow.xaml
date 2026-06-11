@@ -236,28 +236,28 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="✦" Grid.Column="0" FontSize="12"
-                                           Foreground="#C084FC" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource ProTextBrush}" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="GoProLabel" Text="Starkive Pro" Grid.Column="1"
                                            FontSize="12" FontWeight="SemiBold"
-                                           Foreground="#D8B4FE" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource ProTextBrush}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                                 <Border Grid.Column="2" CornerRadius="3" Padding="5,1"
-                                        Background="#2A1A5E">
+                                        Background="{DynamicResource ProBadgeBgBrush}">
                                     <TextBlock x:Name="GoProPrice" Text="$2.99/mo"
                                                FontSize="9" FontWeight="SemiBold"
-                                               Foreground="#A78BFA"/>
+                                               Foreground="{DynamicResource ProTextBrush}"/>
                                 </Border>
                             </Grid>
                             <!-- Feature bullets -->
                             <StackPanel Grid.Row="2">
-                                <TextBlock FontSize="10" Foreground="#8B7EC8" Margin="0,1">
+                                <TextBlock FontSize="10" Foreground="{DynamicResource ProSubTextBrush}" Margin="0,1">
                                     <Run Text="✓ "/>
                                     <Run Text="Secure Container (.ssz)"/>
                                 </TextBlock>
-                                <TextBlock FontSize="10" Foreground="#8B7EC8" Margin="0,1">
+                                <TextBlock FontSize="10" Foreground="{DynamicResource ProSubTextBrush}" Margin="0,1">
                                     <Run Text="✓ "/>
                                     <Run Text="Open notifications + PDF"/>
                                 </TextBlock>
-                                <TextBlock FontSize="10" Foreground="#8B7EC8" Margin="0,1">
+                                <TextBlock FontSize="10" Foreground="{DynamicResource ProSubTextBrush}" Margin="0,1">
                                     <Run Text="✓ "/>
                                     <Run Text="Cloud Drive sync"/>
                                 </TextBlock>
@@ -549,7 +549,7 @@
                         <!-- Pro upsell strip — hidden for Pro users -->
                         <Border x:Name="HomeProUpsellStrip"
                                 CornerRadius="12" Margin="0,0,0,16"
-                                BorderBrush="#3B1D72" BorderThickness="1"
+                                BorderBrush="{DynamicResource GoProBorderBrush}" BorderThickness="1"
                                 Background="{DynamicResource BgCardBrush}">
                             <Border.Effect>
                                 <DropShadowEffect Color="#7C3AED" BlurRadius="14" Opacity="0.15" ShadowDepth="0"/>
@@ -561,18 +561,18 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                        <Border CornerRadius="4" Padding="6,2" Background="#2A1060" Margin="0,0,8,0">
-                                            <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#A855F7"/>
+                                        <Border CornerRadius="4" Padding="6,2" Background="{DynamicResource ProBadgeBgBrush}" Margin="0,0,8,0">
+                                            <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource ProTextBrush}"/>
                                         </Border>
                                         <TextBlock Text="Unlock the full Starkive experience" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="✓" Foreground="{DynamicResource ProTextBrush}" FontSize="11" Margin="0,0,5,0"/>
                                         <TextBlock Text="Open tracking + email alerts" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,16,0"/>
-                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="✓" Foreground="{DynamicResource ProTextBrush}" FontSize="11" Margin="0,0,5,0"/>
                                         <TextBlock Text="Cloud backup" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,16,0"/>
-                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="✓" Foreground="{DynamicResource ProTextBrush}" FontSize="11" Margin="0,0,5,0"/>
                                         <TextBlock Text="SSZ sharing" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -605,38 +605,57 @@
                         <!-- Pro Active ribbon — shown only for Pro subscribers -->
                         <Border x:Name="HomeProActiveStrip"
                                 CornerRadius="12" Margin="0,0,0,16"
-                                BorderBrush="#166534" BorderThickness="1"
-                                Background="{DynamicResource BgCardBrush}"
+                                BorderThickness="0"
                                 Visibility="Collapsed">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0.4">
+                                    <GradientStop Color="#6D28D9" Offset="0"/>
+                                    <GradientStop Color="#7C3AED" Offset="0.55"/>
+                                    <GradientStop Color="#9333EA" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#16A34A" BlurRadius="12" Opacity="0.12" ShadowDepth="0"/>
+                                <DropShadowEffect Color="#7C3AED" BlurRadius="18" Opacity="0.35" ShadowDepth="0"/>
                             </Border.Effect>
-                            <Grid Margin="18,12">
+                            <Grid Margin="18,13">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <!-- Green glow icon -->
-                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8"
-                                        Background="#0F2A1A" Margin="0,0,14,0">
-                                    <TextBlock Text="✦" FontSize="15" Foreground="#22C55E"
+                                <!-- Sparkle medallion -->
+                                <Border Grid.Column="0" Width="38" Height="38" CornerRadius="19"
+                                        Margin="0,0,14,0">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="White" Opacity="0.18"/>
+                                    </Border.Background>
+                                    <TextBlock Text="✦" FontSize="17" Foreground="White"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="Starkive Pro — Active" FontSize="13" FontWeight="SemiBold"
-                                               Foreground="#4ADE80" Margin="0,0,0,3"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="Starkive Pro" FontSize="14" FontWeight="Bold"
+                                                   Foreground="White" VerticalAlignment="Center"/>
+                                        <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                                                VerticalAlignment="Center">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="White" Opacity="0.22"/>
+                                            </Border.Background>
+                                            <TextBlock Text="ACTIVE" FontSize="8.5" FontWeight="Bold"
+                                                       Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="✓ Secure Container" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,14,0"/>
-                                        <TextBlock Text="✓ Open notifications" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,14,0"/>
-                                        <TextBlock Text="✓ Cloud sync" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
+                                        <TextBlock Text="✓ Secure Container" Foreground="#E9DEFF" FontSize="11" Margin="0,0,14,0"/>
+                                        <TextBlock Text="✓ Open notifications" Foreground="#E9DEFF" FontSize="11" Margin="0,0,14,0"/>
+                                        <TextBlock Text="✓ Cloud sync" Foreground="#E9DEFF" FontSize="11"/>
                                     </StackPanel>
                                 </StackPanel>
-                                <Border Grid.Column="2" CornerRadius="6" Padding="10,5"
-                                        Background="#0F2A1A" Margin="16,0,0,0"
+                                <Border Grid.Column="2" CornerRadius="8" Padding="14,7"
+                                        Background="White" Margin="16,0,0,0"
                                         Cursor="Hand" MouseLeftButtonUp="GoProBtn_Click">
-                                    <TextBlock Text="Manage →" FontSize="11" FontWeight="Medium"
-                                               Foreground="#4ADE80"/>
+                                    <TextBlock Text="Manage →" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="#6D28D9"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -719,10 +738,11 @@
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Width="30" Height="30"
                                                     CornerRadius="6" Margin="0,0,10,0"
-                                                    Background="{DynamicResource BgPrimaryBrush}">
+                                                    Background="{DynamicResource IconBgBlueBrush}">
                                                 <TextBlock Text="{Binding TypeIcon}"
                                                            FontFamily="Segoe MDL2 Assets"
                                                            FontSize="14"
+                                                           Foreground="{DynamicResource AccentBrush}"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"/>
                                             </Border>
@@ -771,7 +791,7 @@
                     <StackPanel Margin="28,10,28,12">
 
                         <!-- Drop zone -->
-                        <Grid Margin="0,0,0,8" Height="76">
+                        <Grid Margin="0,0,0,8" MinHeight="110">
                             <Rectangle x:Name="ZipDropRect"
                                        Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
@@ -784,7 +804,7 @@
                                     DragOver="DropZone_DragOver"
                                     DragLeave="DropZone_DragLeave"
                                     DragEnter="DropZone_DragEnter">
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,14,0,14">
                                     <Canvas Width="24" Height="24" Margin="0,0,0,8"
                                             HorizontalAlignment="Center">
                                         <Line X1="12" Y1="20" X2="12" Y2="6"
@@ -1769,73 +1789,79 @@
 
                     <!-- Pro Active badge — shown only when user is Pro -->
                     <Border x:Name="ProActiveCard" CornerRadius="10" Margin="0,0,0,14" Padding="18"
-                            BorderThickness="1" BorderBrush="#22A34A" Visibility="Collapsed">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#071A0E" Offset="0"/>
-                                <GradientStop Color="#0A1510" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
+                            BorderThickness="1" BorderBrush="#22A34A" Visibility="Collapsed"
+                            Background="{DynamicResource BannerSuccessBgBrush}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                 <TextBlock Text="&#x2713;" FontSize="14" Foreground="#16A34A"
                                            VerticalAlignment="Center" FontWeight="Bold"/>
                                 <TextBlock Text="Starkive Pro" FontSize="13" FontWeight="SemiBold"
-                                           Foreground="#E8F0FB" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                 <Border Background="#16A34A" CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
                                     <TextBlock Text="ACTIVE" FontSize="9" FontWeight="Bold"
                                                Foreground="White" VerticalAlignment="Center"/>
                                 </Border>
                             </StackPanel>
-                            <TextBlock FontSize="12" Foreground="#7A9AB8" TextWrapping="Wrap" LineHeight="18">
+                            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="18"
+                                       Margin="0,0,0,10">
                                 Your Pro license is active. All features are unlocked.
                             </TextBlock>
+                            <Button Content="View dashboard →" HorizontalAlignment="Left"
+                                    FontSize="12" FontWeight="SemiBold"
+                                    Foreground="White" Background="#16A34A"
+                                    Padding="14,7" BorderThickness="0" Cursor="Hand"
+                                    Click="ViewDashboard_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </StackPanel>
                     </Border>
 
                     <!-- Pro upgrade card — hidden when user is already Pro -->
-                    <Border x:Name="ProUpgradeCard" CornerRadius="10" Margin="0,0,0,14" Padding="18" BorderThickness="1">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#0A1E42" Offset="0"/>
-                                <GradientStop Color="#0C1525" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
+                    <Border x:Name="ProUpgradeCard" CornerRadius="10" Margin="0,0,0,14" Padding="18" BorderThickness="1"
+                            Background="{DynamicResource BannerInfoBgBrush}">
                         <Border.BorderBrush>
-                            <SolidColorBrush Color="#1A56DB" Opacity="0.25"/>
+                            <SolidColorBrush Color="#0071E3" Opacity="0.35"/>
                         </Border.BorderBrush>
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <TextBlock Text="+" FontSize="13" Foreground="#1A56DB"
+                                <TextBlock Text="+" FontSize="13" Foreground="{DynamicResource AccentBrush}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="Starkive Pro" FontSize="13"
-                                           FontWeight="SemiBold" Foreground="#E8F0FB"
+                                           FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"
                                            Margin="6,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <TextBlock FontSize="12" Foreground="#7A9AB8"
+                            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextWrapping="Wrap" Margin="0,0,0,12" LineHeight="18">
                                 Know the exact moment your files are opened, with proof they have not been tampered with.
                             </TextBlock>
                             <StackPanel Margin="0,0,0,14">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Open notifications with timestamp and IP"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Open notifications with timestamp and country"
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                                     <TextBlock Text="Tamper-proof .ssz secure container format"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                                     <TextBlock Text="SHA-256 file integrity verification"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                                     <TextBlock Text="Full audit history and delivery receipts"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                             <Grid>
@@ -1846,17 +1872,17 @@
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="$2.99" FontSize="18"
-                                                   FontWeight="Bold" Foreground="#E8F0FB"/>
+                                                   FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text=" / month" FontSize="12"
-                                                   Foreground="#3A5470"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    VerticalAlignment="Bottom" Margin="0,0,0,2"/>
                                     </StackPanel>
                                     <TextBlock Text="Cancel anytime  No commitment"
-                                               FontSize="10" Foreground="#3A5470" Margin="0,2,0,0"/>
+                                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
                                 </StackPanel>
                                 <Button Grid.Column="1" Content="Upgrade to Pro"
                                         FontSize="12" FontWeight="SemiBold"
-                                        Foreground="White" Background="#1A56DB"
+                                        Foreground="White" Background="{DynamicResource AccentBrush}"
                                         Padding="16,8" BorderThickness="0" Cursor="Hand"
                                         Click="UpgradeToPro_Click">
                                     <Button.Template>
@@ -1886,7 +1912,7 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="Theme" FontSize="13" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                <TextBlock Text="Dark theme is active" FontSize="11"
+                                <TextBlock x:Name="ThemeStatusText" Text="Light theme is active" FontSize="11"
                                            Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="0,2,0,0"/>
                             </StackPanel>
