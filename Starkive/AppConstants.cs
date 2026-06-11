@@ -4,7 +4,7 @@ internal static partial class AppConstants
 {
     internal const string SupabaseUrl     = "https://aospshdryqifluqyxfjx.supabase.co";
     internal const string SupabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvc3BzaGRyeXFpZmx1cXl4Zmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDE0ODEsImV4cCI6MjA5NjQxNzQ4MX0.mMwLOyKFsJ497tPsgVCxsLOX4XE5XL6Mae_QyencuUM";
-    internal const string AppVersion      = "1.4.4";
+    internal const string AppVersion      = "1.4.5";
 
     // ── Cloud drive OAuth credentials ─────────────────────────────────────────
     // Credentials are stored in Secrets.cs which is NOT committed to git.
