@@ -293,14 +293,16 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
+                    <!-- No hover background swap: the active segment sets a solid accent
+                         background with white text, and a hover override made that
+                         unreadable (white on light gray) in light themes. -->
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
                             CornerRadius="6" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BgHoverBrush}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -1097,14 +1097,11 @@ public partial class MainWindow : Window
         UpdateSaveDestUI();
     }
 
-    private static readonly System.Windows.Media.SolidColorBrush TileActiveBorder =
-        new(System.Windows.Media.Color.FromRgb(0x1A, 0x56, 0xDB));
-    private static readonly System.Windows.Media.SolidColorBrush TileInactiveBorder =
-        new(System.Windows.Media.Color.FromRgb(0x1E, 0x2D, 0x3D));
-    private static readonly System.Windows.Media.SolidColorBrush TileActiveBg =
-        new(System.Windows.Media.Color.FromArgb(0x1A, 0x1A, 0x56, 0xDB));
-    private static readonly System.Windows.Media.SolidColorBrush TileInactiveBg =
-        new(System.Windows.Media.Color.FromRgb(0x0D, 0x1A, 0x26));
+    // Theme-aware brushes so the destination tiles follow Light/Dark/Titanium
+    private static System.Windows.Media.Brush TileActiveBorder   => (System.Windows.Media.Brush)Application.Current.Resources["AccentBrush"];
+    private static System.Windows.Media.Brush TileInactiveBorder => (System.Windows.Media.Brush)Application.Current.Resources["BorderBrush"];
+    private static System.Windows.Media.Brush TileActiveBg       => (System.Windows.Media.Brush)Application.Current.Resources["AccentDimBrush"];
+    private static System.Windows.Media.Brush TileInactiveBg     => (System.Windows.Media.Brush)Application.Current.Resources["BgCardBrush"];
 
     private void UpdateSaveDestUI()
     {

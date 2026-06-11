@@ -1009,9 +1009,9 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="Secure Container" VerticalAlignment="Center"/>
                                                 <Border Margin="5,0,0,0" CornerRadius="3"
-                                                        Background="{DynamicResource IconBgPurpleBrush}" Padding="4,1">
+                                                        Background="{DynamicResource ProBadgeBgBrush}" Padding="4,1">
                                                     <TextBlock Text="PRO" FontSize="9" FontWeight="Bold"
-                                                               Foreground="#C084FC"/>
+                                                               Foreground="{DynamicResource ProTextBrush}"/>
                                                 </Border>
                                             </StackPanel>
                                         </Button>
