@@ -159,6 +159,33 @@ internal static class ApiService
         public string? SentBy { get; init; }
     }
 
+    // ── Stripe checkout ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Creates a Stripe Checkout Session for the given email and returns the URL.
+    /// Returns null on failure.
+    /// </summary>
+    internal static async Task<string?> CreateCheckoutSessionAsync(string email)
+    {
+        try
+        {
+            using var plain = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            plain.DefaultRequestHeaders.Add("User-Agent", $"Starkive/{AppConstants.AppVersion}");
+            var resp = await plain.PostAsJsonAsync(
+                "https://starkive.app/api/checkout",
+                new { email });
+            if (!resp.IsSuccessStatusCode) return null;
+            var json = await resp.Content.ReadFromJsonAsync<CheckoutResponse>();
+            return json?.Url;
+        }
+        catch { return null; }
+    }
+
+    private sealed class CheckoutResponse
+    {
+        [JsonPropertyName("url")] public string? Url { get; init; }
+    }
+
     // ── Pro status ────────────────────────────────────────────────────────────
 
     /// <summary>

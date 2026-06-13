@@ -322,8 +322,18 @@ public partial class MainWindow : Window
         => ShowSection("Unzip");
 
     // Button variant (RoutedEventHandler) for hero CTA and Pro upsell button
-    private void HomeCardPro_Click(object sender, RoutedEventArgs e)
-        => ShowSection("Zip");
+    private async void HomeCardPro_Click(object sender, RoutedEventArgs e)
+    {
+        if (!AuthManager.IsLoggedIn)
+        {
+            var dlg = new OtpDialog { Owner = this };
+            dlg.ShowDialog();
+            RefreshProStatus();
+        }
+        if (!AuthManager.IsLoggedIn || AuthManager.IsProUser) return;
+
+        await StartCheckoutAsync();
+    }
 
     private void HomeCardPro_Click(object sender, MouseButtonEventArgs e)
     {
@@ -382,18 +392,51 @@ public partial class MainWindow : Window
     private void GoProBtn_Click(object sender, MouseButtonEventArgs e)
         => OpenAuthDialog();
 
-    private void UpgradeToPro_Click(object sender, RoutedEventArgs e)
+    private async void UpgradeToPro_Click(object sender, RoutedEventArgs e)
     {
-        // Signed-in free users go straight to checkout on the website;
-        // everyone else signs in first, then continues to checkout.
         if (!AuthManager.IsLoggedIn)
         {
             var dlg = new OtpDialog { Owner = this };
             dlg.ShowDialog();
             RefreshProStatus();
         }
-        if (AuthManager.IsLoggedIn && !AuthManager.IsProUser)
-            OpenUrl("https://starkive.app/#pricing");
+        if (!AuthManager.IsLoggedIn || AuthManager.IsProUser) return;
+
+        await StartCheckoutAsync();
+    }
+
+    private async Task StartCheckoutAsync()
+    {
+        string email = AuthManager.UserEmail ?? "";
+        string? url = null;
+
+        if (!string.IsNullOrEmpty(email))
+            url = await ApiService.CreateCheckoutSessionAsync(email);
+
+        // Fall back to pricing page if session creation fails
+        OpenUrl(url ?? "https://starkive.app/#pricing");
+
+        // Poll for Pro status in the background — update UI the moment payment lands
+        _ = PollForProAsync();
+    }
+
+    private async Task PollForProAsync()
+    {
+        // Poll every 5 seconds for up to 3 minutes
+        for (int i = 0; i < 36; i++)
+        {
+            await Task.Delay(5000);
+            bool isPro = await ApiService.FetchProStatusAsync();
+            if (!isPro) continue;
+
+            AuthManager.SetProStatus(true);
+            Dispatcher.Invoke(() =>
+            {
+                RefreshProStatus();
+                ShowToast("You're now Pro! All features unlocked.");
+            });
+            return;
+        }
     }
 
     private void ViewDashboard_Click(object sender, RoutedEventArgs e)
@@ -418,20 +461,19 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OpenAuthDialog()
+    private async void OpenAuthDialog()
     {
         if (AuthManager.IsLoggedIn)
         {
-            // Already signed in — take them to Settings where the Pro card lives
-            // and send them to checkout if they're not yet Pro.
-            ShowSection("Settings");
             if (!AuthManager.IsProUser)
-                OpenUrl("https://starkive.app/#pricing");
+                await StartCheckoutAsync();
             return;
         }
         var dlg = new OtpDialog { Owner = this };
         dlg.ShowDialog();
         RefreshProStatus();
+        if (AuthManager.IsLoggedIn && !AuthManager.IsProUser)
+            await StartCheckoutAsync();
     }
 
     // ─── ZIP source helpers ───────────────────────────────────────────────────
@@ -771,16 +813,17 @@ public partial class MainWindow : Window
     {
         if (AuthManager.IsProUser) return false;
 
-        var dlg = new OtpDialog { Owner = this };
-        bool? result = dlg.ShowDialog();
-        RefreshProStatus();
+        if (!AuthManager.IsLoggedIn)
+        {
+            var dlg = new OtpDialog { Owner = this };
+            dlg.ShowDialog();
+            RefreshProStatus();
+            if (AuthManager.IsProUser) return false;
+        }
 
-        // After successful login, re-check Pro status.
-        if (result == true && AuthManager.IsProUser) return false;
-
-        // Not Pro — navigate to Settings so they can see the upgrade card.
-        ShowSection("Settings");
-        ShowToast($"{featureName} requires Starkive Pro.");
+        // Logged in but not Pro — go straight to checkout
+        ShowToast($"{featureName} requires Starkive Pro. Opening checkout...");
+        _ = StartCheckoutAsync();
         return true; // blocked
     }
 
@@ -1064,19 +1107,42 @@ public partial class MainWindow : Window
         UpdateSaveDestUI();
     }
 
-    private void DestTile_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private async void DestTile_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (sender is Border tile && tile.Tag is string dest)
+        if (sender is not Border tile || tile.Tag is not string dest) return;
+
+        var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+        var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+
+        if (dest == "GoogleDrive" && !gdrive.IsConnected)
         {
-            var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
-            var onedrive = CloudBackup.VaultSyncManager.Providers[1];
-
-            // If cloud selected but not connected, prompt to go to Settings instead
-            if (dest == "GoogleDrive" && !gdrive.IsConnected) { SetSaveDest("GoogleDrive"); return; }
-            if (dest == "OneDrive"    && !onedrive.IsConnected) { SetSaveDest("OneDrive"); return; }
-
-            SetSaveDest(dest);
+            DestGDriveSub.Text = "Connecting…";
+            try
+            {
+                bool ok = await gdrive.ConnectAsync();
+                if (ok) { _ = CloudBackup.VaultSyncManager.PushAsync(); SetSaveDest("GoogleDrive"); }
+                else DestGDriveSub.Text = "Cancelled";
+            }
+            catch { DestGDriveSub.Text = "Error — try again"; }
+            finally { RefreshCloudStatus(); }
+            return;
         }
+
+        if (dest == "OneDrive" && !onedrive.IsConnected)
+        {
+            DestOneDriveSub.Text = "Connecting…";
+            try
+            {
+                bool ok = await onedrive.ConnectAsync();
+                if (ok) { _ = CloudBackup.VaultSyncManager.PushAsync(); SetSaveDest("OneDrive"); }
+                else DestOneDriveSub.Text = "Cancelled";
+            }
+            catch { DestOneDriveSub.Text = "Error — try again"; }
+            finally { RefreshCloudStatus(); }
+            return;
+        }
+
+        SetSaveDest(dest);
     }
 
     private void SaveDest_Click(object sender, RoutedEventArgs e)

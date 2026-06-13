@@ -902,9 +902,14 @@
                                             BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="GoogleDrive">
                                         <StackPanel>
-                                            <TextBlock Text="G" FontSize="18" FontWeight="Bold"
-                                                       Foreground="#4285F4"
-                                                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            <!-- Google Drive 3-color triangle logo -->
+                                            <Viewbox Width="22" Height="20" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                                <Canvas Width="22" Height="20">
+                                                    <Polygon Points="11,0 0,19 11,13"  Fill="#34A853"/>
+                                                    <Polygon Points="11,0 22,19 11,13" Fill="#4285F4"/>
+                                                    <Polygon Points="0,19 22,19 11,13" Fill="#FBBC04"/>
+                                                </Canvas>
+                                            </Viewbox>
                                             <TextBlock Text="Google Drive" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        HorizontalAlignment="Center"/>
@@ -922,9 +927,12 @@
                                             BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="OneDrive">
                                         <StackPanel>
-                                            <TextBlock Text="☁" FontSize="18"
-                                                       Foreground="#0078D4"
-                                                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            <!-- OneDrive cloud logo -->
+                                            <Viewbox Width="26" Height="18" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                                <Canvas Width="26" Height="17">
+                                                    <Path Fill="#0078D4" Data="M 21 7 C 20.4 4.1 17.9 2 15 2 C 13.2 2 11.6 2.8 10.5 4.1 C 9.7 3.4 8.6 3 7.5 3 C 4.9 3 2.8 5.1 2.8 7.7 C 1.1 8.3 0 9.9 0 11.7 C 0 14.1 1.9 16 4.3 16 H 21.5 C 23.9 16 26 14.2 26 12 C 26 9.8 24.2 8 21 7 Z"/>
+                                                </Canvas>
+                                            </Viewbox>
                                             <TextBlock Text="OneDrive" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        HorizontalAlignment="Center"/>

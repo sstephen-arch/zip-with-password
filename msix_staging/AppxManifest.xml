@@ -8,7 +8,7 @@
   <Identity
     Name="DePaloConsultingLLC.Starkive"
     Publisher="CN=C77DA43A-E748-4317-9CEB-5540F6E6C56C"
-    Version="1.4.5.0"
+    Version="1.4.6.0"
     ProcessorArchitecture="x64" />
 
   <Properties>

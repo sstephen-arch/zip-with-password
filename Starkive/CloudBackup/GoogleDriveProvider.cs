@@ -99,7 +99,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     public async Task UploadVaultAsync(byte[] encryptedBytes, CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         // Find existing file ID (if any)
         string? fileId = await FindBackupFileIdAsync(http, ct);
@@ -138,7 +138,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     public async Task<string?> UploadSszAsync(string filePath, CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         string fileName = Path.GetFileName(filePath);
         byte[] fileBytes = await File.ReadAllBytesAsync(filePath, ct);
@@ -186,7 +186,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     public async Task<byte[]?> DownloadVaultAsync(CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         string? fileId = await FindBackupFileIdAsync(http, ct);
         if (fileId == null) return null;

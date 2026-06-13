@@ -87,7 +87,7 @@ internal sealed class OneDriveProvider : ICloudProvider
     public async Task UploadVaultAsync(byte[] encryptedBytes, CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         // PUT to special/approot:/{filename}:/content
         var content = new ByteArrayContent(encryptedBytes);
@@ -109,7 +109,7 @@ internal sealed class OneDriveProvider : ICloudProvider
     public async Task<string?> UploadSszAsync(string filePath, CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         string fileName  = Path.GetFileName(filePath);
         byte[] fileBytes = await File.ReadAllBytesAsync(filePath, ct);
@@ -152,7 +152,7 @@ internal sealed class OneDriveProvider : ICloudProvider
     public async Task<byte[]?> DownloadVaultAsync(CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         var resp = await http.GetAsync(
             $"{GraphBase}/me/drive/special/approot:/{BackupFileName}:/content", ct);

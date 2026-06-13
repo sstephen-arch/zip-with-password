@@ -235,87 +235,114 @@ async function buildNotificationPdf(
   const fontBold    = await doc.embedFont(StandardFonts.HelveticaBold);
   const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
 
-  // Background
-  page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.039, 0.055, 0.098) });
+  // ── Palette (Apple light / starkive.app) ─────────────────────────────────
+  const white      = rgb(1,      1,      1     );
+  const bgSurface  = rgb(0.961,  0.961,  0.969 ); // #F5F5F7
+  const blue       = rgb(0.000,  0.443,  0.890 ); // #0071E3
+  const blueDim    = rgb(0.922,  0.953,  1.000 ); // #EBF3FF
+  const textPri    = rgb(0.114,  0.114,  0.122 ); // #1D1D1F
+  const textMuted  = rgb(0.431,  0.431,  0.451 ); // #6E6E73
+  const border     = rgb(0.824,  0.824,  0.843 ); // #D2D2D7
 
-  // Top accent bar
-  page.drawRectangle({ x: 0, y: height - 5, width, height: 5, color: rgb(0.149, 0.357, 0.922) });
+  // ── Background ───────────────────────────────────────────────────────────
+  page.drawRectangle({ x: 0, y: 0, width, height, color: white });
 
-  // Header: "* STARKIVE" (ASCII * instead of Unicode star)
-  page.drawText("*", {
-    x: 48, y: height - 58, size: 26, font: fontBold,
-    color: rgb(0.576, 0.773, 0.965),
-  });
-  page.drawText("STARKIVE", {
-    x: 72, y: height - 54, size: 22, font: fontBold,
-    color: rgb(0.910, 0.941, 0.984),
-  });
-  page.drawText("OPEN NOTIFICATION CERTIFICATE", {
-    x: 72, y: height - 72, size: 9, font: fontRegular,
-    color: rgb(0.400, 0.557, 0.722),
-  });
+  // Left accent panel (sidebar feel)
+  page.drawRectangle({ x: 0, y: 0, width: 180, height, color: bgSurface });
+  page.drawRectangle({ x: 0, y: 0, width: 3,   height, color: blue });
 
-  // Divider
+  // ── Left panel: brand + star identity ────────────────────────────────────
+  // Logo mark circle
+  page.drawRectangle({ x: 18, y: height - 62, width: 28, height: 28, color: blueDim,
+    borderColor: blue, borderWidth: 0.75 });
+  page.drawText("*", { x: 25, y: height - 42, size: 16, font: fontBold, color: blue });
+
+  page.drawText("Starkive", { x: 52, y: height - 48, size: 14, font: fontBold, color: textPri });
+  page.drawText("starkive.app",  { x: 52, y: height - 61, size: 8,  font: fontRegular, color: textMuted });
+
+  // Thin divider under header
   page.drawLine({
-    start: { x: 48, y: height - 88 }, end: { x: width - 48, y: height - 88 },
-    thickness: 0.5, color: rgb(0.15, 0.20, 0.30),
+    start: { x: 12, y: height - 74 }, end: { x: 168, y: height - 74 },
+    thickness: 0.5, color: border,
   });
 
-  // Star name (large, centred) — safe: star names are ASCII letters
-  const starFontSize = 40;
+  // Star identity (big, centred in left panel)
+  const starFontSize = 34;
   const starWidth    = fontBold.widthOfTextAtSize(starName, starFontSize);
   page.drawText(starName, {
-    x: (width - starWidth) / 2, y: height - 148,
-    size: starFontSize, font: fontBold,
-    color: rgb(0.910, 0.941, 0.984),
+    x: (180 - starWidth) / 2, y: height - 148,
+    size: starFontSize, font: fontBold, color: blue,
   });
   const subLabel = "Star Identity";
-  const subWidth = fontRegular.widthOfTextAtSize(subLabel, 11);
+  const subWidth = fontRegular.widthOfTextAtSize(subLabel, 9);
   page.drawText(subLabel, {
-    x: (width - subWidth) / 2, y: height - 166,
-    size: 11, font: fontRegular,
-    color: rgb(0.400, 0.557, 0.722),
+    x: (180 - subWidth) / 2, y: height - 164,
+    size: 9, font: fontRegular, color: textMuted,
   });
 
-  // Detail rows
+  // Open count badge
+  const countLabel = `${openCount} open${openCount === 1 ? "" : "s"}`;
+  const badgeW     = fontBold.widthOfTextAtSize(countLabel, 9) + 16;
+  const badgeX     = (180 - badgeW) / 2;
+  page.drawRectangle({ x: badgeX, y: height - 198, width: badgeW, height: 16,
+    color: blueDim, borderColor: blue, borderWidth: 0.5 });
+  page.drawText(countLabel, {
+    x: badgeX + 8, y: height - 189,
+    size: 9, font: fontBold, color: blue,
+  });
+
+  // ── Right panel: title + detail rows ─────────────────────────────────────
+  const rx = 204; // right panel content x
+
+  page.drawText("Open Notification", {
+    x: rx, y: height - 46, size: 18, font: fontBold, color: textPri,
+  });
+  page.drawText("CERTIFICATE", {
+    x: rx, y: height - 62, size: 9, font: fontBold, color: blue,
+  });
+
+  page.drawLine({
+    start: { x: rx, y: height - 76 }, end: { x: width - 32, y: height - 76 },
+    thickness: 0.5, color: border,
+  });
+
+  // Build rows
   const rows: [string, string][] = [
     ["File",       sanitizeForPdf(fileName)],
     ["Opened at",  openTime],
     ["Open count", openCount.toString()],
   ];
   if (recipientHint) rows.splice(1, 0, ["Opened by", sanitizeForPdf(recipientHint)]);
-  // Country: safe to show — 2-letter ISO code only, not personal data
   if (countryCode && countryCode !== "XX" && countryCode !== "T1")
     rows.splice(rows.findIndex(r => r[0] === "Opened at") + 1, 0, ["Country", countryCode]);
   if (sentBy) rows.push(["Sent by", sanitizeForPdf(sentBy)]);
 
-  let rowY = height - 212;
+  let rowY = height - 104;
   for (const [label, value] of rows) {
-    page.drawText(label + ":", {
-      x: 48, y: rowY, size: 10, font: fontBold,
-      color: rgb(0.400, 0.557, 0.722),
-    });
-    // Truncate long values to fit the page
-    const maxW = width - 48 - 160;
+    // Label pill background
+    const labelW = fontBold.widthOfTextAtSize(label, 8.5) + 12;
+    page.drawRectangle({ x: rx, y: rowY - 3, width: labelW, height: 14,
+      color: bgSurface, borderColor: border, borderWidth: 0.5 });
+    page.drawText(label, { x: rx + 6, y: rowY + 4, size: 8.5, font: fontBold, color: textMuted });
+
+    const maxW = width - rx - labelW - 48;
     let display = value;
     while (display.length > 4 && fontRegular.widthOfTextAtSize(display, 10) > maxW) {
       display = display.slice(0, -4) + "...";
     }
     page.drawText(display, {
-      x: 162, y: rowY, size: 10, font: fontRegular,
-      color: rgb(0.910, 0.941, 0.984),
+      x: rx + labelW + 10, y: rowY + 3, size: 10, font: fontRegular, color: textPri,
     });
-    rowY -= 22;
+    rowY -= 26;
   }
 
-  // Footer
+  // ── Footer ───────────────────────────────────────────────────────────────
   page.drawLine({
-    start: { x: 48, y: 38 }, end: { x: width - 48, y: 38 },
-    thickness: 0.5, color: rgb(0.15, 0.20, 0.30),
+    start: { x: rx, y: 32 }, end: { x: width - 32, y: 32 },
+    thickness: 0.5, color: border,
   });
-  page.drawText("Generated by Starkive  |  starkive.app", {
-    x: 48, y: 24, size: 8, font: fontRegular,
-    color: rgb(0.30, 0.40, 0.55),
+  page.drawText("Generated by Starkive  |  starkive.app  |  DePalo Consulting LLC", {
+    x: rx, y: 20, size: 7.5, font: fontRegular, color: textMuted,
   });
 
   return await doc.save();
