@@ -111,8 +111,9 @@ public partial class MainWindow : Window
         SetPasswordMode("Password");
         SelectSegment(BtnModePassword, new[] { BtnModePassword, BtnModePassphrase });
         SelectSegment(BtnFmtZip,      new[] { BtnFmtZip, BtnFmtSsz });
-        SelectSegment(Btn4Words,      new[] { Btn3Words, Btn4Words, Btn5Words });
-        SelectSegment(BtnSepDot,      new[] { BtnSepDot, BtnSepDash, BtnSepSpace });
+        SelectSegment(Btn4Words,       new[] { Btn3Words, Btn4Words, Btn5Words });
+        SelectSegment(BtnSepDot,       new[] { BtnSepDot, BtnSepDash, BtnSepSpace });
+        SelectSegment(BtnPhraseGenerate, new[] { BtnPhraseGenerate, BtnPhraseOwn });
         RegeneratePassphrase();
         RegenerateAutoPassword();
         RefreshHistorySection();
@@ -261,6 +262,13 @@ public partial class MainWindow : Window
         if (section == "Settings") RefreshSettingsSection();
         if (section == "Home")     RefreshHomeSection();
         if (section == "Vault")    RefreshVaultSection();
+
+        // Reset success screen when leaving Zip section
+        if (section != "Zip")
+        {
+            ZipSuccessPanel.Visibility = Visibility.Collapsed;
+            ZipFormPanel.Visibility    = Visibility.Visible;
+        }
     }
 
     // ─── Sidebar collapse/expand ─────────────────────────────────────────────
@@ -857,18 +865,38 @@ public partial class MainWindow : Window
         { error = "Password must be at least 6 characters."; return false; }
         if (_pwdMode == "Password" && pwd != ZipConfirmBox.Password)
         { error = "Passwords do not match."; return false; }
+        if (_pwdMode == "Passphrase" && _phraseSubMode == "Own" && pwd != OwnPassphraseConfirmBox.Text)
+        { error = "Passphrases do not match."; return false; }
 
         error = string.Empty;
         return true;
     }
 
+    private string _phraseSubMode = "Generate"; // Generate | Own
+
+    private void PhraseSubMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string mode)
+        {
+            _phraseSubMode = mode;
+            SelectSegment(btn, new[] { BtnPhraseGenerate, BtnPhraseOwn });
+            PhraseGeneratePanel.Visibility = mode == "Generate" ? Visibility.Visible : Visibility.Collapsed;
+            PhraseOwnPanel.Visibility      = mode == "Own"      ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    private void OwnPassphrase_Changed(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        bool mismatch = OwnPassphraseBox.Text != OwnPassphraseConfirmBox.Text
+                        && OwnPassphraseConfirmBox.Text.Length > 0;
+        OwnPassphraseMismatch.Visibility = mismatch ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private string ResolveActivePassword()
     {
-        return _pwdMode switch
-        {
-            "Passphrase" => PassphraseDisplay.Text,
-            _            => ZipPasswordBox.Password,
-        };
+        if (_pwdMode == "Passphrase")
+            return _phraseSubMode == "Own" ? OwnPassphraseBox.Text : PassphraseDisplay.Text;
+        return ZipPasswordBox.Password;
     }
 
     private void OutputFmt_Click(object sender, RoutedEventArgs e)
@@ -876,18 +904,19 @@ public partial class MainWindow : Window
         string tag = (string)((Button)sender).Tag;
         bool ssz = tag == "SSZ";
 
-        if (ssz && RequirePro("Secure Container (.ssz)")) return;
+        if (ssz && RequirePro("Certified Delivery (.ssz)")) return;
 
         _isSszMode = ssz;
 
         // Segment button highlight
         SelectSegment(ssz ? BtnFmtSsz : BtnFmtZip, new[] { BtnFmtZip, BtnFmtSsz });
 
-        // Show/hide recipient hint
-        RecipientHintPanel.Visibility = ssz ? Visibility.Visible : Visibility.Collapsed;
+        // Show/hide Certified Delivery info card and recipient hint
+        CertifiedDeliveryInfoCard.Visibility = ssz ? Visibility.Visible : Visibility.Collapsed;
+        RecipientHintPanel.Visibility        = ssz ? Visibility.Visible : Visibility.Collapsed;
 
         // Update create button label and output extension
-        ZipCreateButton.Content = ssz ? "Create Secure Container" : "Create Encrypted ZIP";
+        ZipCreateButton.Content = ssz ? "Create Certified Delivery" : "Create Encrypted ZIP";
 
         // Show/hide cloud destination buttons (only relevant for SSZ)
         RefreshSaveDestButtons();
@@ -978,35 +1007,42 @@ public partial class MainWindow : Window
 
         if (success)
         {
+            _lastCreatedSszPath = _isSszMode ? output : null;
+
+            // Headline
             if (_isSszMode && _sszCreatedWhileLoggedOut)
             {
-                ZipSuccessText.Text = $"Container \"{_lastStarName}\" created. Sign in to enable open notifications.";
+                ZipSuccessHeadline.Text  = $"Certified Delivery created!";
+                ZipSuccessSubtitle.Text  = $"\"{_lastStarName}\" — sign in to enable open notifications.";
                 _sszCreatedWhileLoggedOut = false;
+            }
+            else if (_isSszMode)
+            {
+                ZipSuccessHeadline.Text = $"Certified Delivery created!";
+                ZipSuccessSubtitle.Text = $"\"{_lastStarName}\" is ready to send. You'll be notified when it's opened.";
             }
             else
             {
-                string destLabel = _saveDest switch {
-                    "GoogleDrive" => " → uploading to Google Drive…",
-                    "OneDrive"    => " → uploading to OneDrive…",
-                    _             => $" saved as {Path.GetFileName(output)}"
-                };
-                ZipSuccessText.Text = _isSszMode
-                    ? $"Secure Container \"{_lastStarName}\"{destLabel}"
-                    : "ZIP created successfully.";
+                ZipSuccessHeadline.Text = "ZIP created successfully!";
+                ZipSuccessSubtitle.Text = "Your encrypted archive is ready.";
             }
-            ZipSuccessBanner.Visibility = Visibility.Visible;
 
-            // Reset upload panels
-            CloudUploadPanel.Visibility       = Visibility.Collapsed;
-            CloudUploadResultPanel.Visibility = Visibility.Collapsed;
-            CopyCloudLinkBtn.Visibility       = Visibility.Collapsed;
-            _lastCreatedSszPath               = _isSszMode ? output : null;
+            ZipSuccessPath.Text = toCloud ? $"(temp) {output}" : output;
+
+            // Hide form, show success panel
+            ZipFormPanel.Visibility       = Visibility.Collapsed;
+            ZipSuccessPanel.Visibility    = Visibility.Visible;
+            BtnShowInExplorer.IsEnabled   = !toCloud;
+
+            // Cloud upload row
+            ZipSuccessCloudRow.Visibility    = Visibility.Collapsed;
+            ZipSuccessCloudResult.Visibility = Visibility.Collapsed;
+            CopyCloudLinkBtn2.Visibility     = Visibility.Collapsed;
 
             if (_isSszMode && _lastCreatedSszPath != null)
             {
                 if (toCloud)
                 {
-                    // Auto-upload immediately since user chose cloud as destination
                     var provider = _saveDest == "GoogleDrive"
                         ? CloudBackup.VaultSyncManager.Providers[0]
                         : CloudBackup.VaultSyncManager.Providers[1];
@@ -1014,15 +1050,17 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    // Show manual upload buttons if any drive is connected
                     var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
                     var onedrive = CloudBackup.VaultSyncManager.Providers[1];
-                    UploadGDriveBtn.IsEnabled   = gdrive.IsConnected;
-                    UploadOneDriveBtn.IsEnabled = onedrive.IsConnected;
+                    UploadGDriveBtn2.IsEnabled   = gdrive.IsConnected;
+                    UploadOneDriveBtn2.IsEnabled = onedrive.IsConnected;
                     if (gdrive.IsConnected || onedrive.IsConnected)
-                        CloudUploadPanel.Visibility = Visibility.Visible;
+                        ZipSuccessCloudRow.Visibility = Visibility.Visible;
                 }
             }
+
+            // Scroll success panel into view
+            ZipSuccessPanel.BringIntoView();
 
             bool saveChecked = (_pwdMode == "Passphrase")
                 ? ChkSavePassphrase.IsChecked == true
@@ -1045,11 +1083,11 @@ public partial class MainWindow : Window
     private async Task UploadSszToCloudAsync(CloudBackup.ICloudProvider provider, string name)
     {
         if (_lastCreatedSszPath == null) return;
-        UploadGDriveBtn.IsEnabled   = false;
-        UploadOneDriveBtn.IsEnabled = false;
-        CloudUploadResultPanel.Visibility = Visibility.Visible;
-        CloudUploadResultText.Text = $"Uploading to {name}…";
-        CopyCloudLinkBtn.Visibility = Visibility.Collapsed;
+        UploadGDriveBtn2.IsEnabled   = false;
+        UploadOneDriveBtn2.IsEnabled = false;
+        ZipSuccessCloudResult.Visibility = Visibility.Visible;
+        ZipSuccessCloudText.Text = $"Uploading to {name}…";
+        CopyCloudLinkBtn2.Visibility = Visibility.Collapsed;
 
         try
         {
@@ -1057,25 +1095,24 @@ public partial class MainWindow : Window
             if (link != null)
             {
                 _lastCloudLink = link;
-                CloudUploadResultText.Text = $"Uploaded to {name}. Share the link:";
-                CopyCloudLinkBtn.Visibility = Visibility.Visible;
+                ZipSuccessCloudText.Text = $"Uploaded to {name}. Share the link:";
+                CopyCloudLinkBtn2.Visibility = Visibility.Visible;
                 AppLog.Write($"SSZ uploaded to {name}: {link}");
 
-                // Patch vault entry so the Vault section can show "Open in Drive"
                 SavedPasswordStore.UpdateCloudInfo(
                     _lastCreatedSszPath,
                     cloudUrl:      link,
-                    cloudFileId:   link,   // Drive share link doubles as ID for now
+                    cloudFileId:   link,
                     cloudProvider: name);
             }
             else
             {
-                CloudUploadResultText.Text = $"Upload to {name} failed. Check log for details.";
+                ZipSuccessCloudText.Text = $"Upload to {name} failed. Check log for details.";
             }
         }
         catch (Exception ex)
         {
-            CloudUploadResultText.Text = $"Upload error: {ex.Message}";
+            ZipSuccessCloudText.Text = $"Upload error: {ex.Message}";
             AppLog.Write($"SSZ upload to {name} exception: {ex.GetType().Name}: {ex.Message}");
         }
     }
@@ -1085,8 +1122,29 @@ public partial class MainWindow : Window
         if (_lastCloudLink != null)
         {
             Clipboard.SetText(_lastCloudLink);
-            CopyCloudLinkBtn.Content = "Copied!";
+            CopyCloudLinkBtn2.Content = "Copied!";
         }
+    }
+
+    private void ZipShowInExplorer_Click(object sender, RoutedEventArgs e)
+    {
+        string path = ZipSuccessPath.Text;
+        if (File.Exists(path))
+            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\"");
+        else if (Directory.Exists(path))
+            System.Diagnostics.Process.Start("explorer.exe", $"\"{path}\"");
+    }
+
+    private void ZipCreateAnother_Click(object sender, RoutedEventArgs e)
+    {
+        // Reset form and show it again
+        ZipSuccessPanel.Visibility = Visibility.Collapsed;
+        ZipFormPanel.Visibility    = Visibility.Visible;
+        ZipSourceBox.Text          = "No file or folder selected";
+        ZipOutputBox.Text          = "";
+        ZipPasswordBox.Password    = "";
+        ZipConfirmBox.Password     = "";
+        ZipErrorText.Visibility    = Visibility.Collapsed;
     }
 
     // ─── Save destination picker ──────────────────────────────────────────────
@@ -1674,6 +1732,9 @@ public partial class MainWindow : Window
 
         if (ThemeStatusText != null)
             ThemeStatusText.Text = $"{theme} theme is active";
+
+        // Re-apply nav highlight so inactive buttons pick up the new theme colors
+        ShowSection(_activeSection);
     }
 
     // ── Dark  ─────────────────────────────────────────────────────────────────
