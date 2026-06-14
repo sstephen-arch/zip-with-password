@@ -130,9 +130,8 @@ internal static class ApiService
         {
             try
             {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-                client.DefaultRequestHeaders.Add("apikey", AppConstants.SupabaseAnonKey);
-                var resp = await client.PostAsJsonAsync(url, payload);
+                // Reuse the static _http — never create a new HttpClient per call (socket exhaustion)
+                var resp = await _http.PostAsJsonAsync(url, payload);
                 AppLog.Write($"ReportOpen attempt {attempt}: HTTP {(int)resp.StatusCode}");
                 if (resp.IsSuccessStatusCode)
                 {
@@ -158,6 +157,33 @@ internal static class ApiService
     {
         [System.Text.Json.Serialization.JsonPropertyName("sent_by")]
         public string? SentBy { get; init; }
+    }
+
+    // ── Stripe checkout ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Creates a Stripe Checkout Session for the given email and returns the URL.
+    /// Returns null on failure.
+    /// </summary>
+    internal static async Task<string?> CreateCheckoutSessionAsync(string email)
+    {
+        try
+        {
+            using var plain = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            plain.DefaultRequestHeaders.Add("User-Agent", $"Starkive/{AppConstants.AppVersion}");
+            var resp = await plain.PostAsJsonAsync(
+                "https://starkive.app/api/checkout",
+                new { email });
+            if (!resp.IsSuccessStatusCode) return null;
+            var json = await resp.Content.ReadFromJsonAsync<CheckoutResponse>();
+            return json?.Url;
+        }
+        catch { return null; }
+    }
+
+    private sealed class CheckoutResponse
+    {
+        [JsonPropertyName("url")] public string? Url { get; init; }
     }
 
     // ── Pro status ────────────────────────────────────────────────────────────

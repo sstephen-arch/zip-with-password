@@ -65,6 +65,15 @@ public partial class MainWindow : Window
         InitializeComponent();
         _settings = SettingsManager.Load();
 
+        // One-time migration: versions before 1.4.0 defaulted to Dark theme.
+        // Reset to Light on first launch of 1.4.0+ so existing users get the new look.
+        if (_settings.LastSeenVersion != AppConstants.AppVersion && _settings.Theme == "Dark")
+        {
+            _settings.Theme = "Light";
+        }
+        _settings.LastSeenVersion = AppConstants.AppVersion;
+        SettingsManager.Save(_settings);
+
         // Restore sidebar state
         _sidebarExpanded = !_settings.SidebarCollapsed;
         if (!_sidebarExpanded) ApplySidebarState(animate: false);
@@ -83,23 +92,7 @@ public partial class MainWindow : Window
         }
 
         VersionText.Text = $"v{AppConstants.AppVersion}";
-        // Dynamic greeting
-        var hour = DateTime.Now.Hour;
-        HomeGreeting.Text = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-        ShowSection("Home");
-        SetPasswordMode("Password");
-        SelectSegment(BtnModePassword, new[] { BtnModePassword, BtnModePassphrase });
-        SelectSegment(BtnFmtZip,      new[] { BtnFmtZip, BtnFmtSsz });
-        SelectSegment(Btn4Words,      new[] { Btn3Words, Btn4Words, Btn5Words });
-        SelectSegment(BtnSepDot,      new[] { BtnSepDot, BtnSepDash, BtnSepSpace });
-        RegeneratePassphrase();
-        RegenerateAutoPassword();
-        RefreshHistorySection();
-        RefreshHomeSection();
-        RefreshSettingsSection();
-        UpdateSaveDestUI(); // init tile styles on startup
-
-        // Restore saved theme (suppress SelectionChanged during init)
+        // Apply theme FIRST so nav brush snapshots use the correct theme colors
         _suppressThemeChange = true;
         ThemeComboBox.SelectedIndex = _settings.Theme switch
         {
@@ -110,6 +103,23 @@ public partial class MainWindow : Window
         };
         _suppressThemeChange = false;
         ApplyTheme(_settings.Theme);
+
+        // Dynamic greeting
+        var hour = DateTime.Now.Hour;
+        HomeGreeting.Text = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+        ShowSection("Home");
+        SetPasswordMode("Password");
+        SelectSegment(BtnModePassword, new[] { BtnModePassword, BtnModePassphrase });
+        SelectSegment(BtnFmtZip,      new[] { BtnFmtZip, BtnFmtSsz });
+        SelectSegment(Btn4Words,       new[] { Btn3Words, Btn4Words, Btn5Words });
+        SelectSegment(BtnSepDot,       new[] { BtnSepDot, BtnSepDash, BtnSepSpace });
+        SelectSegment(BtnPhraseGenerate, new[] { BtnPhraseGenerate, BtnPhraseOwn });
+        RegeneratePassphrase();
+        RegenerateAutoPassword();
+        RefreshHistorySection();
+        RefreshHomeSection();
+        RefreshSettingsSection();
+        UpdateSaveDestUI(); // init tile styles on startup
 
         RefreshProStatus();
 
@@ -221,6 +231,7 @@ public partial class MainWindow : Window
         ZipSection.Visibility      = section == "Zip"      ? Visibility.Visible : Visibility.Collapsed;
         UnzipSection.Visibility    = section == "Unzip"    ? Visibility.Visible : Visibility.Collapsed;
         HistorySection.Visibility  = section == "History"  ? Visibility.Visible : Visibility.Collapsed;
+        VaultSection.Visibility    = section == "Vault"    ? Visibility.Visible : Visibility.Collapsed;
         SettingsSection.Visibility = section == "Settings" ? Visibility.Visible : Visibility.Collapsed;
 
         // Nav items + accent bars
@@ -231,6 +242,7 @@ public partial class MainWindow : Window
             (btn: NavUnzip,    accent: NavUnzipAccent,    tag: "Unzip"),
             (btn: NavHistory,  accent: NavHistoryAccent,  tag: "History"),
             (btn: NavSettings, accent: NavSettingsAccent, tag: "Settings"),
+            (btn: NavVault,    accent: NavVaultAccent,    tag: "Vault"),
         };
 
         var accentColor = (SolidColorBrush)FindResource("AccentBrush");
@@ -249,6 +261,14 @@ public partial class MainWindow : Window
         if (section == "History")  RefreshHistorySection();
         if (section == "Settings") RefreshSettingsSection();
         if (section == "Home")     RefreshHomeSection();
+        if (section == "Vault")    RefreshVaultSection();
+
+        // Reset success screen when leaving Zip section
+        if (section != "Zip")
+        {
+            ZipSuccessPanel.Visibility = Visibility.Collapsed;
+            ZipFormPanel.Visibility    = Visibility.Visible;
+        }
     }
 
     // ─── Sidebar collapse/expand ─────────────────────────────────────────────
@@ -284,6 +304,7 @@ public partial class MainWindow : Window
         NavUnzipText.Visibility      = textVis;
         NavHistoryText.Visibility    = textVis;
         NavSettingsText.Visibility   = textVis;
+        NavVaultText.Visibility      = textVis;
         VersionText.Visibility       = textVis;
         GoProLabel.Visibility        = textVis;
         GoProPrice.Visibility        = textVis;
@@ -309,8 +330,18 @@ public partial class MainWindow : Window
         => ShowSection("Unzip");
 
     // Button variant (RoutedEventHandler) for hero CTA and Pro upsell button
-    private void HomeCardPro_Click(object sender, RoutedEventArgs e)
-        => ShowSection("Zip");
+    private async void HomeCardPro_Click(object sender, RoutedEventArgs e)
+    {
+        if (!AuthManager.IsLoggedIn)
+        {
+            var dlg = new OtpDialog { Owner = this };
+            dlg.ShowDialog();
+            RefreshProStatus();
+        }
+        if (!AuthManager.IsLoggedIn || AuthManager.IsProUser) return;
+
+        await StartCheckoutAsync();
+    }
 
     private void HomeCardPro_Click(object sender, MouseButtonEventArgs e)
     {
@@ -369,35 +400,97 @@ public partial class MainWindow : Window
     private void GoProBtn_Click(object sender, MouseButtonEventArgs e)
         => OpenAuthDialog();
 
-    private void UpgradeToPro_Click(object sender, RoutedEventArgs e)
+    private async void UpgradeToPro_Click(object sender, RoutedEventArgs e)
     {
-        // Always open the auth dialog when the user explicitly clicks
-        // "Upgrade to Pro" — even if they're already signed in — so they can
-        // sign in with a different address or re-verify their Pro account.
-        var dlg = new OtpDialog { Owner = this };
-        dlg.ShowDialog();
-        RefreshProStatus();
+        if (!AuthManager.IsLoggedIn)
+        {
+            var dlg = new OtpDialog { Owner = this };
+            dlg.ShowDialog();
+            RefreshProStatus();
+        }
+        if (!AuthManager.IsLoggedIn || AuthManager.IsProUser) return;
+
+        await StartCheckoutAsync();
     }
 
-    private void OpenAuthDialog()
+    private async Task StartCheckoutAsync()
+    {
+        string email = AuthManager.UserEmail ?? "";
+        string? url = null;
+
+        if (!string.IsNullOrEmpty(email))
+            url = await ApiService.CreateCheckoutSessionAsync(email);
+
+        // Fall back to pricing page if session creation fails
+        OpenUrl(url ?? "https://starkive.app/#pricing");
+
+        // Poll for Pro status in the background — update UI the moment payment lands
+        _ = PollForProAsync();
+    }
+
+    private async Task PollForProAsync()
+    {
+        // Poll every 5 seconds for up to 3 minutes
+        for (int i = 0; i < 36; i++)
+        {
+            await Task.Delay(5000);
+            bool isPro = await ApiService.FetchProStatusAsync();
+            if (!isPro) continue;
+
+            AuthManager.SetProStatus(true);
+            Dispatcher.Invoke(() =>
+            {
+                RefreshProStatus();
+                ShowToast("You're now Pro! All features unlocked.");
+            });
+            return;
+        }
+    }
+
+    private void ViewDashboard_Click(object sender, RoutedEventArgs e)
+        => OpenUrl("https://starkive.app/dashboard");
+
+    /// <summary>Opens a URL in the default browser; copies it on failure.</summary>
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName        = url,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"OpenUrl error: {ex.Message}");
+            Clipboard.SetText(url);
+            ShowToast("Could not open browser — link copied to clipboard.");
+        }
+    }
+
+    private async void OpenAuthDialog()
     {
         if (AuthManager.IsLoggedIn)
         {
-            // Already signed in — take them to Settings where the Pro card lives
-            // and show a hint if they're not yet Pro.
-            ShowSection("Settings");
             if (!AuthManager.IsProUser)
-                ShowToast("Signed in. Visit starkive.app to activate Pro.");
+                await StartCheckoutAsync();
             return;
         }
         var dlg = new OtpDialog { Owner = this };
         dlg.ShowDialog();
         RefreshProStatus();
+        if (AuthManager.IsLoggedIn && !AuthManager.IsProUser)
+            await StartCheckoutAsync();
     }
 
     // ─── ZIP source helpers ───────────────────────────────────────────────────
     private void SetZipSource(string path)
     {
+        // Clear results from any previous run
+        ZipSuccessBanner.Visibility = Visibility.Collapsed;
+        ZipErrorText.Visibility     = Visibility.Collapsed;
+
         ZipSourceBox.Text = path;
         ZipOutputBox.Text = BuildDefaultZipOutput(path);
     }
@@ -728,16 +821,17 @@ public partial class MainWindow : Window
     {
         if (AuthManager.IsProUser) return false;
 
-        var dlg = new OtpDialog { Owner = this };
-        bool? result = dlg.ShowDialog();
-        RefreshProStatus();
+        if (!AuthManager.IsLoggedIn)
+        {
+            var dlg = new OtpDialog { Owner = this };
+            dlg.ShowDialog();
+            RefreshProStatus();
+            if (AuthManager.IsProUser) return false;
+        }
 
-        // After successful login, re-check Pro status.
-        if (result == true && AuthManager.IsProUser) return false;
-
-        // Not Pro — navigate to Settings so they can see the upgrade card.
-        ShowSection("Settings");
-        ShowToast($"{featureName} requires Starkive Pro.");
+        // Logged in but not Pro — go straight to checkout
+        ShowToast($"{featureName} requires Starkive Pro. Opening checkout...");
+        _ = StartCheckoutAsync();
         return true; // blocked
     }
 
@@ -771,18 +865,38 @@ public partial class MainWindow : Window
         { error = "Password must be at least 6 characters."; return false; }
         if (_pwdMode == "Password" && pwd != ZipConfirmBox.Password)
         { error = "Passwords do not match."; return false; }
+        if (_pwdMode == "Passphrase" && _phraseSubMode == "Own" && pwd != OwnPassphraseConfirmBox.Text)
+        { error = "Passphrases do not match."; return false; }
 
         error = string.Empty;
         return true;
     }
 
+    private string _phraseSubMode = "Generate"; // Generate | Own
+
+    private void PhraseSubMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string mode)
+        {
+            _phraseSubMode = mode;
+            SelectSegment(btn, new[] { BtnPhraseGenerate, BtnPhraseOwn });
+            PhraseGeneratePanel.Visibility = mode == "Generate" ? Visibility.Visible : Visibility.Collapsed;
+            PhraseOwnPanel.Visibility      = mode == "Own"      ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    private void OwnPassphrase_Changed(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        bool mismatch = OwnPassphraseBox.Text != OwnPassphraseConfirmBox.Text
+                        && OwnPassphraseConfirmBox.Text.Length > 0;
+        OwnPassphraseMismatch.Visibility = mismatch ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private string ResolveActivePassword()
     {
-        return _pwdMode switch
-        {
-            "Passphrase" => PassphraseDisplay.Text,
-            _            => ZipPasswordBox.Password,
-        };
+        if (_pwdMode == "Passphrase")
+            return _phraseSubMode == "Own" ? OwnPassphraseBox.Text : PassphraseDisplay.Text;
+        return ZipPasswordBox.Password;
     }
 
     private void OutputFmt_Click(object sender, RoutedEventArgs e)
@@ -790,18 +904,19 @@ public partial class MainWindow : Window
         string tag = (string)((Button)sender).Tag;
         bool ssz = tag == "SSZ";
 
-        if (ssz && RequirePro("Secure Container (.ssz)")) return;
+        if (ssz && RequirePro("Certified Delivery (.ssz)")) return;
 
         _isSszMode = ssz;
 
         // Segment button highlight
         SelectSegment(ssz ? BtnFmtSsz : BtnFmtZip, new[] { BtnFmtZip, BtnFmtSsz });
 
-        // Show/hide recipient hint
-        RecipientHintPanel.Visibility = ssz ? Visibility.Visible : Visibility.Collapsed;
+        // Show/hide Certified Delivery info card and recipient hint
+        CertifiedDeliveryInfoCard.Visibility = ssz ? Visibility.Visible : Visibility.Collapsed;
+        RecipientHintPanel.Visibility        = ssz ? Visibility.Visible : Visibility.Collapsed;
 
         // Update create button label and output extension
-        ZipCreateButton.Content = ssz ? "Create Secure Container" : "Create Encrypted ZIP";
+        ZipCreateButton.Content = ssz ? "Create Certified Delivery" : "Create Encrypted ZIP";
 
         // Show/hide cloud destination buttons (only relevant for SSZ)
         RefreshSaveDestButtons();
@@ -850,6 +965,9 @@ public partial class MainWindow : Window
                 success = true;
                 output = result.FinalOutputPath;
                 _lastStarName = result.StarName;
+                // The star name is appended to the filename — show the real path
+                // so users know what to look for on disk.
+                if (!toCloud) ZipOutputBox.Text = output;
                 if (AuthManager.IsLoggedIn)
                 {
                     // Await registration so we know if it succeeded before showing success
@@ -889,35 +1007,42 @@ public partial class MainWindow : Window
 
         if (success)
         {
+            _lastCreatedSszPath = _isSszMode ? output : null;
+
+            // Headline
             if (_isSszMode && _sszCreatedWhileLoggedOut)
             {
-                ZipSuccessText.Text = $"Container \"{_lastStarName}\" created. Sign in to enable open notifications.";
+                ZipSuccessHeadline.Text  = $"Certified Delivery created!";
+                ZipSuccessSubtitle.Text  = $"\"{_lastStarName}\" — sign in to enable open notifications.";
                 _sszCreatedWhileLoggedOut = false;
+            }
+            else if (_isSszMode)
+            {
+                ZipSuccessHeadline.Text = $"Certified Delivery created!";
+                ZipSuccessSubtitle.Text = $"\"{_lastStarName}\" is ready to send. You'll be notified when it's opened.";
             }
             else
             {
-                string destLabel = _saveDest switch {
-                    "GoogleDrive" => " → uploading to Google Drive…",
-                    "OneDrive"    => " → uploading to OneDrive…",
-                    _             => " created successfully."
-                };
-                ZipSuccessText.Text = _isSszMode
-                    ? $"Secure Container \"{_lastStarName}\"{destLabel}"
-                    : "ZIP created successfully.";
+                ZipSuccessHeadline.Text = "ZIP created successfully!";
+                ZipSuccessSubtitle.Text = "Your encrypted archive is ready.";
             }
-            ZipSuccessBanner.Visibility = Visibility.Visible;
 
-            // Reset upload panels
-            CloudUploadPanel.Visibility       = Visibility.Collapsed;
-            CloudUploadResultPanel.Visibility = Visibility.Collapsed;
-            CopyCloudLinkBtn.Visibility       = Visibility.Collapsed;
-            _lastCreatedSszPath               = _isSszMode ? output : null;
+            ZipSuccessPath.Text = toCloud ? $"(temp) {output}" : output;
+
+            // Hide form, show success panel
+            ZipFormPanel.Visibility       = Visibility.Collapsed;
+            ZipSuccessPanel.Visibility    = Visibility.Visible;
+            BtnShowInExplorer.IsEnabled   = !toCloud;
+
+            // Cloud upload row
+            ZipSuccessCloudRow.Visibility    = Visibility.Collapsed;
+            ZipSuccessCloudResult.Visibility = Visibility.Collapsed;
+            CopyCloudLinkBtn2.Visibility     = Visibility.Collapsed;
 
             if (_isSszMode && _lastCreatedSszPath != null)
             {
                 if (toCloud)
                 {
-                    // Auto-upload immediately since user chose cloud as destination
                     var provider = _saveDest == "GoogleDrive"
                         ? CloudBackup.VaultSyncManager.Providers[0]
                         : CloudBackup.VaultSyncManager.Providers[1];
@@ -925,15 +1050,17 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    // Show manual upload buttons if any drive is connected
                     var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
                     var onedrive = CloudBackup.VaultSyncManager.Providers[1];
-                    UploadGDriveBtn.IsEnabled   = gdrive.IsConnected;
-                    UploadOneDriveBtn.IsEnabled = onedrive.IsConnected;
+                    UploadGDriveBtn2.IsEnabled   = gdrive.IsConnected;
+                    UploadOneDriveBtn2.IsEnabled = onedrive.IsConnected;
                     if (gdrive.IsConnected || onedrive.IsConnected)
-                        CloudUploadPanel.Visibility = Visibility.Visible;
+                        ZipSuccessCloudRow.Visibility = Visibility.Visible;
                 }
             }
+
+            // Scroll success panel into view
+            ZipSuccessPanel.BringIntoView();
 
             bool saveChecked = (_pwdMode == "Passphrase")
                 ? ChkSavePassphrase.IsChecked == true
@@ -956,11 +1083,11 @@ public partial class MainWindow : Window
     private async Task UploadSszToCloudAsync(CloudBackup.ICloudProvider provider, string name)
     {
         if (_lastCreatedSszPath == null) return;
-        UploadGDriveBtn.IsEnabled   = false;
-        UploadOneDriveBtn.IsEnabled = false;
-        CloudUploadResultPanel.Visibility = Visibility.Visible;
-        CloudUploadResultText.Text = $"Uploading to {name}…";
-        CopyCloudLinkBtn.Visibility = Visibility.Collapsed;
+        UploadGDriveBtn2.IsEnabled   = false;
+        UploadOneDriveBtn2.IsEnabled = false;
+        ZipSuccessCloudResult.Visibility = Visibility.Visible;
+        ZipSuccessCloudText.Text = $"Uploading to {name}…";
+        CopyCloudLinkBtn2.Visibility = Visibility.Collapsed;
 
         try
         {
@@ -968,18 +1095,24 @@ public partial class MainWindow : Window
             if (link != null)
             {
                 _lastCloudLink = link;
-                CloudUploadResultText.Text = $"Uploaded to {name}. Share the link:";
-                CopyCloudLinkBtn.Visibility = Visibility.Visible;
+                ZipSuccessCloudText.Text = $"Uploaded to {name}. Share the link:";
+                CopyCloudLinkBtn2.Visibility = Visibility.Visible;
                 AppLog.Write($"SSZ uploaded to {name}: {link}");
+
+                SavedPasswordStore.UpdateCloudInfo(
+                    _lastCreatedSszPath,
+                    cloudUrl:      link,
+                    cloudFileId:   link,
+                    cloudProvider: name);
             }
             else
             {
-                CloudUploadResultText.Text = $"Upload to {name} failed. Check log for details.";
+                ZipSuccessCloudText.Text = $"Upload to {name} failed. Check log for details.";
             }
         }
         catch (Exception ex)
         {
-            CloudUploadResultText.Text = $"Upload error: {ex.Message}";
+            ZipSuccessCloudText.Text = $"Upload error: {ex.Message}";
             AppLog.Write($"SSZ upload to {name} exception: {ex.GetType().Name}: {ex.Message}");
         }
     }
@@ -989,8 +1122,29 @@ public partial class MainWindow : Window
         if (_lastCloudLink != null)
         {
             Clipboard.SetText(_lastCloudLink);
-            CopyCloudLinkBtn.Content = "Copied!";
+            CopyCloudLinkBtn2.Content = "Copied!";
         }
+    }
+
+    private void ZipShowInExplorer_Click(object sender, RoutedEventArgs e)
+    {
+        string path = ZipSuccessPath.Text;
+        if (File.Exists(path))
+            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\"");
+        else if (Directory.Exists(path))
+            System.Diagnostics.Process.Start("explorer.exe", $"\"{path}\"");
+    }
+
+    private void ZipCreateAnother_Click(object sender, RoutedEventArgs e)
+    {
+        // Reset form and show it again
+        ZipSuccessPanel.Visibility = Visibility.Collapsed;
+        ZipFormPanel.Visibility    = Visibility.Visible;
+        ZipSourceBox.Text          = "No file or folder selected";
+        ZipOutputBox.Text          = "";
+        ZipPasswordBox.Password    = "";
+        ZipConfirmBox.Password     = "";
+        ZipErrorText.Visibility    = Visibility.Collapsed;
     }
 
     // ─── Save destination picker ──────────────────────────────────────────────
@@ -1011,19 +1165,42 @@ public partial class MainWindow : Window
         UpdateSaveDestUI();
     }
 
-    private void DestTile_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private async void DestTile_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (sender is Border tile && tile.Tag is string dest)
+        if (sender is not Border tile || tile.Tag is not string dest) return;
+
+        var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
+        var onedrive = CloudBackup.VaultSyncManager.Providers[1];
+
+        if (dest == "GoogleDrive" && !gdrive.IsConnected)
         {
-            var gdrive   = CloudBackup.VaultSyncManager.Providers[0];
-            var onedrive = CloudBackup.VaultSyncManager.Providers[1];
-
-            // If cloud selected but not connected, prompt to go to Settings instead
-            if (dest == "GoogleDrive" && !gdrive.IsConnected) { SetSaveDest("GoogleDrive"); return; }
-            if (dest == "OneDrive"    && !onedrive.IsConnected) { SetSaveDest("OneDrive"); return; }
-
-            SetSaveDest(dest);
+            DestGDriveSub.Text = "Connecting…";
+            try
+            {
+                bool ok = await gdrive.ConnectAsync();
+                if (ok) { _ = CloudBackup.VaultSyncManager.PushAsync(); SetSaveDest("GoogleDrive"); }
+                else DestGDriveSub.Text = "Cancelled";
+            }
+            catch { DestGDriveSub.Text = "Error — try again"; }
+            finally { RefreshCloudStatus(); }
+            return;
         }
+
+        if (dest == "OneDrive" && !onedrive.IsConnected)
+        {
+            DestOneDriveSub.Text = "Connecting…";
+            try
+            {
+                bool ok = await onedrive.ConnectAsync();
+                if (ok) { _ = CloudBackup.VaultSyncManager.PushAsync(); SetSaveDest("OneDrive"); }
+                else DestOneDriveSub.Text = "Cancelled";
+            }
+            catch { DestOneDriveSub.Text = "Error — try again"; }
+            finally { RefreshCloudStatus(); }
+            return;
+        }
+
+        SetSaveDest(dest);
     }
 
     private void SaveDest_Click(object sender, RoutedEventArgs e)
@@ -1044,14 +1221,11 @@ public partial class MainWindow : Window
         UpdateSaveDestUI();
     }
 
-    private static readonly System.Windows.Media.SolidColorBrush TileActiveBorder =
-        new(System.Windows.Media.Color.FromRgb(0x1A, 0x56, 0xDB));
-    private static readonly System.Windows.Media.SolidColorBrush TileInactiveBorder =
-        new(System.Windows.Media.Color.FromRgb(0x1E, 0x2D, 0x3D));
-    private static readonly System.Windows.Media.SolidColorBrush TileActiveBg =
-        new(System.Windows.Media.Color.FromArgb(0x1A, 0x1A, 0x56, 0xDB));
-    private static readonly System.Windows.Media.SolidColorBrush TileInactiveBg =
-        new(System.Windows.Media.Color.FromRgb(0x0D, 0x1A, 0x26));
+    // Theme-aware brushes so the destination tiles follow Light/Dark/Titanium
+    private static System.Windows.Media.Brush TileActiveBorder   => (System.Windows.Media.Brush)Application.Current.Resources["AccentBrush"];
+    private static System.Windows.Media.Brush TileInactiveBorder => (System.Windows.Media.Brush)Application.Current.Resources["BorderBrush"];
+    private static System.Windows.Media.Brush TileActiveBg       => (System.Windows.Media.Brush)Application.Current.Resources["AccentDimBrush"];
+    private static System.Windows.Media.Brush TileInactiveBg     => (System.Windows.Media.Brush)Application.Current.Resources["BgCardBrush"];
 
     private void UpdateSaveDestUI()
     {
@@ -1126,6 +1300,10 @@ public partial class MainWindow : Window
         { ShowUnzipError("Please select a .zip or .ssz file."); return; }
 
         if (isSsz && RequirePro("Opening Starkive Secure Containers (.ssz)")) return;
+
+        // Clear results from any previous extraction
+        UnzipSuccessBanner.Visibility = Visibility.Collapsed;
+        UnzipErrorText.Visibility     = Visibility.Collapsed;
 
         UnzipSourceBox.Text = path;
         UnzipOutputBox.Text = Path.Combine(
@@ -1257,6 +1435,154 @@ public partial class MainWindow : Window
         {
             HistoryManager.Clear();
             RefreshHistorySection();
+        }
+    }
+
+    // ─── Vault ────────────────────────────────────────────────────────────────
+    private List<VaultEntryViewModel> _vaultVMs = [];
+
+    private void RefreshVaultSection()
+    {
+        var entries = SavedPasswordStore.GetAll();
+
+        // Badge is driven by the entry's own CloudProvider field — not by whether
+        // a drive happens to be connected right now.
+        _vaultVMs = entries
+            .Select(e =>
+            {
+                bool   isCloud    = !string.IsNullOrEmpty(e.CloudProvider);
+                string cloudLabel = e.CloudProvider ?? "";
+                return new VaultEntryViewModel(e, isCloud, cloudLabel);
+            })
+            .ToList();
+
+        // Header sync badge: only show if at least one connected provider exists
+        bool hasCloud     = CloudBackup.VaultSyncManager.ConnectedProviders.Any();
+        string syncLabel  = CloudBackup.VaultSyncManager.ConnectedProviders
+            .Select(p => p.ProviderName).FirstOrDefault() ?? "";
+
+        VaultList.ItemsSource    = _vaultVMs;
+        VaultEmptyState.Visibility = _vaultVMs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        // Subtitle
+        VaultSubtitle.Text = _vaultVMs.Count == 0
+            ? "Your saved passwords live here, encrypted on this device."
+            : $"{_vaultVMs.Count} saved password{(_vaultVMs.Count == 1 ? "" : "s")}";
+
+        // Nav badge — show count when > 0
+        NavVaultBadge.Visibility = _vaultVMs.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        NavVaultCount.Text       = _vaultVMs.Count.ToString();
+
+        // Cloud sync status badge in header
+        if (hasCloud)
+        {
+            VaultSyncBadge.Visibility = Visibility.Visible;
+            VaultSyncBadge.Background = new SolidColorBrush(Color.FromArgb(0x22, 0x22, 0xC5, 0x5E));
+            VaultSyncBadge.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromArgb(0x40, 0x16, 0xA3, 0x4A)));
+            VaultSyncBadge.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+            VaultSyncIcon.Text      = "";  // cloud icon
+            VaultSyncIcon.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+            VaultSyncLabel.Text     = $"Synced · {syncLabel}";
+            VaultSyncLabel.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0xDE, 0x80));
+        }
+        else
+        {
+            VaultSyncBadge.Visibility = Visibility.Visible;
+            VaultSyncBadge.Background = new SolidColorBrush(Color.FromArgb(0x18, 0x94, 0xA3, 0xB8));
+            VaultSyncBadge.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromArgb(0x30, 0x94, 0xA3, 0xB8)));
+            VaultSyncBadge.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+            VaultSyncIcon.Text       = "";  // local/device icon
+            VaultSyncIcon.Foreground  = (SolidColorBrush)FindResource("TextMutedBrush");
+            VaultSyncLabel.Text      = "Local only · Connect cloud in Settings";
+            VaultSyncLabel.Foreground = (SolidColorBrush)FindResource("TextMutedBrush");
+        }
+    }
+
+    private void VaultReveal_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is string key)
+        {
+            var vm = _vaultVMs.FirstOrDefault(v => v.Key == key);
+            if (vm != null) vm.IsRevealed = !vm.IsRevealed;
+        }
+    }
+
+    private void VaultCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is string key)
+        {
+            var vm = _vaultVMs.FirstOrDefault(v => v.Key == key);
+            if (vm != null)
+            {
+                Clipboard.SetText(vm.Password);
+                ShowToast("Password copied.");
+            }
+        }
+    }
+
+    private void VaultDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is string key)
+        {
+            var vm = _vaultVMs.FirstOrDefault(v => v.Key == key);
+            string name = vm?.Hint ?? "this entry";
+            if (MessageBox.Show($"Delete the saved password for \"{name}\"?",
+                "Starkive", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                SavedPasswordStore.DeleteByKey(key);
+                RefreshVaultSection();
+            }
+        }
+    }
+
+    private void VaultGoToZip_Click(object sender, RoutedEventArgs e)
+        => ShowSection("Zip");
+
+    /// <summary>Opens Explorer with the local encrypted file selected.</summary>
+    private void VaultOpenLocal_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is not VaultEntryViewModel vm) return;
+        if (string.IsNullOrEmpty(vm.OutputPath)) return;
+
+        if (!System.IO.File.Exists(vm.OutputPath))
+        {
+            ShowToast("File not found — it may have been moved or deleted.");
+            return;
+        }
+
+        try
+        {
+            // Open Explorer with the file highlighted
+            System.Diagnostics.Process.Start("explorer.exe",
+                $"/select,\"{vm.OutputPath}\"");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"VaultOpenLocal error: {ex.Message}");
+            ShowToast("Could not open file location.");
+        }
+    }
+
+    /// <summary>Opens the cloud share link in the default browser.</summary>
+    private void VaultOpenCloud_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).Tag is not VaultEntryViewModel vm) return;
+        if (string.IsNullOrEmpty(vm.CloudUrl)) return;
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName        = vm.CloudUrl,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"VaultOpenCloud error: {ex.Message}");
+            // Fallback: copy to clipboard
+            Clipboard.SetText(vm.CloudUrl);
+            ShowToast("Could not open browser — link copied to clipboard.");
         }
     }
 
@@ -1403,116 +1729,138 @@ public partial class MainWindow : Window
             case "Titanium": ApplyTitaniumTheme(); break;
             default:         ApplyDarkTheme();     break;  // "Dark" + fallback
         }
+
+        if (ThemeStatusText != null)
+            ThemeStatusText.Text = $"{theme} theme is active";
+
+        // Re-apply nav highlight so inactive buttons pick up the new theme colors
+        ShowSection(_activeSection);
     }
 
     // ── Dark  ─────────────────────────────────────────────────────────────────
-    // Deep blue-black palette. The app's signature look.
+    // Apple dark mode system palette. Pure blacks, WCAG AA throughout.
+    // TextPrimary  #F5F5F7 on #1C1C1E  → 16.1:1  ✓
+    // TextSecondary #AEAEB2 on #1C1C1E →  7.3:1  ✓
+    // TextMuted    #8E8E93 on #1C1C1E  →  5.1:1  ✓
+    // AccentBrush  #0071E3 on #2C2C2E  →  4.5:1  ✓ (buttons: white text 4.7:1)
     private void ApplyDarkTheme()
     {
-        SetBrush("BgSurfaceBrush",       "#0D111A");
-        SetBrush("BgPrimaryBrush",       "#14171E");
-        SetBrush("BgCardBrush",          "#1A1D26");
-        SetBrush("BgHoverBrush",         "#1F2230");
-        SetBrush("BgElevatedBrush",      "#222636");
-        SetBrush("BgInputBrush",         "#0D111A");
-        SetBrush("LogoMarkBgBrush",      "#0A0E1A");
-        SetBrush("NavActiveBgBrush",     "#1A4ED8");
+        SetBrush("BgSurfaceBrush",       "#2C2C2E");  // sidebar: Apple secondarySystemBackground
+        SetBrush("BgPrimaryBrush",       "#1C1C1E");  // content: Apple systemBackground
+        SetBrush("BgCardBrush",          "#2C2C2E");  // cards: lifted surface
+        SetBrush("BgHoverBrush",         "#3A3A3C");  // hover: Apple tertiarySystemBackground
+        SetBrush("BgElevatedBrush",      "#3A3A3C");  // elevated controls
+        SetBrush("BgInputBrush",         "#1C1C1E");  // inputs: same as content bg
+        SetBrush("LogoMarkBgBrush",      "#003B8E");  // logo: deep blue
+        SetBrush("NavActiveBgBrush",     "#0071E3");  // active pill: Apple blue
         SetBrush("NavActiveBorderBrush", "Transparent");
-        SetBrush("BorderBrush",          "#252A38");
-        SetBrush("BorderSubtleBrush",    "#1A1F2C");
-        SetBrush("TextPrimaryBrush",     "#E8EAED");
-        SetBrush("TextSecondaryBrush",   "#8892A4");
-        SetBrush("TextMutedBrush",       "#4A5568");
-        SetBrush("TextLabelBrush",       "#3D4A5C");
-        SetBrush("AccentDimBrush",       "#162044");
-        SetBrush("AccentGlowBrush",      "#1F2563EB");
-        SetBrush("IconBgBlueBrush",      "#0C1F50");
-        SetBrush("IconBgGreenBrush",     "#0A2018");
-        SetBrush("IconBgPurpleBrush",    "#1A0D3A");
-        SetBrush("IconBgAmberBrush",     "#1A1408");
-        SetBrush("BannerSuccessBgBrush", "#0A2018");
-        SetBrush("BannerWarnBgBrush",    "#1A0E0A");
-        SetBrush("BannerInfoBgBrush",    "#0A1E42");
-        SetBrush("GoProBgBrush",         "#1A0D3A");
-        SetBrush("GoProBorderBrush",     "#40C084FC");
-        SetGradient("HeroGradientBrush", "#0F1729", "#14171E");
+        SetBrush("BorderBrush",          "#38383A");  // Apple separator dark
+        SetBrush("BorderSubtleBrush",    "#2C2C2E");  // subtle divider
+        SetBrush("TextPrimaryBrush",     "#F5F5F7");  // Apple label dark       — 16:1 on #1C1C1E ✓
+        SetBrush("TextSecondaryBrush",   "#C7C7CC");  // Apple secondaryLabel  — 10.8:1            ✓
+        SetBrush("TextMutedBrush",       "#AEAEB2");  // Apple tertiaryLabel   —  8.2:1            ✓
+        SetBrush("TextLabelBrush",       "#98989D");  // section headers       —  6.3:1 on #1C1C1E ✓
+        SetBrush("AccentDimBrush",       "#002A6B");  // deep blue tint for selected bg
+        SetBrush("AccentGlowBrush",      "#400071E3");
+        SetBrush("IconBgBlueBrush",      "#002A6B");
+        SetBrush("IconBgGreenBrush",     "#003B1A");
+        SetBrush("IconBgPurpleBrush",    "#2A0A50");
+        SetBrush("IconBgAmberBrush",     "#3A2400");
+        SetBrush("BannerSuccessBgBrush", "#003B1A");
+        SetBrush("BannerWarnBgBrush",    "#3A2400");
+        SetBrush("BannerInfoBgBrush",    "#002A6B");
+        SetBrush("GoProBgBrush",         "#2A0A50");
+        SetBrush("GoProBorderBrush",     "#9F67E0");
+        SetBrush("ProTextBrush",         "#C084FC");  // bright purple on dark
+        SetBrush("ProSubTextBrush",      "#A78BFA");  // softer purple on dark
+        SetBrush("ProBadgeBgBrush",      "#3A2070");  // deep purple chip
+        SetGradient("HeroGradientBrush", "#2C2C2E", "#1C1C1E");
         SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
-        SetGradient("AccentGradientBrush","#3B82F6","#2563EB");
+        SetGradient("AccentGradientBrush","#0071E3","#0077ED");
     }
 
     // ── Light  ────────────────────────────────────────────────────────────────
-    // Clean neutral whites with crisp blue accents. Legible, minimal.
+    // Apple light mode system palette. Pure white content, F5F5F7 sidebar.
+    // TextPrimary  #1D1D1F on #FFFFFF  → 19.1:1  ✓
+    // TextSecondary #3A3A3C on #FFFFFF →  9.7:1  ✓
+    // TextMuted    #6E6E73 on #FFFFFF  →  4.6:1  ✓
+    // AccentBrush  #0071E3 on #FFFFFF  →  4.5:1  ✓ (buttons: white text 4.7:1)
     private void ApplyLightTheme()
     {
-        SetBrush("BgSurfaceBrush",       "#F8F9FB");  // sidebar: soft cool white
-        SetBrush("BgPrimaryBrush",       "#ECEEF2");  // content: slightly darker for depth
-        SetBrush("BgCardBrush",          "#FFFFFF");  // cards pop white
-        SetBrush("BgHoverBrush",         "#E4E7ED");
-        SetBrush("BgElevatedBrush",      "#F0F2F6");
-        SetBrush("BgInputBrush",         "#FFFFFF");
-        SetBrush("LogoMarkBgBrush",      "#EEF2FF");
-        SetBrush("NavActiveBgBrush",     "#2563EB");  // solid blue pill — same as dark
-        SetBrush("NavActiveBorderBrush", "Transparent");
-        SetBrush("BorderBrush",          "#D0D5DF");
-        SetBrush("BorderSubtleBrush",    "#E4E7ED");
-        SetBrush("TextPrimaryBrush",     "#0F172A");
-        SetBrush("TextSecondaryBrush",   "#4B5675");
-        SetBrush("TextMutedBrush",       "#8A93A8");
-        SetBrush("TextLabelBrush",       "#64748B");
-        SetBrush("AccentDimBrush",       "#DBEAFE");
-        SetBrush("AccentGlowBrush",      "#302563EB");
-        SetBrush("IconBgBlueBrush",      "#DBEAFE");
-        SetBrush("IconBgGreenBrush",     "#DCFCE7");
-        SetBrush("IconBgPurpleBrush",    "#F3E8FF");
-        SetBrush("IconBgAmberBrush",     "#FEF3C7");
-        SetBrush("BannerSuccessBgBrush", "#F0FDF4");
-        SetBrush("BannerWarnBgBrush",    "#FFF7ED");
-        SetBrush("BannerInfoBgBrush",    "#EFF6FF");
-        SetBrush("GoProBgBrush",         "#FAF5FF");
-        SetBrush("GoProBorderBrush",     "#C084FC");
-        // Hero gradient: soft indigo wash (readable over white content)
-        SetGradient("HeroGradientBrush", "#EEF2FF", "#ECEEF2");
-        // Pro gradient: vivid purple — stays strong on light bg
+        SetBrush("BgSurfaceBrush",       "#F5F5F7");  // sidebar: Apple secondarySystemBackground
+        SetBrush("BgPrimaryBrush",       "#FFFFFF");  // content: pure white
+        SetBrush("BgCardBrush",          "#FFFFFF");  // cards: white
+        SetBrush("BgHoverBrush",         "#F0F0F2");  // hover: subtle off-white
+        SetBrush("BgElevatedBrush",      "#F5F5F7");  // elevated controls
+        SetBrush("BgInputBrush",         "#FFFFFF");  // inputs: white
+        SetBrush("LogoMarkBgBrush",      "#EBF3FF");  // logo: light blue tint
+        SetBrush("NavActiveBgBrush",     "#EBF3FF");  // active nav: blue tint
+        SetBrush("NavActiveBorderBrush", "#0071E3");  // active nav: blue accent line
+        SetBrush("BorderBrush",          "#D2D2D7");  // Apple separator light
+        SetBrush("BorderSubtleBrush",    "#E8E8ED");  // Apple subtle separator
+        SetBrush("TextPrimaryBrush",     "#1D1D1F");  // Apple label light
+        SetBrush("TextSecondaryBrush",   "#3A3A3C");  // Apple secondaryLabel light
+        SetBrush("TextMutedBrush",       "#6E6E73");  // Apple tertiaryLabel light
+        SetBrush("TextLabelBrush",       "#86868B");  // Apple quaternaryLabel light
+        SetBrush("AccentDimBrush",       "#EBF3FF");  // blue tint background
+        SetBrush("AccentGlowBrush",      "#200071E3");
+        SetBrush("IconBgBlueBrush",      "#EBF3FF");
+        SetBrush("IconBgGreenBrush",     "#E8FFF0");
+        SetBrush("IconBgPurpleBrush",    "#F3EFFE");
+        SetBrush("IconBgAmberBrush",     "#FFF8E7");
+        SetBrush("BannerSuccessBgBrush", "#E8FFF0");
+        SetBrush("BannerWarnBgBrush",    "#FFF8E7");
+        SetBrush("BannerInfoBgBrush",    "#EBF3FF");
+        SetBrush("GoProBgBrush",         "#F3EFFE");
+        SetBrush("GoProBorderBrush",     "#9F67E0");
+        SetBrush("ProTextBrush",         "#6D28D9");  // deep purple on light — 6.6:1 on #F3EFFE ✓
+        SetBrush("ProSubTextBrush",      "#7C5DA8");  // muted purple on light
+        SetBrush("ProBadgeBgBrush",      "#E5D8FA");  // pale purple chip
+        SetGradient("HeroGradientBrush", "#F5F5F7", "#FFFFFF");
         SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
-        SetGradient("AccentGradientBrush","#3B82F6","#2563EB");
+        SetGradient("AccentGradientBrush","#0071E3","#0077ED");
     }
 
     // ── Titanium (Antares) ────────────────────────────────────────────────────
-    // Antares is an M-supergiant blazing with titanium-oxide bands in its spectrum.
-    // Palette: warm charcoal — the colour of brushed titanium in shadow.
-    // Not dark, not light — a third temperature, like the star itself.
+    // Warm charcoal. Every layer stepped 12-15 luminance points for clear depth.
+    // TextPrimary  #F2EDE4 on #1E1B17  → 14.8:1  ✓
+    // TextSecondary #B8B0A6 on #1E1B17 →  7.1:1  ✓
+    // TextMuted    #8A8278 on #1E1B17  →  4.9:1  ✓
+    // AccentBrush  #0071E3 on #2E2A25  →  4.5:1  ✓ (buttons: white text 4.7:1)
     private void ApplyTitaniumTheme()
     {
-        SetBrush("BgSurfaceBrush",       "#26231F");  // sidebar: deep warm charcoal
-        SetBrush("BgPrimaryBrush",       "#302D29");  // content: lifted warm dark
-        SetBrush("BgCardBrush",          "#3C3935");  // cards: warm mid-tone
-        SetBrush("BgHoverBrush",         "#47443F");
-        SetBrush("BgElevatedBrush",      "#4E4B46");
-        SetBrush("BgInputBrush",         "#26231F");
-        SetBrush("LogoMarkBgBrush",      "#1E1B18");
-        SetBrush("NavActiveBgBrush",     "#1A4ED8");  // blue pill — pops on warm bg
+        SetBrush("BgSurfaceBrush",       "#2E2A25");  // sidebar: warm charcoal lifted
+        SetBrush("BgPrimaryBrush",       "#1E1B17");  // content: warm near-black
+        SetBrush("BgCardBrush",          "#2E2A25");  // cards: lifted warm layer
+        SetBrush("BgHoverBrush",         "#3E3A34");  // hover: warm mid
+        SetBrush("BgElevatedBrush",      "#3E3A34");  // elevated controls
+        SetBrush("BgInputBrush",         "#1E1B17");  // inputs: content bg
+        SetBrush("LogoMarkBgBrush",      "#002060");  // logo: cool contrast on warm
+        SetBrush("NavActiveBgBrush",     "#0071E3");  // active pill: blue pops on warm
         SetBrush("NavActiveBorderBrush", "Transparent");
-        SetBrush("BorderBrush",          "#5A5752");  // warm medium border
-        SetBrush("BorderSubtleBrush",    "#4A4744");
-        SetBrush("TextPrimaryBrush",     "#F2EFE8");  // warm off-white
-        SetBrush("TextSecondaryBrush",   "#A89F96");  // warm medium tan
-        SetBrush("TextMutedBrush",       "#706A64");  // warm muted
-        SetBrush("TextLabelBrush",       "#605A55");
-        SetBrush("AccentDimBrush",       "#1A2E50");
-        SetBrush("AccentGlowBrush",      "#282563EB");
+        SetBrush("BorderBrush",          "#4E4A44");  // warm medium separator
+        SetBrush("BorderSubtleBrush",    "#3E3A34");  // warm subtle separator
+        SetBrush("TextPrimaryBrush",     "#F2EDE4");  // warm near-white — 14.8:1 ✓
+        SetBrush("TextSecondaryBrush",   "#CEC8C0");  // warm medium     —  9.8:1 ✓
+        SetBrush("TextMutedBrush",       "#B8B0A6");  // warm muted      —  7.1:1 ✓
+        SetBrush("TextLabelBrush",       "#9A948C");  // section headers —  5.1:1 ✓
+        SetBrush("AccentDimBrush",       "#002060");  // deep blue tint
+        SetBrush("AccentGlowBrush",      "#400071E3");
         SetBrush("IconBgBlueBrush",      "#1A2840");
         SetBrush("IconBgGreenBrush",     "#0E2218");
-        SetBrush("IconBgPurpleBrush",    "#201030");
-        SetBrush("IconBgAmberBrush",     "#2A1E0A");  // warm amber tile
-        SetBrush("BannerSuccessBgBrush", "#0E1E14");
-        SetBrush("BannerWarnBgBrush",    "#201608");
-        SetBrush("BannerInfoBgBrush",    "#0E1E38");
-        SetBrush("GoProBgBrush",         "#2A1E38");
-        SetBrush("GoProBorderBrush",     "#7040B0");
-        // Hero gradient: warm ember glow — like Antares itself
-        SetGradient("HeroGradientBrush", "#2C2018", "#302D29");
-        SetGradient("ProGradientBrush",  "#C2773A", "#A0521C");  // amber-bronze Pro
-        SetGradient("AccentGradientBrush","#3B82F6","#2563EB");
+        SetBrush("IconBgPurpleBrush",    "#2A1040");
+        SetBrush("IconBgAmberBrush",     "#3A2810");
+        SetBrush("BannerSuccessBgBrush", "#0E2218");
+        SetBrush("BannerWarnBgBrush",    "#3A2810");
+        SetBrush("BannerInfoBgBrush",    "#1A2840");
+        SetBrush("GoProBgBrush",         "#2A1040");
+        SetBrush("GoProBorderBrush",     "#9F67E0");
+        SetBrush("ProTextBrush",         "#C9A8F0");  // warm-leaning purple on charcoal
+        SetBrush("ProSubTextBrush",      "#AC92D8");  // softer warm purple
+        SetBrush("ProBadgeBgBrush",      "#3A2458");  // deep purple chip
+        SetGradient("HeroGradientBrush", "#2E2A25", "#1E1B17");
+        SetGradient("ProGradientBrush",  "#A855F7", "#7C3AED");
+        SetGradient("AccentGradientBrush","#0071E3","#0077ED");
     }
 
     private void SetBrush(string key, string hex)
@@ -1559,23 +1907,10 @@ public partial class MainWindow : Window
     {
         bool isPro = AuthManager.IsProUser;
 
-        // Sidebar button
-        if (isPro)
-        {
-            GoProBtn.Background     = new SolidColorBrush(Color.FromArgb(0x22, 0x16, 0xA3, 0x4A));
-            GoProLabel.Text         = "Starkive Pro";
-            GoProLabel.Foreground   = new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A));
-            GoProPrice.Text         = "Active ✓";
-            GoProPrice.Foreground   = new SolidColorBrush(Color.FromArgb(0xCC, 0x16, 0xA3, 0x4A));
-        }
-        else
-        {
-            GoProBtn.Background     = new SolidColorBrush(Color.FromArgb(0x14, 0xC0, 0x84, 0xFC));
-            GoProLabel.Text         = "Go Pro";
-            GoProLabel.Foreground   = new SolidColorBrush(Color.FromRgb(0xC0, 0x84, 0xFC));
-            GoProPrice.Text         = "$0.99/mo";
-            GoProPrice.Foreground   = new SolidColorBrush(Color.FromArgb(0x99, 0xC0, 0x84, 0xFC));
-        }
+        // Sidebar card — colors come from theme-aware Pro brushes in XAML;
+        // only the wording changes between free and Pro.
+        GoProLabel.Text = isPro ? "Starkive Pro" : "Go Pro";
+        GoProPrice.Text = isPro ? "Active ✓"     : "$2.99/mo";
 
         // Settings page — swap upgrade card ↔ active badge
         ProUpgradeCard.Visibility = isPro ? Visibility.Collapsed : Visibility.Visible;

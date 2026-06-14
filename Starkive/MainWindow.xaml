@@ -46,19 +46,16 @@
                 <StackPanel Grid.Row="1" Orientation="Horizontal"
                             Margin="12,0,12,0" VerticalAlignment="Center">
                     <Border x:Name="LogoMark" Width="26" Height="26" CornerRadius="7"
-                            Background="#0D1631">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#2563EB" BlurRadius="10" Opacity="0.6" ShadowDepth="0"/>
-                        </Border.Effect>
+                            Background="#EBF3FF">
                         <Canvas Width="26" Height="26" ClipToBounds="True">
                             <Ellipse Canvas.Left="3" Canvas.Top="3" Width="20" Height="20"
-                                     Stroke="#3B82F6" StrokeThickness="1.5" Fill="Transparent"/>
-                            <Line X1="13" Y1="3"  X2="13" Y2="23" Stroke="#3B82F6" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Line X1="3"  Y1="13" X2="23" Y2="13" Stroke="#3B82F6" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Line X1="5.5" Y1="5.5" X2="20.5" Y2="20.5" Stroke="#3B82F6" StrokeThickness="1.0" Opacity="0.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Line X1="20.5" Y1="5.5" X2="5.5" Y2="20.5" Stroke="#3B82F6" StrokeThickness="1.0" Opacity="0.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Ellipse Canvas.Left="10" Canvas.Top="10" Width="6" Height="6" Fill="#2563EB"/>
-                            <Ellipse Canvas.Left="11.2" Canvas.Top="11.2" Width="3.6" Height="3.6" Fill="#60A5FA"/>
+                                     Stroke="#0071E3" StrokeThickness="1.5" Fill="Transparent"/>
+                            <Line X1="13" Y1="3"  X2="13" Y2="23" Stroke="#0071E3" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Line X1="3"  Y1="13" X2="23" Y2="13" Stroke="#0071E3" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Line X1="5.5" Y1="5.5" X2="20.5" Y2="20.5" Stroke="#0071E3" StrokeThickness="1.0" Opacity="0.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Line X1="20.5" Y1="5.5" X2="5.5" Y2="20.5" Stroke="#0071E3" StrokeThickness="1.0" Opacity="0.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Ellipse Canvas.Left="10" Canvas.Top="10" Width="6" Height="6" Fill="#0071E3"/>
+                            <Ellipse Canvas.Left="11.2" Canvas.Top="11.2" Width="3.6" Height="3.6" Fill="#5AA8F0"/>
                         </Canvas>
                     </Border>
                     <TextBlock x:Name="LogoTextPanel"
@@ -181,6 +178,34 @@
                                        VerticalAlignment="Center"/>
                         </Grid>
                     </Button>
+
+                    <!-- Vault -->
+                    <Button x:Name="NavVault" Click="Nav_Click" Tag="Vault"
+                            Style="{StaticResource NavButtonStyle}">
+                        <Grid Margin="10,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="NavVaultIcon" Grid.Column="0"
+                                       Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="NavVaultText"
+                                           Text="Vault" FontSize="12.5"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                           VerticalAlignment="Center"/>
+                                <Border x:Name="NavVaultBadge" CornerRadius="8" Padding="5,1"
+                                        Background="{DynamicResource AccentBrush}" Margin="6,0,0,0"
+                                        Visibility="Collapsed">
+                                    <TextBlock x:Name="NavVaultCount" Text="0" FontSize="9"
+                                               FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
                 <!-- Footer -->
@@ -211,28 +236,28 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="✦" Grid.Column="0" FontSize="12"
-                                           Foreground="#C084FC" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource ProTextBrush}" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="GoProLabel" Text="Starkive Pro" Grid.Column="1"
                                            FontSize="12" FontWeight="SemiBold"
-                                           Foreground="#D8B4FE" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource ProTextBrush}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                                 <Border Grid.Column="2" CornerRadius="3" Padding="5,1"
-                                        Background="#2A1A5E">
-                                    <TextBlock x:Name="GoProPrice" Text="$0.99/mo"
+                                        Background="{DynamicResource ProBadgeBgBrush}">
+                                    <TextBlock x:Name="GoProPrice" Text="$2.99/mo"
                                                FontSize="9" FontWeight="SemiBold"
-                                               Foreground="#A78BFA"/>
+                                               Foreground="{DynamicResource ProTextBrush}"/>
                                 </Border>
                             </Grid>
                             <!-- Feature bullets -->
                             <StackPanel Grid.Row="2">
-                                <TextBlock FontSize="10" Foreground="#8B7EC8" Margin="0,1">
+                                <TextBlock FontSize="10" Foreground="{DynamicResource ProSubTextBrush}" Margin="0,1">
                                     <Run Text="✓ "/>
                                     <Run Text="Secure Container (.ssz)"/>
                                 </TextBlock>
-                                <TextBlock FontSize="10" Foreground="#8B7EC8" Margin="0,1">
+                                <TextBlock FontSize="10" Foreground="{DynamicResource ProSubTextBrush}" Margin="0,1">
                                     <Run Text="✓ "/>
                                     <Run Text="Open notifications + PDF"/>
                                 </TextBlock>
-                                <TextBlock FontSize="10" Foreground="#8B7EC8" Margin="0,1">
+                                <TextBlock FontSize="10" Foreground="{DynamicResource ProSubTextBrush}" Margin="0,1">
                                     <Run Text="✓ "/>
                                     <Run Text="Cloud Drive sync"/>
                                 </TextBlock>
@@ -257,6 +282,7 @@
                     <Rectangle x:Name="NavUnzipAccent"/>
                     <Rectangle x:Name="NavHistoryAccent"/>
                     <Rectangle x:Name="NavSettingsAccent"/>
+                    <Rectangle x:Name="NavVaultAccent"/>
                 </Canvas>
 
             </Grid>
@@ -370,7 +396,7 @@
                                     <Border Grid.Column="0" Width="38" Height="38"
                                             CornerRadius="10" Background="{DynamicResource IconBgBlueBrush}">
                                         <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="17" Foreground="#3B82F6"
+                                                   FontSize="17" Foreground="#0071E3"
                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="13,0,0,0" VerticalAlignment="Center">
@@ -523,7 +549,7 @@
                         <!-- Pro upsell strip — hidden for Pro users -->
                         <Border x:Name="HomeProUpsellStrip"
                                 CornerRadius="12" Margin="0,0,0,16"
-                                BorderBrush="#3B1D72" BorderThickness="1"
+                                BorderBrush="{DynamicResource GoProBorderBrush}" BorderThickness="1"
                                 Background="{DynamicResource BgCardBrush}">
                             <Border.Effect>
                                 <DropShadowEffect Color="#7C3AED" BlurRadius="14" Opacity="0.15" ShadowDepth="0"/>
@@ -535,18 +561,18 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                        <Border CornerRadius="4" Padding="6,2" Background="#2A1060" Margin="0,0,8,0">
-                                            <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#A855F7"/>
+                                        <Border CornerRadius="4" Padding="6,2" Background="{DynamicResource ProBadgeBgBrush}" Margin="0,0,8,0">
+                                            <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource ProTextBrush}"/>
                                         </Border>
                                         <TextBlock Text="Unlock the full Starkive experience" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="✓" Foreground="{DynamicResource ProTextBrush}" FontSize="11" Margin="0,0,5,0"/>
                                         <TextBlock Text="Open tracking + email alerts" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,16,0"/>
-                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="✓" Foreground="{DynamicResource ProTextBrush}" FontSize="11" Margin="0,0,5,0"/>
                                         <TextBlock Text="Cloud backup" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,16,0"/>
-                                        <TextBlock Text="✓" Foreground="#A855F7" FontSize="11" Margin="0,0,5,0"/>
+                                        <TextBlock Text="✓" Foreground="{DynamicResource ProTextBrush}" FontSize="11" Margin="0,0,5,0"/>
                                         <TextBlock Text="SSZ sharing" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -579,38 +605,57 @@
                         <!-- Pro Active ribbon — shown only for Pro subscribers -->
                         <Border x:Name="HomeProActiveStrip"
                                 CornerRadius="12" Margin="0,0,0,16"
-                                BorderBrush="#166534" BorderThickness="1"
-                                Background="{DynamicResource BgCardBrush}"
+                                BorderThickness="0"
                                 Visibility="Collapsed">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0.4">
+                                    <GradientStop Color="#6D28D9" Offset="0"/>
+                                    <GradientStop Color="#7C3AED" Offset="0.55"/>
+                                    <GradientStop Color="#9333EA" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#16A34A" BlurRadius="12" Opacity="0.12" ShadowDepth="0"/>
+                                <DropShadowEffect Color="#7C3AED" BlurRadius="18" Opacity="0.35" ShadowDepth="0"/>
                             </Border.Effect>
-                            <Grid Margin="18,12">
+                            <Grid Margin="18,13">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <!-- Green glow icon -->
-                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8"
-                                        Background="#0F2A1A" Margin="0,0,14,0">
-                                    <TextBlock Text="✦" FontSize="15" Foreground="#22C55E"
+                                <!-- Sparkle medallion -->
+                                <Border Grid.Column="0" Width="38" Height="38" CornerRadius="19"
+                                        Margin="0,0,14,0">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="White" Opacity="0.18"/>
+                                    </Border.Background>
+                                    <TextBlock Text="✦" FontSize="17" Foreground="White"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="Starkive Pro — Active" FontSize="13" FontWeight="SemiBold"
-                                               Foreground="#4ADE80" Margin="0,0,0,3"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="Starkive Pro" FontSize="14" FontWeight="Bold"
+                                                   Foreground="White" VerticalAlignment="Center"/>
+                                        <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                                                VerticalAlignment="Center">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="White" Opacity="0.22"/>
+                                            </Border.Background>
+                                            <TextBlock Text="ACTIVE" FontSize="8.5" FontWeight="Bold"
+                                                       Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="✓ Secure Container" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,14,0"/>
-                                        <TextBlock Text="✓ Open notifications" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" Margin="0,0,14,0"/>
-                                        <TextBlock Text="✓ Cloud sync" Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
+                                        <TextBlock Text="✓ Secure Container" Foreground="#E9DEFF" FontSize="11" Margin="0,0,14,0"/>
+                                        <TextBlock Text="✓ Open notifications" Foreground="#E9DEFF" FontSize="11" Margin="0,0,14,0"/>
+                                        <TextBlock Text="✓ Cloud sync" Foreground="#E9DEFF" FontSize="11"/>
                                     </StackPanel>
                                 </StackPanel>
-                                <Border Grid.Column="2" CornerRadius="6" Padding="10,5"
-                                        Background="#0F2A1A" Margin="16,0,0,0"
+                                <Border Grid.Column="2" CornerRadius="8" Padding="14,7"
+                                        Background="White" Margin="16,0,0,0"
                                         Cursor="Hand" MouseLeftButtonUp="GoProBtn_Click">
-                                    <TextBlock Text="Manage →" FontSize="11" FontWeight="Medium"
-                                               Foreground="#4ADE80"/>
+                                    <TextBlock Text="Manage →" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="#6D28D9"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -618,7 +663,7 @@
                         <!-- Drop zone (secondary) -->
                         <Grid Margin="0,0,0,16" MinHeight="64">
                             <Rectangle x:Name="HomeDropRect"
-                                       Stroke="#2563EB"
+                                       Stroke="#0071E3"
                                        StrokeThickness="1.5" StrokeDashArray="5 4"
                                        RadiusX="10" RadiusY="10"
                                        Opacity="0.35"
@@ -641,14 +686,14 @@
                                         <Canvas Width="16" Height="16"
                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Line X1="8" Y1="13" X2="8" Y2="3"
-                                                  Stroke="#3B82F6" StrokeThickness="1.6"
+                                                  Stroke="#0071E3" StrokeThickness="1.6"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                             <Polyline Points="4,7 8,3 12,7"
-                                                      Stroke="#3B82F6" StrokeThickness="1.6"
+                                                      Stroke="#0071E3" StrokeThickness="1.6"
                                                       StrokeLineJoin="Round" StrokeStartLineCap="Round"
                                                       StrokeEndLineCap="Round" Fill="Transparent"/>
                                             <Line X1="2" Y1="14" X2="14" Y2="14"
-                                                  Stroke="#3B82F6" StrokeThickness="1.4"
+                                                  Stroke="#0071E3" StrokeThickness="1.4"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                   Opacity="0.5"/>
                                         </Canvas>
@@ -674,7 +719,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="RECENT ACTIVITY" FontSize="10" FontWeight="SemiBold"                                       Foreground="{DynamicResource TextLabelBrush}" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1" Text="View all →" FontSize="11"
-                                       Foreground="#3B82F6" VerticalAlignment="Center"
+                                       Foreground="#0071E3" VerticalAlignment="Center"
                                        Cursor="Hand" MouseLeftButtonUp="HomeCardHistory_Click"/>
                         </Grid>
                         <ItemsControl x:Name="HomeRecentList">
@@ -693,10 +738,11 @@
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Width="30" Height="30"
                                                     CornerRadius="6" Margin="0,0,10,0"
-                                                    Background="{DynamicResource BgPrimaryBrush}">
+                                                    Background="{DynamicResource IconBgBlueBrush}">
                                                 <TextBlock Text="{Binding TypeIcon}"
                                                            FontFamily="Segoe MDL2 Assets"
                                                            FontSize="14"
+                                                           Foreground="{DynamicResource AccentBrush}"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"/>
                                             </Border>
@@ -733,19 +779,19 @@
                 <StackPanel>
 
                     <!-- Header -->
-                    <StackPanel Margin="22,20,22,0">
-                        <TextBlock Text="Zip &amp; Encrypt" FontSize="20" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,3"/>
+                    <StackPanel Margin="22,12,22,0">
+                        <TextBlock Text="Zip &amp; Encrypt" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,2"/>
                         <TextBlock Text="Add files or folders, set a password, create an AES-256 encrypted archive."
-                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <!-- Body -->
-                    <StackPanel Margin="28,16,28,24">
+                    <!-- Body (form) -->
+                    <StackPanel x:Name="ZipFormPanel" Margin="28,10,28,12">
 
                         <!-- Drop zone -->
-                        <Grid Margin="0,0,0,16" Height="120">
+                        <Grid Margin="0,0,0,8" MinHeight="110">
                             <Rectangle x:Name="ZipDropRect"
                                        Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
@@ -758,71 +804,133 @@
                                     DragOver="DropZone_DragOver"
                                     DragLeave="DropZone_DragLeave"
                                     DragEnter="DropZone_DragEnter">
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <Canvas Width="24" Height="24" Margin="0,0,0,8"
-                                            HorizontalAlignment="Center">
-                                        <Line X1="12" Y1="20" X2="12" Y2="6"
-                                              Stroke="#1A56DB" StrokeThickness="1.8"
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,14,0,14">
+                                    <Canvas Width="24" Height="24" Margin="0,0,0,8" HorizontalAlignment="Center">
+                                        <Line X1="12" Y1="20" X2="12" Y2="6" Stroke="#1A56DB" StrokeThickness="1.8"
                                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                        <Polyline Points="7,11 12,6 17,11"
-                                                  Stroke="#1A56DB" StrokeThickness="1.8"
+                                        <Polyline Points="7,11 12,6 17,11" Stroke="#1A56DB" StrokeThickness="1.8"
                                                   StrokeLineJoin="Round" StrokeStartLineCap="Round"
                                                   StrokeEndLineCap="Round" Fill="Transparent"/>
-                                        <Line X1="5" Y1="20" X2="19" Y2="20"
-                                              Stroke="#1A56DB" StrokeThickness="1.8"
-                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Opacity="0.4"/>
+                                        <Line X1="5" Y1="20" X2="19" Y2="20" Stroke="#1A56DB" StrokeThickness="1.8"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0.4"/>
                                     </Canvas>
                                     <TextBlock Text="Drop files or folders here"
                                                FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
                                                HorizontalAlignment="Center"/>
-                                    <TextBlock Text="or" FontSize="11"
-                                               Foreground="{DynamicResource TextMutedBrush}"
+                                    <TextBlock Text="or" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                                                HorizontalAlignment="Center" Margin="0,3"/>
-                                    <Button Content="Browse files"
-                                            Style="{StaticResource GhostButtonStyle}"
-                                            Padding="14,6" FontSize="12"
-                                            HorizontalAlignment="Center"
+                                    <Button Content="Browse files" Style="{StaticResource GhostButtonStyle}"
+                                            Padding="14,6" FontSize="12" HorizontalAlignment="Center"
                                             Click="ZipBrowseSource_Click"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
 
-                        <!-- SOURCE card -->
+                        <!-- 1. SOURCE -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="SOURCE" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="ZipSourceBox"
-                                             Style="{StaticResource DarkTextBoxStyle}"
-                                             IsReadOnly="True"
-                                             Text="No file or folder selected"/>
+                                    <TextBox x:Name="ZipSourceBox" Style="{StaticResource DarkTextBoxStyle}"
+                                             IsReadOnly="True" Text="No file or folder selected"/>
                                     <Button Grid.Column="1" Content="Change"
                                             Style="{StaticResource InlineButtonStyle}"
-                                            Margin="6,0,0,0"
-                                            Click="ZipBrowseSource_Click"/>
+                                            Margin="6,0,0,0" Click="ZipBrowseSource_Click"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <!-- SAVE TO card — always visible, shows all destinations -->
+                        <!-- 2. OUTPUT FORMAT -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,6">
+                            <StackPanel>
+                                <TextBlock Text="OUTPUT FORMAT" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
+                                <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="6" Padding="2">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button x:Name="BtnFmtZip" Grid.Column="0"
+                                                Content="Encrypted ZIP" Tag="ZIP"
+                                                Style="{StaticResource SegmentButtonStyle}"
+                                                Click="OutputFmt_Click"/>
+                                        <Button x:Name="BtnFmtSsz" Grid.Column="1" Tag="SSZ"
+                                                Style="{StaticResource SegmentButtonStyle}"
+                                                Click="OutputFmt_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Certified Delivery" VerticalAlignment="Center"/>
+                                                <Border Margin="5,0,0,0" CornerRadius="3"
+                                                        Background="{DynamicResource ProBadgeBgBrush}" Padding="4,1">
+                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold"
+                                                               Foreground="{DynamicResource ProTextBrush}"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Certified Delivery intro card — shown only when SSZ selected -->
+                                <Border x:Name="CertifiedDeliveryInfoCard"
+                                        Background="{DynamicResource BannerInfoBgBrush}"
+                                        BorderBrush="{DynamicResource AccentBrush}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Padding="14,12" Margin="0,10,0,0" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock Text="Certified Delivery" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Send files with proof they were received."
+                                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                                   Margin="0,0,0,8"/>
+                                        <StackPanel>
+                                            <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4">
+                                                <Run Text="🔒" /><Run Text="  Encrypted — only your recipient can open it"/>
+                                            </TextBlock>
+                                            <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4">
+                                                <Run Text="📬" /><Run Text="  Tracked — you're notified the moment it's opened"/>
+                                            </TextBlock>
+                                            <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                <Run Text="📄" /><Run Text="  Certified — a signed PDF receipt is generated automatically"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <TextBlock Text="Free to create · Notifications require Pro"
+                                                   FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
+                                                   Margin="0,8,0,0" FontStyle="Italic"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Recipient hint — shown only in SSZ mode -->
+                                <StackPanel x:Name="RecipientHintPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <TextBlock Text="RECIPIENT" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextLabelBrush}"/>
+                                        <TextBlock Text=" — optional" FontSize="10"
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="RecipientHintBox" Style="{StaticResource DarkTextBoxStyle}"
+                                             Text="" MaxLength="120"
+                                             ToolTip="Who is this for? e.g. 'John at Acme' — shown in your open notification email."/>
+                                    <TextBlock Text="Shown in your notification email when the file is opened."
+                                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 3. SAVE TO -->
+                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="SAVE TO" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,10"/>
-
-                                <!-- Three destination tiles always visible -->
+                                           Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,7"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -831,11 +939,9 @@
                                         <ColumnDefinition Width="8"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-
                                     <!-- Local -->
                                     <Border x:Name="DestTileLocal" Grid.Column="0"
-                                            CornerRadius="8" Padding="12,10"
-                                            BorderThickness="2" Cursor="Hand"
+                                            CornerRadius="8" Padding="10,7" BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="Local">
                                         <StackPanel>
                                             <TextBlock Text="💾" FontSize="18" HorizontalAlignment="Center" Margin="0,0,0,6"/>
@@ -849,82 +955,76 @@
                                                        Text="Save to your computer"/>
                                         </StackPanel>
                                     </Border>
-
                                     <!-- Google Drive -->
                                     <Border x:Name="DestTileGDrive" Grid.Column="2"
-                                            CornerRadius="8" Padding="12,10"
-                                            BorderThickness="2" Cursor="Hand"
+                                            CornerRadius="8" Padding="10,7" BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="GoogleDrive">
                                         <StackPanel>
-                                            <TextBlock Text="G" FontSize="18" FontWeight="Bold"
-                                                       Foreground="#4285F4"
-                                                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            <Viewbox Width="22" Height="20" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                                <Canvas Width="22" Height="20">
+                                                    <Polygon Points="11,0 0,19 11,13"  Fill="#34A853"/>
+                                                    <Polygon Points="11,0 22,19 11,13" Fill="#4285F4"/>
+                                                    <Polygon Points="0,19 22,19 11,13" Fill="#FBBC04"/>
+                                                </Canvas>
+                                            </Viewbox>
                                             <TextBlock Text="Google Drive" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        HorizontalAlignment="Center"/>
                                             <TextBlock x:Name="DestGDriveSub" FontSize="10"
                                                        Foreground="{DynamicResource TextMutedBrush}"
                                                        HorizontalAlignment="Center" TextWrapping="Wrap"
-                                                       TextAlignment="Center" Margin="0,3,0,0"
-                                                       Text="Not connected"/>
+                                                       TextAlignment="Center" Margin="0,3,0,0" Text="Not connected"/>
                                         </StackPanel>
                                     </Border>
-
                                     <!-- OneDrive -->
                                     <Border x:Name="DestTileOneDrive" Grid.Column="4"
-                                            CornerRadius="8" Padding="12,10"
-                                            BorderThickness="2" Cursor="Hand"
+                                            CornerRadius="8" Padding="12,10" BorderThickness="2" Cursor="Hand"
                                             MouseLeftButtonDown="DestTile_Click" Tag="OneDrive">
                                         <StackPanel>
-                                            <TextBlock Text="☁" FontSize="18"
-                                                       Foreground="#0078D4"
-                                                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            <Viewbox Width="26" Height="18" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                                <Canvas Width="26" Height="17">
+                                                    <Path Fill="#0078D4" Data="M 21 7 C 20.4 4.1 17.9 2 15 2 C 13.2 2 11.6 2.8 10.5 4.1 C 9.7 3.4 8.6 3 7.5 3 C 4.9 3 2.8 5.1 2.8 7.7 C 1.1 8.3 0 9.9 0 11.7 C 0 14.1 1.9 16 4.3 16 H 21.5 C 23.9 16 26 14.2 26 12 C 26 9.8 24.2 8 21 7 Z"/>
+                                                </Canvas>
+                                            </Viewbox>
                                             <TextBlock Text="OneDrive" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        HorizontalAlignment="Center"/>
                                             <TextBlock x:Name="DestOneDriveSub" FontSize="10"
                                                        Foreground="{DynamicResource TextMutedBrush}"
                                                        HorizontalAlignment="Center" TextWrapping="Wrap"
-                                                       TextAlignment="Center" Margin="0,3,0,0"
-                                                       Text="Not connected"/>
+                                                       TextAlignment="Center" Margin="0,3,0,0" Text="Not connected"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
 
-                                <!-- Local path row — shown when Local is selected -->
+                                <!-- Local path row -->
                                 <Grid x:Name="LocalPathRow" Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="ZipOutputBox"
-                                             Style="{StaticResource DarkTextBoxStyle}"/>
+                                    <TextBox x:Name="ZipOutputBox" Style="{StaticResource DarkTextBoxStyle}"/>
                                     <Button Grid.Column="1" Content="Browse"
                                             Style="{StaticResource InlineButtonStyle}"
-                                            Margin="6,0,0,0"
-                                            Click="ZipBrowseOutput_Click"/>
+                                            Margin="6,0,0,0" Click="ZipBrowseOutput_Click"/>
                                 </Grid>
 
-                                <!-- Cloud info row — shown when cloud is selected -->
+                                <!-- Cloud info row -->
                                 <Border x:Name="CloudDestRow"
                                         Background="{DynamicResource BgInputBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6"
                                         Padding="12,10" Margin="0,12,0,0" Visibility="Collapsed">
                                     <StackPanel>
-                                        <TextBlock x:Name="CloudDestTitle"
-                                                   FontSize="12" FontWeight="Medium"
+                                        <TextBlock x:Name="CloudDestTitle" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock x:Name="CloudDestSubtitle"
-                                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                        <TextBlock x:Name="CloudDestSubtitle" FontSize="11"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    Margin="0,3,0,0" TextWrapping="Wrap"/>
-                                        <Button x:Name="CloudDestConnectBtn"
-                                                Content="Connect in Settings →"
+                                        <Button x:Name="CloudDestConnectBtn" Content="Connect in Settings →"
                                                 Style="{StaticResource GhostButtonStyle}"
-                                                FontSize="11" Padding="0,4,0,0"
-                                                HorizontalAlignment="Left"
-                                                Visibility="Collapsed"
-                                                Click="CloudDestConnectBtn_Click"/>
+                                                FontSize="11" Padding="0,4,0,0" HorizontalAlignment="Left"
+                                                Visibility="Collapsed" Click="CloudDestConnectBtn_Click"/>
                                     </StackPanel>
                                 </Border>
 
@@ -937,68 +1037,12 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- OUTPUT FORMAT card -->
+                        <!-- 4. PASSWORD -->
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
-                            <StackPanel>
-                                <TextBlock Text="OUTPUT FORMAT" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,8"/>
-                                <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="6" Padding="2">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Button x:Name="BtnFmtZip" Grid.Column="0"
-                                                Content="Encrypted ZIP" Tag="ZIP"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="OutputFmt_Click"/>
-                                        <Button x:Name="BtnFmtSsz" Grid.Column="1"
-                                                Tag="SSZ"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="OutputFmt_Click">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="Secure Container" VerticalAlignment="Center"/>
-                                                <Border Margin="5,0,0,0" CornerRadius="3"
-                                                        Background="{DynamicResource IconBgPurpleBrush}" Padding="4,1">
-                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold"
-                                                               Foreground="#C084FC"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </Button>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Recipient hint — shown only in SSZ mode -->
-                                <StackPanel x:Name="RecipientHintPanel" Visibility="Collapsed" Margin="0,12,0,0">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                        <TextBlock Text="RECIPIENT" FontSize="10" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextLabelBrush}"/>
-                                        <TextBlock Text=" — optional" FontSize="10"
-                                                   Foreground="{DynamicResource TextMutedBrush}"/>
-                                    </StackPanel>
-                                    <TextBox x:Name="RecipientHintBox"
-                                             Style="{StaticResource DarkTextBoxStyle}"
-                                             Text="" MaxLength="120"
-                                             ToolTip="Who is this for? e.g. 'John at Acme' — shown in the open notification email you receive."/>
-                                    <TextBlock Text="Shown in your notification email when the file is opened."
-                                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
-                                               Margin="0,4,0,0"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- PASSWORD MODE card (Fix 4d) -->
-                        <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="PASSWORD MODE" FontSize="10" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,8"/>
+                                           Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
                                 <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="6" Padding="2">
                                     <Grid>
@@ -1016,224 +1060,279 @@
                                                 Click="PwdMode_Click"/>
                                     </Grid>
                                 </Border>
-                            </StackPanel>
-                        </Border>
 
-                        <!--   MODE: PASSWORD   -->
-                        <StackPanel x:Name="PwdPanelPassword">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="12"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextLabelBrush}"
-                                               Margin="0,0,0,5"/>
-                                    <Border Background="{DynamicResource BgCardBrush}"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1" CornerRadius="10">
-                                        <PasswordBox x:Name="ZipPasswordBox"
-                                                     Style="{StaticResource DarkPasswordBoxStyle}"
-                                                     PasswordChanged="ZipPassword_Changed"/>
+                                <!-- PASSWORD panel -->
+                                <StackPanel x:Name="PwdPanelPassword" Margin="0,10,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,3"/>
+                                            <Border Background="{DynamicResource BgCardBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="10">
+                                                <PasswordBox x:Name="ZipPasswordBox"
+                                                             Style="{StaticResource DarkPasswordBoxStyle}"
+                                                             PasswordChanged="ZipPassword_Changed"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="CONFIRM" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,3"/>
+                                            <Border Background="{DynamicResource BgCardBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="10">
+                                                <PasswordBox x:Name="ZipConfirmBox"
+                                                             Style="{StaticResource DarkPasswordBoxStyle}"
+                                                             PasswordChanged="ZipPassword_Changed"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                    <!-- Strength bar -->
+                                    <Grid Margin="0,6,0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Height="3" CornerRadius="1.5"
+                                                Background="{DynamicResource BorderBrush}" VerticalAlignment="Center">
+                                            <Border x:Name="StrengthBar" CornerRadius="1.5"
+                                                    Background="{DynamicResource AccentBrush}"
+                                                    HorizontalAlignment="Left" Width="0"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" x:Name="StrengthLabel" Text="--" FontSize="11"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <TextBlock x:Name="EntropyLabel" FontSize="10"
+                                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
+                                    <Border x:Name="WeakPasswordWarning"
+                                            Background="{DynamicResource BannerWarnBgBrush}" BorderBrush="#7C2D12"
+                                            BorderThickness="1" CornerRadius="6"
+                                            Padding="10,7" Margin="0,8,0,0" Visibility="Collapsed">
+                                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#FCA47A">
+                                            <Run FontWeight="SemiBold">Weak password.</Run>
+                                            <Run>Use the passphrase mode or generate a strong password below.</Run>
+                                        </TextBlock>
+                                    </Border>
+                                    <!-- Auto-generate -->
+                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                            Margin="0,8,0,0" Padding="0,8,0,0">
+                                        <StackPanel>
+                                            <Button x:Name="BtnAutoGenToggle"
+                                                    Content="&#x2022;&#x2022;&#x2022; Generate a strong password for me"
+                                                    Style="{StaticResource InlineButtonStyle}"
+                                                    HorizontalAlignment="Left" FontSize="12"
+                                                    Click="AutoGenToggle_Click"/>
+                                            <StackPanel x:Name="AutoGenPanel" Visibility="Collapsed" Margin="0,10,0,0">
+                                                <TextBlock Text="GENERATED PASSWORD" FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
+                                                <Border Background="{DynamicResource BgCardBrush}"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1" CornerRadius="10" Margin="0,0,0,10">
+                                                    <TextBox x:Name="AutoGenDisplay" Style="{StaticResource MonoDisplayStyle}"/>
+                                                </Border>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                    <CheckBox x:Name="ChkUpper" Content="Uppercase" IsChecked="True"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                                              FontSize="12" Margin="0,0,14,0"
+                                                              Checked="AutoGenOption_Changed" Unchecked="AutoGenOption_Changed"/>
+                                                    <CheckBox x:Name="ChkLower" Content="Lowercase" IsChecked="True"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                                              FontSize="12" Margin="0,0,14,0"
+                                                              Checked="AutoGenOption_Changed" Unchecked="AutoGenOption_Changed"/>
+                                                    <CheckBox x:Name="ChkDigits" Content="Digits" IsChecked="True"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                                              FontSize="12" Margin="0,0,14,0"
+                                                              Checked="AutoGenOption_Changed" Unchecked="AutoGenOption_Changed"/>
+                                                    <CheckBox x:Name="ChkSpecial" Content="Symbols" IsChecked="True"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                                              FontSize="12"
+                                                              Checked="AutoGenOption_Changed" Unchecked="AutoGenOption_Changed"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                    <Slider x:Name="LengthSlider" Minimum="8" Maximum="64" Value="16"
+                                                            Width="160" VerticalAlignment="Center"
+                                                            ValueChanged="LengthSlider_Changed"/>
+                                                    <TextBlock x:Name="LengthLabel" Text="16 characters" FontSize="11"
+                                                               Foreground="{DynamicResource TextMutedBrush}"
+                                                               Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="&#x21BB; Regenerate" Style="{StaticResource GhostButtonStyle}"
+                                                            Padding="12,7" FontSize="12" Click="RegenerateAutoPassword_Click"/>
+                                                    <Button Content="Copy" Style="{StaticResource GhostButtonStyle}"
+                                                            Padding="12,7" FontSize="12" Margin="8,0,0,0"
+                                                            Click="CopyAutoPassword_Click"/>
+                                                    <Button Content="Use this password" Style="{StaticResource PrimaryButtonStyle}"
+                                                            Padding="12,7" FontSize="12" Margin="8,0,0,0"
+                                                            Click="UseAutoPassword_Click"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Save to archive vault -->
+                                    <Border Background="{DynamicResource BgInputBrush}"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Padding="12,10" Margin="0,12,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox x:Name="ChkSavePassword" IsChecked="False"
+                                                      VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="Save password to archive vault"
+                                                           FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="Stored securely on this device — retrieve it anytime from the Vault tab."
+                                                           FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="CONFIRM PASSWORD" FontSize="10"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextLabelBrush}"
-                                               Margin="0,0,0,5"/>
-                                    <Border Background="{DynamicResource BgCardBrush}"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1" CornerRadius="10">
-                                        <PasswordBox x:Name="ZipConfirmBox"
-                                                     Style="{StaticResource DarkPasswordBoxStyle}"
-                                                     PasswordChanged="ZipPassword_Changed"/>
+
+                                <!-- PASSPHRASE panel -->
+                                <StackPanel x:Name="PwdPanelPassphrase" Visibility="Collapsed" Margin="0,10,0,0">
+                                    <!-- Sub-mode: Generate vs Type own -->
+                                    <Border Background="{DynamicResource BgInputBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1" CornerRadius="6" Padding="2" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="BtnPhraseGenerate" Grid.Column="0"
+                                                    Content="Generate for me" Tag="Generate"
+                                                    Style="{StaticResource SegmentButtonStyle}"
+                                                    Click="PhraseSubMode_Click"/>
+                                            <Button x:Name="BtnPhraseOwn" Grid.Column="1"
+                                                    Content="Type my own" Tag="Own"
+                                                    Style="{StaticResource SegmentButtonStyle}"
+                                                    Click="PhraseSubMode_Click"/>
+                                        </Grid>
                                     </Border>
-                                </StackPanel>
-                            </Grid>
 
-                            <!-- Strength bar -->
-                            <Grid Margin="0,10,0,2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Height="3" CornerRadius="1.5"
-                                        Background="{DynamicResource BorderBrush}"
-                                        VerticalAlignment="Center">
-                                    <Border x:Name="StrengthBar" CornerRadius="1.5"
-                                            Background="{DynamicResource AccentBrush}"
-                                            HorizontalAlignment="Left" Width="0"/>
-                                </Border>
-                                <TextBlock Grid.Column="1" x:Name="StrengthLabel"
-                                           Text="--" FontSize="11"
-                                           Foreground="{DynamicResource TextMutedBrush}"
-                                           Margin="10,0,0,0" VerticalAlignment="Center"/>
-                            </Grid>
-                            <TextBlock x:Name="EntropyLabel" FontSize="10"
-                                       Foreground="{DynamicResource TextMutedBrush}"
-                                       Margin="0,2,0,0"/>
-                            <Border x:Name="WeakPasswordWarning"
-                                    Background="{DynamicResource BannerWarnBgBrush}" BorderBrush="#7C2D12"
-                                    BorderThickness="1" CornerRadius="6"
-                                    Padding="10,7" Margin="0,8,0,0"
-                                    Visibility="Collapsed">
-                                <TextBlock TextWrapping="Wrap" FontSize="11"
-                                           Foreground="#FCA47A">
-                                    <Run FontWeight="SemiBold">Weak password.</Run>
-                                    <Run>WinZip AES uses only 1,000 PBKDF2 rounds — a short or common password can be brute-forced quickly. Use the passphrase mode or generate a strong password below.</Run>
-                                </TextBlock>
-                            </Border>
-
-                            <!-- Auto-generate section (inline, collapsible) -->
-                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                                    Margin="0,14,0,0" Padding="0,12,0,0">
-                                <StackPanel>
-                                    <Button x:Name="BtnAutoGenToggle"
-                                            Content="&#x2022;&#x2022;&#x2022; Generate a strong password for me"
-                                            Style="{StaticResource InlineButtonStyle}"
-                                            HorizontalAlignment="Left" FontSize="12"
-                                            Click="AutoGenToggle_Click"/>
-                                    <StackPanel x:Name="AutoGenPanel" Visibility="Collapsed" Margin="0,10,0,0">
-                                        <TextBlock Text="GENERATED PASSWORD" FontSize="10"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextLabelBrush}"
-                                                   Margin="0,0,0,5"/>
+                                    <!-- Generated sub-panel -->
+                                    <StackPanel x:Name="PhraseGeneratePanel">
+                                        <TextBlock Text="GENERATED PASSPHRASE" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
                                         <Border Background="{DynamicResource BgCardBrush}"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1" CornerRadius="10" Margin="0,0,0,10">
-                                            <TextBox x:Name="AutoGenDisplay"
-                                                     Style="{StaticResource MonoDisplayStyle}"/>
+                                            <TextBox x:Name="PassphraseDisplay" Style="{StaticResource MonoDisplayStyle}"/>
                                         </Border>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                            <CheckBox x:Name="ChkUpper" Content="Uppercase" IsChecked="True"
-                                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                                      FontSize="12" Margin="0,0,14,0"
-                                                      Checked="AutoGenOption_Changed"
-                                                      Unchecked="AutoGenOption_Changed"/>
-                                            <CheckBox x:Name="ChkLower" Content="Lowercase" IsChecked="True"
-                                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                                      FontSize="12" Margin="0,0,14,0"
-                                                      Checked="AutoGenOption_Changed"
-                                                      Unchecked="AutoGenOption_Changed"/>
-                                            <CheckBox x:Name="ChkDigits" Content="Digits" IsChecked="True"
-                                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                                      FontSize="12" Margin="0,0,14,0"
-                                                      Checked="AutoGenOption_Changed"
-                                                      Unchecked="AutoGenOption_Changed"/>
-                                            <CheckBox x:Name="ChkSpecial" Content="Symbols" IsChecked="True"
-                                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                                      FontSize="12"
-                                                      Checked="AutoGenOption_Changed"
-                                                      Unchecked="AutoGenOption_Changed"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                            <Slider x:Name="LengthSlider" Minimum="8" Maximum="64" Value="16"
-                                                    Width="160" VerticalAlignment="Center"
-                                                    ValueChanged="LengthSlider_Changed"/>
-                                            <TextBlock x:Name="LengthLabel" Text="16 characters" FontSize="11"
-                                                       Foreground="{DynamicResource TextMutedBrush}"
-                                                       Margin="10,0,0,0" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="&#x21BB; Regenerate"
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Background="{DynamicResource BgInputBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="2">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button x:Name="Btn3Words" Content="3 words" Tag="3"
+                                                            Style="{StaticResource SegmentButtonStyle}"
+                                                            Click="WordCount_Click" Padding="8,5"/>
+                                                    <Button x:Name="Btn4Words" Content="4 words" Tag="4"
+                                                            Style="{StaticResource SegmentButtonStyle}"
+                                                            Click="WordCount_Click" Padding="8,5"/>
+                                                    <Button x:Name="Btn5Words" Content="5 words" Tag="5"
+                                                            Style="{StaticResource SegmentButtonStyle}"
+                                                            Click="WordCount_Click" Padding="8,5"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Grid.Column="2" Background="{DynamicResource BgInputBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="2">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button x:Name="BtnSepDot" Content="&#xB7;" Tag="&#xB7;"
+                                                            Style="{StaticResource SegmentButtonStyle}"
+                                                            Click="Separator_Click" Padding="10,5"/>
+                                                    <Button x:Name="BtnSepDash" Content="-" Tag="-"
+                                                            Style="{StaticResource SegmentButtonStyle}"
+                                                            Click="Separator_Click" Padding="10,5"/>
+                                                    <Button x:Name="BtnSepSpace" Content="space" Tag=" "
+                                                            Style="{StaticResource SegmentButtonStyle}"
+                                                            Click="Separator_Click" Padding="8,5"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Button Grid.Column="4" Content="&#x21BB; New"
                                                     Style="{StaticResource GhostButtonStyle}"
                                                     Padding="12,7" FontSize="12"
-                                                    Click="RegenerateAutoPassword_Click"/>
-                                            <Button Content="Copy"
+                                                    Click="RegeneratePassphrase_Click"/>
+                                            <Button Grid.Column="6" x:Name="CopyPassphraseBtn" Content="Copy"
                                                     Style="{StaticResource GhostButtonStyle}"
-                                                    Padding="12,7" FontSize="12" Margin="8,0,0,0"
-                                                    Click="CopyAutoPassword_Click"/>
-                                            <Button Content="Use this password"
-                                                    Style="{StaticResource PrimaryButtonStyle}"
-                                                    Padding="12,7" FontSize="12" Margin="8,0,0,0"
-                                                    Click="UseAutoPassword_Click"/>
-                                        </StackPanel>
+                                                    Padding="12,7" FontSize="12"
+                                                    Click="CopyPassphrase_Click"/>
+                                        </Grid>
                                     </StackPanel>
+
+                                    <!-- Own passphrase sub-panel -->
+                                    <StackPanel x:Name="PhraseOwnPanel" Visibility="Collapsed">
+                                        <TextBlock Text="YOUR PASSPHRASE" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
+                                        <Border Background="{DynamicResource BgCardBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="10" Margin="0,0,0,6">
+                                            <TextBox x:Name="OwnPassphraseBox"
+                                                     Style="{StaticResource MonoDisplayStyle}"
+                                                     TextChanged="OwnPassphrase_Changed"/>
+                                        </Border>
+                                        <TextBlock Text="CONFIRM PASSPHRASE" FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
+                                        <Border Background="{DynamicResource BgCardBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="10">
+                                            <TextBox x:Name="OwnPassphraseConfirmBox"
+                                                     Style="{StaticResource MonoDisplayStyle}"
+                                                     TextChanged="OwnPassphrase_Changed"/>
+                                        </Border>
+                                        <TextBlock x:Name="OwnPassphraseMismatch"
+                                                   Text="Passphrases don't match"
+                                                   FontSize="11" Foreground="{DynamicResource DangerBrush}"
+                                                   Margin="0,5,0,0" Visibility="Collapsed"/>
+                                    </StackPanel>
+
+                                    <!-- Save to archive vault -->
+                                    <Border Background="{DynamicResource BgInputBrush}"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Padding="12,10" Margin="0,12,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox x:Name="ChkSavePassphrase" IsChecked="False"
+                                                      VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="Save passphrase to archive vault"
+                                                           FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="Stored securely on this device — retrieve it anytime from the Vault tab."
+                                                           FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
-                            </Border>
+                            </StackPanel>
+                        </Border>
 
-                            <!-- Save to this device -->
-                            <CheckBox x:Name="ChkSavePassword"
-                                      Content="Save password to this device"
-                                      IsChecked="False"
-                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                      FontSize="12" Margin="0,12,0,0"/>
-                        </StackPanel>
-
-                        <!--   MODE: PASSPHRASE   -->
-                        <StackPanel x:Name="PwdPanelPassphrase" Visibility="Collapsed">
-                            <TextBlock Text="GENERATED PASSPHRASE" FontSize="10"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextLabelBrush}"
-                                       Margin="0,0,0,5"/>
-                            <Border Background="{DynamicResource BgCardBrush}"
-                                    BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1" CornerRadius="10" Margin="0,0,0,10">
-                                <TextBox x:Name="PassphraseDisplay"
-                                         Style="{StaticResource MonoDisplayStyle}"/>
-                            </Border>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="16"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Background="{DynamicResource BgInputBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="6" Padding="2">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button x:Name="Btn3Words" Content="3 words" Tag="3"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="WordCount_Click" Padding="8,5"/>
-                                        <Button x:Name="Btn4Words" Content="4 words" Tag="4"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="WordCount_Click" Padding="8,5"/>
-                                        <Button x:Name="Btn5Words" Content="5 words" Tag="5"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="WordCount_Click" Padding="8,5"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Grid.Column="2" Background="{DynamicResource BgInputBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="6" Padding="2">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button x:Name="BtnSepDot" Content="&#xB7;" Tag="&#xB7;"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="Separator_Click" Padding="10,5"/>
-                                        <Button x:Name="BtnSepDash" Content="-" Tag="-"
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="Separator_Click" Padding="10,5"/>
-                                        <Button x:Name="BtnSepSpace" Content="space" Tag=" "
-                                                Style="{StaticResource SegmentButtonStyle}"
-                                                Click="Separator_Click" Padding="8,5"/>
-                                    </StackPanel>
-                                </Border>
-                                <Button Grid.Column="4" Content="&#x21BB; New passphrase"
-                                        Style="{StaticResource GhostButtonStyle}"
-                                        Padding="12,7" FontSize="12"
-                                        Click="RegeneratePassphrase_Click"/>
-                                <Button Grid.Column="6" x:Name="CopyPassphraseBtn"
-                                        Content="Copy"
-                                        Style="{StaticResource GhostButtonStyle}"
-                                        Padding="12,7" FontSize="12"
-                                        Click="CopyPassphrase_Click"/>
-                            </Grid>
-                            <!-- Save to this device -->
-                            <CheckBox x:Name="ChkSavePassphrase"
-                                      Content="Save passphrase to this device"
-                                      IsChecked="False"
-                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                      FontSize="12" Margin="0,8,0,0"/>
-                        </StackPanel>
-
-                        <!-- Create ZIP button -->
+                        <!-- Create button + progress -->
                         <Button x:Name="ZipCreateButton" Content="Create Encrypted ZIP"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Margin="0,18,0,0" HorizontalAlignment="Stretch"
@@ -1253,58 +1352,104 @@
                                 <TextBlock x:Name="ZipPercentText" Text="0%" FontSize="11"
                                            Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 <TextBlock x:Name="ZipStatusText" Text="" FontSize="11"
-                                           Foreground="{DynamicResource TextMutedBrush}"
-                                           Margin="10,0,0,0"/>
+                                           Foreground="{DynamicResource TextMutedBrush}" Margin="10,0,0,0"/>
                             </StackPanel>
                         </Grid>
                         <TextBlock x:Name="ZipErrorText" FontSize="12"
                                    Foreground="{DynamicResource DangerBrush}"
-                                   TextWrapping="Wrap" Margin="0,10,0,0"
-                                   Visibility="Collapsed"/>
-                        <Border x:Name="ZipSuccessBanner"
-                                Background="{DynamicResource BannerSuccessBgBrush}" BorderBrush="{DynamicResource SuccessBrush}"
-                                BorderThickness="1" CornerRadius="8" Padding="14,12"
-                                Margin="0,10,0,0" Visibility="Collapsed">
+                                   TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed"/>
+
+                        <!-- Hidden compat elements -->
+                        <Border x:Name="ZipSuccessBanner" Visibility="Collapsed">
                             <StackPanel>
-                                <!-- Status row -->
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="✓" FontSize="13"
-                                               Foreground="{DynamicResource SuccessBrush}"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="ZipSuccessText"
-                                               Text="ZIP created successfully."
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="ZipSuccessText"/>
+                                <StackPanel x:Name="CloudUploadPanel" Visibility="Collapsed">
+                                    <Button x:Name="UploadGDriveBtn"   Click="UploadGDriveBtn_Click"/>
+                                    <Button x:Name="UploadOneDriveBtn" Click="UploadOneDriveBtn_Click"/>
                                 </StackPanel>
-
-                                <!-- Cloud upload row — shown only when SSZ + Drive connected -->
-                                <StackPanel x:Name="CloudUploadPanel" Orientation="Horizontal"
-                                            Margin="0,10,0,0" Visibility="Collapsed">
-                                    <TextBlock Text="Upload to:"
-                                               FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
-                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                    <Button x:Name="UploadGDriveBtn" Content="☁ Google Drive"
-                                            FontSize="11" Padding="10,4" Margin="0,0,8,0"
-                                            Click="UploadGDriveBtn_Click"/>
-                                    <Button x:Name="UploadOneDriveBtn" Content="☁ OneDrive"
-                                            FontSize="11" Padding="10,4"
-                                            Click="UploadOneDriveBtn_Click"/>
-                                </StackPanel>
-
-                                <!-- Upload result row -->
-                                <StackPanel x:Name="CloudUploadResultPanel" Orientation="Horizontal"
-                                            Margin="0,8,0,0" Visibility="Collapsed">
-                                    <TextBlock x:Name="CloudUploadResultText"
-                                               FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
-                                               VerticalAlignment="Center"/>
-                                    <Button x:Name="CopyCloudLinkBtn" Content="Copy Link"
-                                            FontSize="11" Padding="8,3" Margin="10,0,0,0"
-                                            Click="CopyCloudLinkBtn_Click" Visibility="Collapsed"/>
+                                <StackPanel x:Name="CloudUploadResultPanel" Visibility="Collapsed">
+                                    <TextBlock x:Name="CloudUploadResultText"/>
+                                    <Button x:Name="CopyCloudLinkBtn" Click="CopyCloudLinkBtn_Click" Visibility="Collapsed"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>
+
+                    <!-- SUCCESS screen — shown after zip completes, replaces form -->
+                    <Border x:Name="ZipSuccessPanel" Visibility="Collapsed"
+                            Margin="28,10,28,24">
+                        <StackPanel>
+                            <!-- Check circle -->
+                            <Border Width="64" Height="64" CornerRadius="32"
+                                    Background="{DynamicResource BannerSuccessBgBrush}"
+                                    HorizontalAlignment="Center" Margin="0,20,0,0">
+                                <TextBlock Text="✓" FontSize="28" FontWeight="Bold"
+                                           Foreground="{DynamicResource SuccessBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock x:Name="ZipSuccessHeadline" Text="File created successfully!"
+                                       FontSize="17" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,14,0,4"/>
+                            <TextBlock x:Name="ZipSuccessSubtitle" Text=""
+                                       FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                       HorizontalAlignment="Center" TextWrapping="Wrap"
+                                       TextAlignment="Center" Margin="0,0,0,20"/>
+
+                            <!-- Output path card -->
+                            <Border Background="{DynamicResource BgCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="10"
+                                    Padding="14,12" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="SAVED TO" FontSize="10" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextLabelBrush}" Margin="0,0,0,5"/>
+                                    <TextBlock x:Name="ZipSuccessPath" FontSize="11"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" FontFamily="Consolas"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Action buttons -->
+                            <Button x:Name="BtnShowInExplorer"
+                                    Content="📂  Show in Explorer"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                    Click="ZipShowInExplorer_Click"/>
+
+                            <!-- Cloud upload row -->
+                            <StackPanel x:Name="ZipSuccessCloudRow" Visibility="Collapsed" Margin="0,0,0,8">
+                                <TextBlock Text="Also upload to cloud:" FontSize="11"
+                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="UploadGDriveBtn2" Content="☁ Google Drive"
+                                            FontSize="11" Padding="10,6" Margin="0,0,8,0"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            Click="UploadGDriveBtn_Click"/>
+                                    <Button x:Name="UploadOneDriveBtn2" Content="☁ OneDrive"
+                                            FontSize="11" Padding="10,6"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            Click="UploadOneDriveBtn_Click"/>
+                                </StackPanel>
+                                <StackPanel x:Name="ZipSuccessCloudResult" Orientation="Horizontal"
+                                            Margin="0,8,0,0" Visibility="Collapsed">
+                                    <TextBlock x:Name="ZipSuccessCloudText" FontSize="11"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <Button x:Name="CopyCloudLinkBtn2" Content="Copy Link"
+                                            FontSize="11" Padding="8,3" Margin="10,0,0,0"
+                                            Style="{StaticResource GhostButtonStyle}"
+                                            Click="CopyCloudLinkBtn_Click" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button Content="Create another"
+                                    Style="{StaticResource GhostButtonStyle}"
+                                    HorizontalAlignment="Stretch" Padding="0,10"
+                                    Click="ZipCreateAnother_Click"/>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </ScrollViewer>
 
@@ -1312,15 +1457,15 @@
             <ScrollViewer x:Name="UnzipSection" VerticalScrollBarVisibility="Auto"
                           Background="Transparent" Visibility="Collapsed">
                 <StackPanel>
-                    <StackPanel Margin="22,20,22,0">
-                        <TextBlock Text="Unzip &amp; Decrypt" FontSize="20" FontWeight="SemiBold"
+                    <StackPanel Margin="22,12,22,0">
+                        <TextBlock Text="Unzip &amp; Decrypt" FontSize="18" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,3"/>
                         <TextBlock Text="Select an AES-256 encrypted ZIP, enter the password, and extract."
-                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
-                    <StackPanel Margin="28,16,28,24">
-                        <Grid Margin="0,0,0,16" Height="100">
+                    <StackPanel Margin="28,10,28,12">
+                        <Grid Margin="0,0,0,8" Height="76">
                             <Rectangle Stroke="{DynamicResource BorderBrush}"
                                        StrokeThickness="1.5" StrokeDashArray="4 3"
                                        RadiusX="8" RadiusY="8" IsHitTestVisible="False"/>
@@ -1347,11 +1492,11 @@
                         </Grid>
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="ZIP FILE" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1365,10 +1510,10 @@
                                             Margin="6,0,0,0"
                                             Click="UnzipBrowseSource_Click"/>
                                 </Grid>
-                                <Rectangle Height="1" Fill="#152030" Margin="0,12"/>
+                                <Rectangle Height="1" Fill="#152030" Margin="0,8"/>
                                 <TextBlock Text="EXTRACT TO" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,4"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1385,11 +1530,11 @@
                         </Border>
                         <Border Background="{DynamicResource BgCardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10"
-                                Padding="16,14" Margin="0,0,0,10">
+                                Padding="14,10" Margin="0,0,0,6">
                             <StackPanel>
                                 <TextBlock Text="PASSWORD" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextLabelBrush}"
-                                           Margin="0,0,0,5"/>
+                                           Margin="0,0,0,3"/>
                                 <Border Background="{DynamicResource BgCardBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="10">
@@ -1529,6 +1674,211 @@
                 </ScrollViewer>
             </Grid>
 
+            <!-- VAULT SECTION -->
+            <Grid x:Name="VaultSection" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" Background="{DynamicResource HeroGradientBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid Margin="28,20,28,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Password Vault" FontSize="22" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock x:Name="VaultSubtitle" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <!-- Cloud sync status badge -->
+                        <Border x:Name="VaultSyncBadge" Grid.Column="1" CornerRadius="8"
+                                Padding="10,5" VerticalAlignment="Center" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="VaultSyncIcon" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock x:Name="VaultSyncLabel" FontSize="11" FontWeight="Medium"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Body -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="28,20,28,28">
+
+                        <!-- Empty state -->
+                        <Border x:Name="VaultEmptyState" CornerRadius="12"
+                                Background="{DynamicResource BgCardBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Padding="32,40" Visibility="Collapsed">
+                            <StackPanel HorizontalAlignment="Center">
+                                <Border Width="52" Height="52" CornerRadius="14"
+                                        Background="{DynamicResource IconBgBlueBrush}"
+                                        HorizontalAlignment="Center" Margin="0,0,0,14">
+                                    <TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="22" Foreground="#0071E3"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="No saved passwords yet" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Check 'Save password to this device' when creating a ZIP."
+                                           FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,16"
+                                           TextAlignment="Center" TextWrapping="Wrap"/>
+                                <Button Content="Go to Zip &amp; Encrypt"
+                                        Style="{StaticResource GhostButtonStyle}"
+                                        Padding="16,8" FontSize="12" HorizontalAlignment="Center"
+                                        Click="VaultGoToZip_Click"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Entry list — populated from code-behind -->
+                        <ItemsControl x:Name="VaultList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="12" Margin="0,0,0,8"
+                                            Background="{DynamicResource BgCardBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1">
+                                        <Grid Margin="16,14">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="10"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="8"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Row 1: file info + delete -->
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="9"
+                                                        Background="{DynamicResource IconBgBlueBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="15" Foreground="#0071E3"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="13,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Hint}" FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                        <TextBlock Text="{Binding FormattedDate}" FontSize="10.5"
+                                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        <!-- Cloud badge -->
+                                                        <Border x:Name="EntryCloudBadge"
+                                                                Visibility="{Binding CloudBadgeVisibility}"
+                                                                CornerRadius="4" Padding="5,1" Margin="8,0,0,0"
+                                                                Background="{DynamicResource IconBgBlueBrush}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets"
+                                                                           FontSize="9" Foreground="#0071E3"
+                                                                           VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                                                <TextBlock Text="{Binding CloudLabel}" FontSize="9"
+                                                                           FontWeight="SemiBold" Foreground="#0071E3"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <!-- Local badge -->
+                                                        <Border Visibility="{Binding LocalBadgeVisibility}"
+                                                                CornerRadius="4" Padding="5,1" Margin="8,0,0,0"
+                                                                Background="{DynamicResource BgPrimaryBrush}">
+                                                            <TextBlock Text="Local" FontSize="9" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Content="&#xE74D;"
+                                                        FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        Padding="6,4" VerticalAlignment="Center"
+                                                        ToolTip="Delete saved password"
+                                                        Tag="{Binding Key}"
+                                                        Click="VaultDelete_Click"/>
+                                            </Grid>
+
+                                            <!-- Row 3: password row -->
+                                            <Border Grid.Row="2" CornerRadius="8"
+                                                    Background="{DynamicResource BgPrimaryBrush}"
+                                                    Padding="12,9">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding PasswordDisplay}"
+                                                               FontFamily="Consolas" FontSize="12.5"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Button Grid.Column="1"
+                                                            Content="{Binding RevealLabel}"
+                                                            Style="{StaticResource GhostButtonStyle}"
+                                                            FontSize="11" Padding="8,3" Margin="8,0,0,0"
+                                                            Tag="{Binding Key}"
+                                                            Click="VaultReveal_Click"/>
+                                                    <Button Grid.Column="2" Content="Copy"
+                                                            Style="{StaticResource GhostButtonStyle}"
+                                                            FontSize="11" Padding="8,3" Margin="4,0,0,0"
+                                                            Tag="{Binding Key}"
+                                                            Click="VaultCopy_Click"/>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Row 5: open/locate actions (hidden when neither path nor URL available) -->
+                                            <StackPanel Grid.Row="4" Orientation="Horizontal">
+                                                <!-- Open Location — local entries with a stored path -->
+                                                <Button Visibility="{Binding OpenLocalBtnVisibility}"
+                                                        IsEnabled="{Binding LocalFileExists}"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        FontSize="11" Padding="8,4" Margin="0,0,6,0"
+                                                        ToolTip="{Binding OpenLocalTooltip}"
+                                                        Tag="{Binding}"
+                                                        Click="VaultOpenLocal_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets"
+                                                                   FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                        <TextBlock Text="Open Location" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <!-- Open in Drive — cloud entries with a share URL -->
+                                                <Button Visibility="{Binding OpenCloudBtnVisibility}"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        FontSize="11" Padding="8,4" Margin="0,0,6,0"
+                                                        ToolTip="{Binding CloudUrl}"
+                                                        Tag="{Binding}"
+                                                        Click="VaultOpenCloud_Click">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets"
+                                                                   FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                        <TextBlock Text="Open in Drive" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
             <!-- SETTINGS SECTION -->
             <ScrollViewer x:Name="SettingsSection" VerticalScrollBarVisibility="Auto"
                           Background="Transparent" Visibility="Collapsed">
@@ -1538,73 +1888,79 @@
 
                     <!-- Pro Active badge — shown only when user is Pro -->
                     <Border x:Name="ProActiveCard" CornerRadius="10" Margin="0,0,0,14" Padding="18"
-                            BorderThickness="1" BorderBrush="#22A34A" Visibility="Collapsed">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#071A0E" Offset="0"/>
-                                <GradientStop Color="#0A1510" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
+                            BorderThickness="1" BorderBrush="#22A34A" Visibility="Collapsed"
+                            Background="{DynamicResource BannerSuccessBgBrush}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                 <TextBlock Text="&#x2713;" FontSize="14" Foreground="#16A34A"
                                            VerticalAlignment="Center" FontWeight="Bold"/>
                                 <TextBlock Text="Starkive Pro" FontSize="13" FontWeight="SemiBold"
-                                           Foreground="#E8F0FB" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                 <Border Background="#16A34A" CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
                                     <TextBlock Text="ACTIVE" FontSize="9" FontWeight="Bold"
                                                Foreground="White" VerticalAlignment="Center"/>
                                 </Border>
                             </StackPanel>
-                            <TextBlock FontSize="12" Foreground="#7A9AB8" TextWrapping="Wrap" LineHeight="18">
+                            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="18"
+                                       Margin="0,0,0,10">
                                 Your Pro license is active. All features are unlocked.
                             </TextBlock>
+                            <Button Content="View dashboard →" HorizontalAlignment="Left"
+                                    FontSize="12" FontWeight="SemiBold"
+                                    Foreground="White" Background="#16A34A"
+                                    Padding="14,7" BorderThickness="0" Cursor="Hand"
+                                    Click="ViewDashboard_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </StackPanel>
                     </Border>
 
                     <!-- Pro upgrade card — hidden when user is already Pro -->
-                    <Border x:Name="ProUpgradeCard" CornerRadius="10" Margin="0,0,0,14" Padding="18" BorderThickness="1">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#0A1E42" Offset="0"/>
-                                <GradientStop Color="#0C1525" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
+                    <Border x:Name="ProUpgradeCard" CornerRadius="10" Margin="0,0,0,14" Padding="18" BorderThickness="1"
+                            Background="{DynamicResource BannerInfoBgBrush}">
                         <Border.BorderBrush>
-                            <SolidColorBrush Color="#1A56DB" Opacity="0.25"/>
+                            <SolidColorBrush Color="#0071E3" Opacity="0.35"/>
                         </Border.BorderBrush>
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <TextBlock Text="+" FontSize="13" Foreground="#1A56DB"
+                                <TextBlock Text="+" FontSize="13" Foreground="{DynamicResource AccentBrush}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text="Starkive Pro" FontSize="13"
-                                           FontWeight="SemiBold" Foreground="#E8F0FB"
+                                           FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"
                                            Margin="6,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <TextBlock FontSize="12" Foreground="#7A9AB8"
+                            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextWrapping="Wrap" Margin="0,0,0,12" LineHeight="18">
                                 Know the exact moment your files are opened, with proof they have not been tampered with.
                             </TextBlock>
                             <StackPanel Margin="0,0,0,14">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Open notifications with timestamp and IP"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Open notifications with timestamp and country"
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                                     <TextBlock Text="Tamper-proof .ssz secure container format"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                                     <TextBlock Text="SHA-256 file integrity verification"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="4" Height="4" Fill="#1A56DB" VerticalAlignment="Center"/>
+                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                                     <TextBlock Text="Full audit history and delivery receipts"
-                                               FontSize="12" Foreground="#7A9AB8" Margin="7,0,0,0"/>
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="7,0,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                             <Grid>
@@ -1614,18 +1970,18 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="$0.99" FontSize="18"
-                                                   FontWeight="Bold" Foreground="#E8F0FB"/>
+                                        <TextBlock Text="$2.99" FontSize="18"
+                                                   FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text=" / month" FontSize="12"
-                                                   Foreground="#3A5470"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    VerticalAlignment="Bottom" Margin="0,0,0,2"/>
                                     </StackPanel>
                                     <TextBlock Text="Cancel anytime  No commitment"
-                                               FontSize="10" Foreground="#3A5470" Margin="0,2,0,0"/>
+                                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
                                 </StackPanel>
                                 <Button Grid.Column="1" Content="Upgrade to Pro"
                                         FontSize="12" FontWeight="SemiBold"
-                                        Foreground="White" Background="#1A56DB"
+                                        Foreground="White" Background="{DynamicResource AccentBrush}"
                                         Padding="16,8" BorderThickness="0" Cursor="Hand"
                                         Click="UpgradeToPro_Click">
                                     <Button.Template>
@@ -1655,7 +2011,7 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="Theme" FontSize="13" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                <TextBlock Text="Dark theme is active" FontSize="11"
+                                <TextBlock x:Name="ThemeStatusText" Text="Light theme is active" FontSize="11"
                                            Foreground="{DynamicResource TextMutedBrush}"
                                            Margin="0,2,0,0"/>
                             </StackPanel>

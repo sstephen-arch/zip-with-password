@@ -2,6 +2,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,6 +33,9 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     private static readonly string _tokenPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Starkive", "cloud", "gdrive_token.json");
+
+    // One HttpClient for the lifetime of the process — never create per-call (socket exhaustion)
+    private static readonly HttpClient _sharedHttp = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     private GoogleToken? _token;
 
@@ -80,8 +84,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
         {
             try
             {
-                using var http = new HttpClient();
-                await http.PostAsync(
+                await _sharedHttp.PostAsync(
                     $"https://oauth2.googleapis.com/revoke?token={Uri.EscapeDataString(_token.AccessToken)}",
                     null);
             }
@@ -96,7 +99,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     public async Task UploadVaultAsync(byte[] encryptedBytes, CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         // Find existing file ID (if any)
         string? fileId = await FindBackupFileIdAsync(http, ct);
@@ -135,7 +138,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     public async Task<string?> UploadSszAsync(string filePath, CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         string fileName = Path.GetFileName(filePath);
         byte[] fileBytes = await File.ReadAllBytesAsync(filePath, ct);
@@ -183,7 +186,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     public async Task<byte[]?> DownloadVaultAsync(CancellationToken ct = default)
     {
         await EnsureFreshTokenAsync(ct);
-        using var http = BuildClient();
+        var http = BuildClient();
 
         string? fileId = await FindBackupFileIdAsync(http, ct);
         if (fileId == null) return null;
@@ -205,7 +208,6 @@ internal sealed class GoogleDriveProvider : ICloudProvider
 
     private async Task<GoogleToken?> ExchangeCodeAsync(string code, string verifier, CancellationToken ct)
     {
-        using var http = new HttpClient();
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["code"]          = code,
@@ -215,7 +217,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
             ["grant_type"]    = "authorization_code",
             ["code_verifier"] = verifier,
         });
-        var resp = await http.PostAsync(TokenEndpoint, form, ct);
+        var resp = await _sharedHttp.PostAsync(TokenEndpoint, form, ct);
         if (!resp.IsSuccessStatusCode) return null;
         var raw = await resp.Content.ReadFromJsonAsync<GoogleTokenRaw>(cancellationToken: ct);
         if (raw?.AccessToken == null) return null;
@@ -231,7 +233,6 @@ internal sealed class GoogleDriveProvider : ICloudProvider
         if (_token == null) throw new InvalidOperationException("Not connected to Google Drive.");
         if (_token.ExpiresAt > DateTime.UtcNow) return;
 
-        using var http = new HttpClient();
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["refresh_token"] = _token.RefreshToken,
@@ -239,7 +240,7 @@ internal sealed class GoogleDriveProvider : ICloudProvider
             ["client_secret"] = ClientSecret,
             ["grant_type"]    = "refresh_token",
         });
-        var resp = await http.PostAsync(TokenEndpoint, form, ct);
+        var resp = await _sharedHttp.PostAsync(TokenEndpoint, form, ct);
         if (!resp.IsSuccessStatusCode)
         {
             _token = null;
@@ -259,21 +260,30 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     {
         try
         {
-            using var http = new HttpClient();
-            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var info = await http.GetFromJsonAsync<JsonElement>(
-                "https://www.googleapis.com/oauth2/v2/userinfo", ct);
+            using var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var resp = await _sharedHttp.SendAsync(req, ct);
+            var info = await resp.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
             return info.TryGetProperty("email", out var e) ? e.GetString() : null;
         }
         catch { return null; }
     }
 
+    // Returns a request-scoped message with the current access token — no new HttpClient created.
+    private HttpRequestMessage BuildRequest(HttpMethod method, string url)
+    {
+        var req = new HttpRequestMessage(method, url);
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
+        return req;
+    }
+
     private HttpClient BuildClient()
     {
-        var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization =
+        // Still returns the shared client; caller must set Authorization per-request via BuildRequest.
+        // Kept for compatibility with existing upload methods that use PostAsJsonAsync etc.
+        _sharedHttp.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
-        return client;
+        return _sharedHttp;
     }
 
     private static GoogleToken? LoadToken()
@@ -281,7 +291,9 @@ internal sealed class GoogleDriveProvider : ICloudProvider
         try
         {
             if (!File.Exists(_tokenPath)) return null;
-            return JsonSerializer.Deserialize<GoogleToken>(File.ReadAllText(_tokenPath));
+            var encrypted = File.ReadAllBytes(_tokenPath);
+            var plaintext = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.CurrentUser);
+            return JsonSerializer.Deserialize<GoogleToken>(Encoding.UTF8.GetString(plaintext));
         }
         catch { return null; }
     }
@@ -289,7 +301,9 @@ internal sealed class GoogleDriveProvider : ICloudProvider
     private static void SaveToken(GoogleToken token)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_tokenPath)!);
-        File.WriteAllText(_tokenPath, JsonSerializer.Serialize(token));
+        var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(token));
+        var encrypted = ProtectedData.Protect(plaintext, null, DataProtectionScope.CurrentUser);
+        File.WriteAllBytes(_tokenPath, encrypted);
     }
 
     // ── Models ────────────────────────────────────────────────────────────────

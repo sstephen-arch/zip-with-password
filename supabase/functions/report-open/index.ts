@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { PDFDocument, rgb, StandardFonts } from "npm:pdf-lib@1.17.1";
 
 // ── Environment ───────────────────────────────────────────────────────────────
 const SUPABASE_URL     = Deno.env.get("SUPABASE_URL")!;
@@ -19,6 +19,16 @@ Deno.serve(async (req: Request) => {
   const { file_token, star_name, file_name } = body;
   if (!file_token) return new Response("Missing file_token", { status: 400 });
 
+  // ── Input validation ─────────────────────────────────────────────────────
+  // Validate UUID format to block garbage tokens early (before any DB hit)
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(file_token))
+    return new Response("Invalid file_token", { status: 400 });
+
+  // Clamp client-supplied display strings (untrusted — DB values are preferred anyway)
+  const safe_star = typeof star_name === "string" ? star_name.slice(0, 64)  : undefined;
+  const safe_file = typeof file_name === "string" ? file_name.slice(0, 260) : undefined;
+
   // Service-role client — bypasses RLS on all public tables
   const supabase = createClient(SUPABASE_URL, SUPABASE_SVC_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -36,11 +46,13 @@ Deno.serve(async (req: Request) => {
 
   const now      = new Date().toISOString();
   const newCount = (file.open_count ?? 0) + 1;
+  // IP is used ONLY for immediate country-level geo lookup — never stored (EULA §3a).
   const opener_ip  = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null;
   const user_agent = req.headers.get("user-agent") ?? null;
   // Cloudflare injects cf-ipcountry on every edge-function request — ISO 3166-1 alpha-2.
   // Country-level geo is not personal data under GDPR Art.4(1); logged under legitimate interest.
   const country_code = req.headers.get("cf-ipcountry") ?? null; // e.g. "US", "GB", "XX" if unknown
+  // ip_address deliberately NOT forwarded to DB insert — see EULA §3a and privacy policy.
 
   // ── 2. Increment open counter (fire-and-forget) ──────────────────────────
   supabase.from("ssz_files")
@@ -53,7 +65,8 @@ Deno.serve(async (req: Request) => {
   try {
     const { data: ae, error: aeErr } = await supabase
       .from("audit_events")
-      .insert({ file_id: file.id, event_type: "file_opened", ip_address: opener_ip, user_agent, country_code, opened_at: now })
+      // ip_address omitted — not stored per EULA §3a; opener_ip used only for country_code derivation above
+      .insert({ file_id: file.id, event_type: "file_opened", user_agent, country_code, opened_at: now })
       .select("id")
       .single();
     if (aeErr) console.error("[report-open] audit_events insert error:", JSON.stringify(aeErr));
@@ -79,8 +92,8 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 6. Resolve display values ────────────────────────────────────────────
-  const resolvedStar = file.star_name ?? star_name ?? "Unknown";
-  const resolvedFile = file.original_filename ?? file_name ?? "Unnamed file";
+  const resolvedStar = file.star_name ?? safe_star ?? "Unknown";
+  const resolvedFile = file.original_filename ?? safe_file ?? "Unnamed file";
   const openTime     = new Date(now).toUTCString();
 
   // ── 7. Build PDF certificate (failure does NOT block email) ──────────────
@@ -127,11 +140,12 @@ Deno.serve(async (req: Request) => {
   </div>
 </div>`;
 
-  // ── 9. Send email via Resend ─────────────────────────────────────────────
+  // ── 9. Send email via Resend (3 attempts with backoff) ───────────────────
+  const emailSubject = `[Starkive] ${resolvedStar} - "${resolvedFile}" was opened`;
   const emailPayload: Record<string, unknown> = {
     from:    `Starkive <${FROM_EMAIL}>`,
     to:      [ownerEmail],
-    subject: `[Starkive] ${resolvedStar} - "${resolvedFile}" was opened`,
+    subject: emailSubject,
     html,
   };
   if (pdfBase64) {
@@ -141,25 +155,59 @@ Deno.serve(async (req: Request) => {
     }];
   }
 
-  try {
-    const emailResp = await fetch("https://api.resend.com/emails", {
-      method:  "POST",
-      headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body:    JSON.stringify(emailPayload),
-    });
+  let emailSent = false;
+  const delays  = [0, 2000, 5000]; // attempt 1 immediate, retry after 2s, retry after 5s
 
-    if (emailResp.ok) {
-      // Mark notified
-      if (auditId) {
-        const { error: nErr } = await supabase.from("audit_events").update({ notified_at: now }).eq("id", auditId);
-        if (nErr) console.error("[report-open] notified_at update error:", JSON.stringify(nErr));
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+    try {
+      const emailResp = await fetch("https://api.resend.com/emails", {
+        method:  "POST",
+        headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body:    JSON.stringify(emailPayload),
+      });
+
+      if (emailResp.ok) {
+        emailSent = true;
+        console.log(`[report-open] Email sent (attempt ${attempt + 1}) to ${ownerEmail} for star=${resolvedStar}`);
+        break;
+      } else {
+        const errBody = await emailResp.text();
+        console.error(`[report-open] Resend attempt ${attempt + 1} HTTP ${emailResp.status}: ${errBody}`);
+        // Don't retry on 4xx (bad request / auth) — only retry on 5xx / network issues
+        if (emailResp.status >= 400 && emailResp.status < 500) break;
       }
-      console.log(`[report-open] Email sent to ${ownerEmail} for star=${resolvedStar}`);
-    } else {
-      const errBody = await emailResp.text();
-      console.error(`[report-open] Resend error ${emailResp.status}: ${errBody}`);
+    } catch (e) {
+      console.error(`[report-open] Resend attempt ${attempt + 1} exception:`, e);
     }
-  } catch (e) { console.error("[report-open] Email send exception:", e); }
+  }
+
+  if (emailSent) {
+    // Mark notified so the retry-queue cron can skip this record
+    if (auditId) {
+      const { error: nErr } = await supabase.from("audit_events")
+        .update({ notified_at: now }).eq("id", auditId);
+      if (nErr) console.error("[report-open] notified_at update error:", JSON.stringify(nErr));
+    }
+  } else {
+    // Queue for async retry: write a pending_notifications record
+    console.error(`[report-open] All email attempts failed for audit_id=${auditId ?? "null"}, queuing for retry`);
+    try {
+      const { error: qInsErr } = await supabase.from("pending_notifications").insert({
+        audit_event_id: auditId,
+        owner_email:    ownerEmail,
+        subject:        emailSubject,
+        html_body:      html,
+        pdf_base64:     pdfBase64,
+        pdf_filename:   pdfBase64 ? `Starkive_${resolvedStar}_Certificate.pdf` : null,
+        created_at:     now,
+        attempts:       delays.length,
+      });
+      if (qInsErr) console.error("[report-open] pending_notifications insert error:", JSON.stringify(qInsErr));
+    } catch (qErr) {
+      console.error("[report-open] Failed to queue pending notification:", qErr);
+    }
+  }
 
   // Return creator email so the app can display "Sent by [email]" to the opener
   return new Response(JSON.stringify({ ok: true, sent_by: ownerEmail }), {
@@ -187,87 +235,114 @@ async function buildNotificationPdf(
   const fontBold    = await doc.embedFont(StandardFonts.HelveticaBold);
   const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
 
-  // Background
-  page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.039, 0.055, 0.098) });
+  // ── Palette (Apple light / starkive.app) ─────────────────────────────────
+  const white      = rgb(1,      1,      1     );
+  const bgSurface  = rgb(0.961,  0.961,  0.969 ); // #F5F5F7
+  const blue       = rgb(0.000,  0.443,  0.890 ); // #0071E3
+  const blueDim    = rgb(0.922,  0.953,  1.000 ); // #EBF3FF
+  const textPri    = rgb(0.114,  0.114,  0.122 ); // #1D1D1F
+  const textMuted  = rgb(0.431,  0.431,  0.451 ); // #6E6E73
+  const border     = rgb(0.824,  0.824,  0.843 ); // #D2D2D7
 
-  // Top accent bar
-  page.drawRectangle({ x: 0, y: height - 5, width, height: 5, color: rgb(0.149, 0.357, 0.922) });
+  // ── Background ───────────────────────────────────────────────────────────
+  page.drawRectangle({ x: 0, y: 0, width, height, color: white });
 
-  // Header: "* STARKIVE" (ASCII * instead of Unicode star)
-  page.drawText("*", {
-    x: 48, y: height - 58, size: 26, font: fontBold,
-    color: rgb(0.576, 0.773, 0.965),
-  });
-  page.drawText("STARKIVE", {
-    x: 72, y: height - 54, size: 22, font: fontBold,
-    color: rgb(0.910, 0.941, 0.984),
-  });
-  page.drawText("OPEN NOTIFICATION CERTIFICATE", {
-    x: 72, y: height - 72, size: 9, font: fontRegular,
-    color: rgb(0.400, 0.557, 0.722),
-  });
+  // Left accent panel (sidebar feel)
+  page.drawRectangle({ x: 0, y: 0, width: 180, height, color: bgSurface });
+  page.drawRectangle({ x: 0, y: 0, width: 3,   height, color: blue });
 
-  // Divider
+  // ── Left panel: brand + star identity ────────────────────────────────────
+  // Logo mark circle
+  page.drawRectangle({ x: 18, y: height - 62, width: 28, height: 28, color: blueDim,
+    borderColor: blue, borderWidth: 0.75 });
+  page.drawText("*", { x: 25, y: height - 42, size: 16, font: fontBold, color: blue });
+
+  page.drawText("Starkive", { x: 52, y: height - 48, size: 14, font: fontBold, color: textPri });
+  page.drawText("starkive.app",  { x: 52, y: height - 61, size: 8,  font: fontRegular, color: textMuted });
+
+  // Thin divider under header
   page.drawLine({
-    start: { x: 48, y: height - 88 }, end: { x: width - 48, y: height - 88 },
-    thickness: 0.5, color: rgb(0.15, 0.20, 0.30),
+    start: { x: 12, y: height - 74 }, end: { x: 168, y: height - 74 },
+    thickness: 0.5, color: border,
   });
 
-  // Star name (large, centred) — safe: star names are ASCII letters
-  const starFontSize = 40;
+  // Star identity (big, centred in left panel)
+  const starFontSize = 34;
   const starWidth    = fontBold.widthOfTextAtSize(starName, starFontSize);
   page.drawText(starName, {
-    x: (width - starWidth) / 2, y: height - 148,
-    size: starFontSize, font: fontBold,
-    color: rgb(0.910, 0.941, 0.984),
+    x: (180 - starWidth) / 2, y: height - 148,
+    size: starFontSize, font: fontBold, color: blue,
   });
   const subLabel = "Star Identity";
-  const subWidth = fontRegular.widthOfTextAtSize(subLabel, 11);
+  const subWidth = fontRegular.widthOfTextAtSize(subLabel, 9);
   page.drawText(subLabel, {
-    x: (width - subWidth) / 2, y: height - 166,
-    size: 11, font: fontRegular,
-    color: rgb(0.400, 0.557, 0.722),
+    x: (180 - subWidth) / 2, y: height - 164,
+    size: 9, font: fontRegular, color: textMuted,
   });
 
-  // Detail rows
+  // Open count badge
+  const countLabel = `${openCount} open${openCount === 1 ? "" : "s"}`;
+  const badgeW     = fontBold.widthOfTextAtSize(countLabel, 9) + 16;
+  const badgeX     = (180 - badgeW) / 2;
+  page.drawRectangle({ x: badgeX, y: height - 198, width: badgeW, height: 16,
+    color: blueDim, borderColor: blue, borderWidth: 0.5 });
+  page.drawText(countLabel, {
+    x: badgeX + 8, y: height - 189,
+    size: 9, font: fontBold, color: blue,
+  });
+
+  // ── Right panel: title + detail rows ─────────────────────────────────────
+  const rx = 204; // right panel content x
+
+  page.drawText("Open Notification", {
+    x: rx, y: height - 46, size: 18, font: fontBold, color: textPri,
+  });
+  page.drawText("CERTIFICATE", {
+    x: rx, y: height - 62, size: 9, font: fontBold, color: blue,
+  });
+
+  page.drawLine({
+    start: { x: rx, y: height - 76 }, end: { x: width - 32, y: height - 76 },
+    thickness: 0.5, color: border,
+  });
+
+  // Build rows
   const rows: [string, string][] = [
     ["File",       sanitizeForPdf(fileName)],
     ["Opened at",  openTime],
     ["Open count", openCount.toString()],
   ];
   if (recipientHint) rows.splice(1, 0, ["Opened by", sanitizeForPdf(recipientHint)]);
-  // Country: safe to show — 2-letter ISO code only, not personal data
   if (countryCode && countryCode !== "XX" && countryCode !== "T1")
     rows.splice(rows.findIndex(r => r[0] === "Opened at") + 1, 0, ["Country", countryCode]);
   if (sentBy) rows.push(["Sent by", sanitizeForPdf(sentBy)]);
 
-  let rowY = height - 212;
+  let rowY = height - 104;
   for (const [label, value] of rows) {
-    page.drawText(label + ":", {
-      x: 48, y: rowY, size: 10, font: fontBold,
-      color: rgb(0.400, 0.557, 0.722),
-    });
-    // Truncate long values to fit the page
-    const maxW = width - 48 - 160;
+    // Label pill background
+    const labelW = fontBold.widthOfTextAtSize(label, 8.5) + 12;
+    page.drawRectangle({ x: rx, y: rowY - 3, width: labelW, height: 14,
+      color: bgSurface, borderColor: border, borderWidth: 0.5 });
+    page.drawText(label, { x: rx + 6, y: rowY + 4, size: 8.5, font: fontBold, color: textMuted });
+
+    const maxW = width - rx - labelW - 48;
     let display = value;
     while (display.length > 4 && fontRegular.widthOfTextAtSize(display, 10) > maxW) {
       display = display.slice(0, -4) + "...";
     }
     page.drawText(display, {
-      x: 162, y: rowY, size: 10, font: fontRegular,
-      color: rgb(0.910, 0.941, 0.984),
+      x: rx + labelW + 10, y: rowY + 3, size: 10, font: fontRegular, color: textPri,
     });
-    rowY -= 22;
+    rowY -= 26;
   }
 
-  // Footer
+  // ── Footer ───────────────────────────────────────────────────────────────
   page.drawLine({
-    start: { x: 48, y: 38 }, end: { x: width - 48, y: 38 },
-    thickness: 0.5, color: rgb(0.15, 0.20, 0.30),
+    start: { x: rx, y: 32 }, end: { x: width - 32, y: 32 },
+    thickness: 0.5, color: border,
   });
-  page.drawText("Generated by Starkive  |  starkive.app", {
-    x: 48, y: 24, size: 8, font: fontRegular,
-    color: rgb(0.30, 0.40, 0.55),
+  page.drawText("Generated by Starkive  |  starkive.app  |  DePalo Consulting LLC", {
+    x: rx, y: 20, size: 7.5, font: fontRegular, color: textMuted,
   });
 
   return await doc.save();

@@ -147,7 +147,8 @@ public static class ContextMenuInstaller
             progKey.SetValue("", "Starkive Secure Container");
 
             using var iconKey = progKey.CreateSubKey("DefaultIcon");
-            iconKey?.SetValue("", $"\"{exePath}\",0");
+            string sszIcon = SszIconGenerator.EnsureIcon();
+            iconKey?.SetValue("", $"\"{sszIcon}\",0");
 
             using var openKey = progKey.CreateSubKey(@"shell\open\command");
             openKey?.SetValue("", $"\"{exePath}\" \"%1\"");
